@@ -1,13 +1,14 @@
 // src/adapters/PlugAdapter.ts
 
-import { ActorSubclass } from "@dfinity/agent";
+import { Actor, HttpAgent, type ActorSubclass } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
-import { Adapter, Wallet } from "../types";
-import { ICRC1_IDL } from "../did/icrc1.idl.js";
+import type { Adapter, Wallet } from "../types";
+import plugLogo from "../../assets/plug.jpg";
 
 export class PlugAdapter implements Adapter.Interface {
+  static readonly logo: string = plugLogo;
   name: string = "Plug";
-  logo: string = "path_to_plug_logo.svg";
+  logo: string = PlugAdapter.logo;
   url: string = "https://plugwallet.ooo/";
 
   private readyState:
@@ -35,6 +36,11 @@ export class PlugAdapter implements Adapter.Interface {
   // Check if the wallet is available
   async isAvailable(): Promise<boolean> {
     return this.readyState !== "NotDetected";
+  }
+
+  // Check if the wallet is connected
+  async isConnected(): Promise<boolean> {
+    return window.ic?.plug?.isConnected() || false;
   }
 
   // Connect to Plug wallet
@@ -104,64 +110,21 @@ export class PlugAdapter implements Adapter.Interface {
     }
   }
 
-  // Create an actor to interact with a canister
-  async createActor<T>(
-    canisterId: string,
-    idlFactory: any
-  ): Promise<ActorSubclass<T>> {
-    if (!canisterId || !idlFactory) {
-      throw new Error("Canister ID and IDL factory are required");
+  // Create an actor for interacting with a canister
+  async createActor<T>(canisterId: string, idl: any): Promise<ActorSubclass<T>> {
+    if (!window.ic?.plug) {
+      throw new Error("Plug wallet is not available");
     }
-
-    if (window.ic && window.ic.plug && window.ic.plug.createActor) {
-      try {
-        const actor = await window.ic.plug.createActor<T>({
-          canisterId,
-          interfaceFactory: idlFactory,
-        });
-        return actor;
-      } catch (e) {
-        console.error("Failed to create actor through Plug:", e);
-        throw e;
-      }
-    } else {
-      throw new Error("Plug wallet is not available or not connected");
-    }
+    return window.ic.plug.createActor({
+      canisterId,
+      interfaceFactory: idl,
+    });
   }
 
-  // Request balance
-  async getBalance(): Promise<bigint> {
-    if (window.ic && window.ic.plug && window.ic.plug.requestBalance) {
-      try {
-        const balances = await window.ic.plug.requestBalance();
-        const icpBalance = balances.find((b) => b.currency === "ICP");
-        return BigInt(icpBalance ? icpBalance.amount : 0);
-      } catch (e) {
-        console.error("Failed to get balance:", e);
-        throw e;
-      }
-    } else {
-      throw new Error("Plug wallet is not available or not connected");
+  // Handle connection updates
+  private handleConnectionUpdate(status: { sessionExpired: boolean }): void {
+    if (status.sessionExpired) {
+      this.readyState = "Disconnected";
     }
-  }
-
-  // Perform an ICRC-1 token transfer
-  async icrc1Transfer(
-    canisterId: Principal,
-    params: Wallet.TransferParams
-  ): Promise<void> {
-    const actor = await this.createActor<any>(canisterId.toText(), ICRC1_IDL);
-    try {
-      await actor.icrc1_transfer(params);
-    } catch (e) {
-      console.error("ICRC-1 transfer failed:", e);
-      throw e;
-    }
-  }
-
-  // Handle connection updates (e.g., account switching)
-  private handleConnectionUpdate(): void {
-    console.log("Plug connection updated");
-    // You can add logic here to handle when the user switches accounts in Plug
   }
 }

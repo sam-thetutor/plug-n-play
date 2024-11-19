@@ -1,4 +1,4 @@
-import { Adapter, Wallet } from '../../types/index';
+import { Adapter, Wallet } from '../types/index';
 import { ActorSubclass } from '../@dfinity/agent';
 import { Principal } from '../@dfinity/principal';
 declare class PNP {

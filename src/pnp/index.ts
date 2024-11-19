@@ -162,7 +162,7 @@ class PNP {
       identity: new AnonymousIdentity(),
       host: this.state.config.hostUrl,
     });
-    if (this.state.config.hostUrl?.includes("localhost")) {
+    if (this.state.config.hostUrl?.includes("localhost") && this.state.provider.name !== "NFID") {
       await agent.fetchRootKey();
     }
     return Actor.createActor<T>(idl, { agent, canisterId });

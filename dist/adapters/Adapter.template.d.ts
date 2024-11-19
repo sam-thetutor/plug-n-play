@@ -1,20 +1,21 @@
 import { ActorSubclass } from '../@dfinity/agent';
 import { Principal } from '../@dfinity/principal';
 import { Adapter, Wallet } from '../types';
-export declare class PlugAdapter implements Adapter.Interface {
+/**
+ * Template adapter class that implements the Adapter.Interface
+ */
+export declare class TemplateAdapter implements Adapter.Interface {
     static readonly logo: string;
     name: string;
     logo: string;
     url: string;
-    private readyState;
+    readyState: string;
     constructor();
-    private initPlug;
     isAvailable(): Promise<boolean>;
-    isConnected(): Promise<boolean>;
     connect(config: Wallet.AdapterConfig): Promise<Wallet.Account>;
     disconnect(): Promise<void>;
-    getPrincipal(): Promise<Principal>;
-    getAccountId(): Promise<string>;
+    getPrincipal(): Promise<Principal | null>;
+    getAccountId(): Promise<string | null>;
+    isConnected(): Promise<boolean>;
     createActor<T>(canisterId: string, idl: any): Promise<ActorSubclass<T>>;
-    private handleConnectionUpdate;
 }

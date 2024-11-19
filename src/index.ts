@@ -4,6 +4,7 @@ import { createPNP, walletsList } from './pnp';
 import { BatchTransact } from "./utils/batchTransact";
 import { getAccountIdentifier } from './utils/identifierUtils.js';
 import { HOSTURL, NNS_CANISTER_ID } from './constants';
+import type { Wallet, Adapter } from './types';
 
 const principalIdFromHex = getAccountIdentifier;
 
@@ -30,4 +31,14 @@ if (typeof window !== 'undefined') {
   };
 }
 
-export { createPNP, walletsList, BatchTransact, principalIdFromHex, getAccountIdentifier, getPNPAdapter };
+export { 
+  createPNP, 
+  walletsList, 
+  BatchTransact, 
+  principalIdFromHex, 
+  getAccountIdentifier, 
+  getPNPAdapter,
+  // Type exports
+  type Wallet,
+  type Adapter
+};

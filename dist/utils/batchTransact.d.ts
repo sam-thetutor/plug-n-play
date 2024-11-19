@@ -1,4 +1,4 @@
-import { Wallet } from '../../types/index';
+import { Wallet } from '../types/index';
 export declare class BatchTransact {
     state: string;
     transactionLlist: Record<string, Wallet.Transaction.Item>;
