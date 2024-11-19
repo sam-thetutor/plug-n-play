@@ -10,7 +10,7 @@ export function createHttpAgent(options: HttpAgentOptions): HttpAgent {
   }
 
   // Fall back to the standard constructor
-  return new HttpAgent(options);
+  return HttpAgent.createSync(options);
 }
 
 export async function fetchRootKey(agent: HttpAgent): Promise<void | ArrayBuffer> {

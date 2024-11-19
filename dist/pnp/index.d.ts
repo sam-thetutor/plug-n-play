@@ -6,9 +6,8 @@ declare class PNP {
         account: Wallet.Account | null;
         activeWallet: string | null;
         provider: Adapter.Interface | null;
-        canisterActors: Record<string, ActorSubclass<any>>;
-        anonCanisterActors: Record<string, ActorSubclass<any>>;
         config: Wallet.PNPConfig;
+        actorCache: Map<string, ActorSubclass<any>>;
     };
     constructor(config?: Wallet.PNPConfig);
     getAccountId(): string | null;
@@ -31,4 +30,4 @@ declare class PNP {
 }
 export declare const walletsList: Wallet.AdapterInfo[];
 export declare const createPNP: (config?: Wallet.PNPConfig) => PNP;
-export {};
+export { type PnPState, createInitialState, getAccountId, getPrincipalId, connect, disconnect, callCanister, getActor, isWalletConnected, } from './functionalPnp';

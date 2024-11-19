@@ -15,9 +15,8 @@ class PNP {
     account: Wallet.Account | null;
     activeWallet: string | null;
     provider: Adapter.Interface | null;
-    canisterActors: Record<string, ActorSubclass<any>>;
-    anonCanisterActors: Record<string, ActorSubclass<any>>;
     config: Wallet.PNPConfig;
+    actorCache: Map<string, ActorSubclass<any>>;
   };
 
   constructor(config: Wallet.PNPConfig = {}) {
@@ -25,13 +24,13 @@ class PNP {
       account: null,
       activeWallet: null,
       provider: null,
-      canisterActors: {},
-      anonCanisterActors: {},
+      actorCache: new Map(),
       config: {
         hostUrl: config.hostUrl || "http://localhost:4943",
         localStorageKey: config.localStorageKey || "pnpConnectedWallet",
         identityProvider: config.identityProvider,
         timeout: config.timeout || 1000 * 60 * 60 * 24 * 7, // 7 days
+        verifyQuerySignatures: config.verifyQuerySignatures,
         ...config,
       },
     };
@@ -50,7 +49,7 @@ class PNP {
   }
 
   async connect(walletId: string): Promise<Wallet.Account> {
-    const selectedWallet = walletsList.find((w) => w.id === walletId);
+    const selectedWallet = walletList.find((w) => w.id === walletId);
     if (!selectedWallet)
       throw new Error(`Wallet with ID "${walletId}" not found.`);
 
@@ -77,13 +76,14 @@ class PNP {
   }
 
   async disconnect(): Promise<void> {
-    if (this.state.provider) await this.state.provider.disconnect();
-    localStorage.removeItem(this.state.config.localStorageKey);
+    if (this.state.provider) {
+      await this.state.provider.disconnect();
+    }
+    this.state.provider = null;
     this.state.account = null;
     this.state.activeWallet = null;
-    this.state.provider = null;
-    this.state.canisterActors = {};
-    this.state.anonCanisterActors = {};
+    this.state.actorCache.clear();
+    localStorage.removeItem(this.state.config.localStorageKey);
   }
 
   async callCanister<T>(
@@ -135,22 +135,39 @@ class PNP {
   ): Promise<ActorSubclass<T>> {
     const { isAnon = false, isForced = false, isSigned = false } = options || {};
 
-    if (isSigned) {
-      return this.createSignedActor<T>(canisterId, idl);
+    console.log('Creating actor:', {
+      canisterId,
+      isAnon,
+      isSigned,
+      hasProvider: !!this.state.provider
+    });
+
+    // Generate a cache key based on the parameters
+    const cacheKey = `${this.state.account?.owner.toString() || 'anonymous'}-${canisterId}-${isAnon}-${isSigned}`;
+
+    // Check cache unless forced refresh is requested
+    if (!isForced && this.state.actorCache.has(cacheKey)) {
+      console.log('Returning cached actor for:', cacheKey);
+      return this.state.actorCache.get(cacheKey) as ActorSubclass<T>;
     }
 
-    const actorCache = isAnon
-      ? this.state.anonCanisterActors
-      : this.state.canisterActors;
-    if (!isForced && actorCache[canisterId]) {
-      return actorCache[canisterId] as ActorSubclass<T>;
+    let actor: ActorSubclass<T>;
+
+    if (isAnon) {
+      actor = await this.createAnonymousActor<T>(canisterId, idl);
+    } else if (!this.state.provider) {
+      console.log('No provider available, falling back to anonymous actor');
+      actor = await this.createAnonymousActor<T>(canisterId, idl);
+    } else if (isSigned) {
+      console.log('Creating signed actor');
+      actor = await this.createSignedActor<T>(canisterId, idl);
+    } else {
+      console.log('Creating unsigned authenticated actor');
+      actor = await this.state.provider.createActor<T>(canisterId, idl);
     }
 
-    const actor = isAnon
-      ? await this.createAnonymousActor<T>(canisterId, idl)
-      : await this.createSignedActor<T>(canisterId, idl);
-
-    actorCache[canisterId] = actor;
+    // Cache the actor
+    this.state.actorCache.set(cacheKey, actor);
     return actor;
   }
 
@@ -158,11 +175,12 @@ class PNP {
     canisterId: string,
     idl: any
   ): Promise<ActorSubclass<T>> {
-    const agent = await HttpAgent.create({
+    const agent = HttpAgent.createSync({
       identity: new AnonymousIdentity(),
       host: this.state.config.hostUrl,
+      verifyQuerySignatures: this.state.config.verifyQuerySignatures
     });
-    if (this.state.config.hostUrl?.includes("localhost") && this.state.provider.name !== "NFID") {
+    if (this.state.config.hostUrl?.includes("localhost") && this.state.provider?.name !== "NFID") {
       await agent.fetchRootKey();
     }
     return Actor.createActor<T>(idl, { agent, canisterId });
@@ -185,5 +203,19 @@ class PNP {
   }
 }
 
+// Export class-based implementation
 export const walletsList = walletList;
 export const createPNP = (config: Wallet.PNPConfig = {}) => new PNP(config);
+
+// Export functional implementation
+export {
+  type PnPState,
+  createInitialState,
+  getAccountId,
+  getPrincipalId,
+  connect,
+  disconnect,
+  callCanister,
+  getActor,
+  isWalletConnected,
+} from './functionalPnp';

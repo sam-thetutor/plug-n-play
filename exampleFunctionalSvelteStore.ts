@@ -1,21 +1,29 @@
-import { writable, type Writable } from 'svelte/store';
-import { walletsList, createPNP, type Wallet } from '@windoge98/plug-n-play';
+import { writable, type Writable, get } from 'svelte/store';
+import { 
+  walletsList, 
+  createInitialState,
+  type PnPState,
+  type Wallet,
+  connect as pnpConnect,
+  disconnect as pnpDisconnect,
+  getActor as pnpGetActor,
+  isWalletConnected
+} from '@windoge98/plug-n-play';
 import {
   canisterId as kongBackendCanisterId,
   idlFactory as kongBackendIDL,
-} from '../../../../../declarations/kong_backend'; 
+} from '../../../../../declarations/kong_backend';
 import {
   idlFactory as kongFaucetIDL,
   canisterId as kongFaucetCanisterId,
 } from '../../../../../declarations/kong_faucet';
-import { HttpAgent, Actor, type ActorSubclass } from '@dfinity/agent';
+import { type ActorSubclass } from '@dfinity/agent';
 import { WalletService } from '$lib/services/wallet/WalletService';
 import { ICRC2_IDL } from '$lib/idls/icrc2.idl.js';
 import { browser } from '$app/environment';
 import { tokenStore } from '$lib/services/tokens/tokenStore';
-import { Principal } from '@dfinity/principal';
 import { DelegationIdentity } from '@dfinity/identity';
-import { get} from 'svelte/store';
+import { Principal } from '@dfinity/principal';
 
 // Export the list of available wallets
 export const availableWallets = walletsList;
@@ -27,12 +35,13 @@ export const canisterIDLs = {
   'kong_faucet': kongFaucetIDL,
   'icrc1': ICRC2_IDL,
   'icrc2': ICRC2_IDL,
-}
+};
 
 // Stores
 export const selectedWalletId = writable<string>('');
 export const isReady = writable<boolean>(false);
 export const userStore: Writable<any> = writable(null);
+export const pnpState = writable<PnPState | null>(null);
 export const walletStore = writable<{
   account: any | null;
   error: Error | null;
@@ -45,30 +54,25 @@ export const walletStore = writable<{
   isConnected: false,
 });
 
-// PNP instance
-let pnp: ReturnType<typeof createPNP> | null = null;
-let actorCache: { [key: string]: Actor } = {};
+// Actor cache store
+export const actorCache = writable<Map<string, ActorSubclass<any>>>(new Map());
 
 // Calculate delegation expiry time from duration
 function calculateTimeout(days: number): bigint {
-  // Get current time in nanoseconds
-  const now = BigInt(Date.now()) * BigInt(1_000_000); // Convert ms to ns
-  // Add a much larger buffer for clock skew (30 minutes)
-  const BUFFER_NS = BigInt(30 * 60 * 1000_000_000); // 30 minute buffer
-  // First add the buffer to current time to account for clock skew
+  const now = BigInt(Date.now()) * BigInt(1_000_000);
+  const BUFFER_NS = BigInt(30 * 60 * 1000_000_000);
   const adjustedNow = now + BUFFER_NS;
-  // Then add the requested duration
   return adjustedNow + BigInt(days * 24 * 60 * 60 * 1000_000_000);
 }
 
-// Initialize PNP
+// Initialize PNP state
 export function initializePNP(useDelegation: boolean = true) {
-  if (pnp === null && browser) {
+  if (!get(pnpState) && browser) {
     const isLocalEnv = process.env.DFX_NETWORK === 'local';
     const config: Wallet.PNPConfig = {
       hostUrl: isLocalEnv ? 'http://localhost:4943' : 'https://ic0.app',
       whitelist: [kongBackendCanisterId],
-      timeout: BigInt(7 * 24 * 60 * 60 * 1000_000_000), // 7 days in nanoseconds
+      timeout: BigInt(7 * 24 * 60 * 60 * 1000_000_000),
       verifyQuerySignatures: isLocalEnv ? false : true,
       identityProvider: isLocalEnv
         ? 'http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943'
@@ -76,35 +80,41 @@ export function initializePNP(useDelegation: boolean = true) {
       isDev: isLocalEnv
     };
 
-    // Always add delegation configuration for NFID
     if (useDelegation) {
       console.log('Initializing PNP with delegation support');
-      config.delegationTargets = [kongBackendCanisterId];
-      config.delegationTimeout = calculateTimeout(7); // 7 days
+      config.delegationTargets = [Principal.fromText(kongBackendCanisterId)];
+      config.delegationTimeout = calculateTimeout(7);
     }
-    
-    pnp = createPNP(config);
+
+    const initialState = createInitialState(config);
+    pnpState.set(initialState);
   }
 }
 
-// Connect to a wallet with optional delegation
+// Connect to a wallet
 export async function connectWallet(walletId: string, useDelegation: boolean = false) {
   console.log('Connecting wallet:', { walletId, useDelegation });
   
-  if (useDelegation && pnp) {
+  if (useDelegation) {
     console.log('Reinitializing PNP with delegation support');
-    pnp = null;
+    pnpState.set(null);
     initializePNP(true);
   }
   
+  const currentState = get(pnpState);
+  if (!currentState) {
+    throw new Error('PNP not initialized');
+  }
+
   updateWalletStore({ isConnecting: true });
   try {
-    const account = await pnp.connect(walletId);
+    const [newState, account] = await pnpConnect(currentState, walletId);
     console.log('Connected successfully:', {
       principal: account.owner?.toString(),
-      hasDelegation: pnp.state.provider instanceof DelegationIdentity
+      hasDelegation: newState.provider instanceof DelegationIdentity
     });
     
+    pnpState.set(newState);
     isReady.set(true);
     updateWalletStore({
       account,
@@ -112,6 +122,7 @@ export async function connectWallet(walletId: string, useDelegation: boolean = f
       isConnecting: false,
       isConnected: true,
     });
+    
     localStorage.setItem('selectedWalletId', walletId);
     localStorage.setItem('useDelegation', String(useDelegation));
     selectedWalletId.set(walletId);
@@ -137,28 +148,35 @@ function handleConnectionError(error: Error) {
 
 // Disconnect from a wallet
 export async function disconnectWallet() {
+  const currentState = get(pnpState);
+  if (!currentState) return;
+
   try {
-    await pnp.disconnect();
+    const newState = await pnpDisconnect(currentState);
+    pnpState.set(newState);
+    
     updateWalletStore({
       account: null,
       error: null,
       isConnecting: false,
       isConnected: false,
     });
+    
     tokenStore.clearUserData();
     localStorage.removeItem('selectedWalletId');
     localStorage.removeItem('useDelegation');
     selectedWalletId.set('');
     isReady.set(false);
     userStore.set(null);
+    actorCache.set(new Map());
   } catch (error) {
     handleConnectionError(error);
   }
 }
 
-// Attempt to restore wallet connection on page load
+// Attempt to restore wallet connection
 export async function restoreWalletConnection() {
-  if(browser) {
+  if (browser) {
     const storedWalletId = localStorage.getItem('selectedWalletId');
     const storedUseDelegation = localStorage.getItem('useDelegation') === 'true';
     if (!storedWalletId) return;
@@ -178,97 +196,56 @@ export async function restoreWalletConnection() {
 
 // Check if wallet is connected
 export function isConnected(): boolean {
-  return pnp ? pnp.isWalletConnected() : false;
+  const currentState = get(pnpState);
+  return currentState ? isWalletConnected(currentState) : false;
 }
 
-// Track reconnection attempts
-let isReconnecting = false;
-
-// Create actor with retry logic for expired delegations
+// Create actor with retry logic
 export async function getActor<T>(
-    canisterId: string,
-    idlFactory: IDL.InterfaceFactory,
-    requiresSigning: boolean = false
+  canisterId: string = kongBackendCanisterId,
+  idlFactory: any = kongBackendIDL,
+  requiresSigning: boolean = false
 ): Promise<ActorSubclass<T> | null> {
-    console.log('Creating actor:', { canisterId, requiresSigning });
-    
-    const isAuthenticated = isConnected();
-    const cacheKey = `${canisterId}-${idlFactory}-${isAuthenticated}-${requiresSigning}`;
-    
-    // Return cached actor if available
-    if (actorCache[cacheKey]) {
-      return actorCache[cacheKey];
-    }
+  const currentState = get(pnpState);
+  if (!currentState) return null;
 
-    try {
-      if (isAuthenticated && pnp) {
-        // If signing is required, ensure we're using delegations
-        if (requiresSigning && !pnp.state.config.delegationTargets?.length) {
-          console.log('Signing required but no delegation targets set, reinitializing');
-          const storedWalletId = localStorage.getItem('selectedWalletId');
-          if (!storedWalletId) {
-            throw new Error('No stored wallet ID found');
-          }
-          pnp = null;
-          initializePNP(true);
-          await connectWallet(storedWalletId, true);
-        }
+  const cacheKey = `${canisterId}-${idlFactory}-${isConnected()}-${requiresSigning}`;
+  const cache = get(actorCache);
+  
+  if (cache.has(cacheKey)) {
+    return cache.get(cacheKey) as ActorSubclass<T>;
+  }
 
-        // Get actor with appropriate identity
-        const actor = await pnp.getActor(canisterId, idlFactory, { isSigned: requiresSigning });
-        actorCache[cacheKey] = actor;
-        return actor;
-      }
+  try {
+    const [newState, actor] = await pnpGetActor<T>(
+      currentState,
+      canisterId,
+      typeof idlFactory === 'function' ? idlFactory : idlFactory.idlFactory,
+      { isSigned: requiresSigning }
+    );
 
-      // Create anonymous actor if not authenticated
-      const isLocalEnv = process.env.DFX_NETWORK === 'local';
-      const host = isLocalEnv ? 'http://localhost:4943' : 'https://ic0.app';
-      const agent = HttpAgent.createSync({ 
-        host,
-        verifyQuerySignatures: isLocalEnv ? false : true
-      });
+    pnpState.set(newState);
+    cache.set(cacheKey, actor);
+    actorCache.set(cache);
 
-      if (isLocalEnv) {
-        await agent.fetchRootKey().catch(err => {
-          console.warn('Unable to fetch root key:', err);
-        });
-      }
-
-      const actor = Actor.createActor(idlFactory, { agent, canisterId });
-      actorCache[cacheKey] = actor;
-      return actor;
-    } catch (error) {
-      console.error('Error creating actor:', error);
-      if (!isReconnecting && isAuthenticated) {
-        isReconnecting = true;
-        console.log('Reconnecting wallet...');
-        await disconnectWallet();
-        await connectWallet(get(selectedWalletId));
-        isReconnecting = false;
-        return getActor(canisterId, idlFactory, requiresSigning);
-      }
-      throw error;
-    }
+    return actor;
+  } catch (error) {
+    console.error('Failed to create actor:', error);
+    throw error;
+  }
 }
 
-// Export function to get the actor
-export async function getActor(canisterId = kongBackendCanisterId, canisterType: CanisterType = 'kong_backend', requiresSigning: boolean = false): Promise<ActorSubclass<any>> {
-  const idl = canisterIDLs[canisterType];
-  if (!idl) throw new Error(`No IDL found for canister type: ${canisterType}`);
-  return getActor(canisterId, idl, requiresSigning);
-}
-
-// Example functions for different actor types
+// Helper functions for specific canisters
 export async function getKongBackendActor(requiresSigning: boolean = false) {
-  return getActor(kongBackendCanisterId, 'kong_backend', requiresSigning);
+  return getActor(kongBackendCanisterId, kongBackendIDL, requiresSigning);
 }
 
 export async function getKongFaucetActor(requiresSigning: boolean = false) {
-  return getActor(kongFaucetCanisterId, 'kong_faucet', requiresSigning);
+  return getActor(kongFaucetCanisterId, kongFaucetIDL, requiresSigning);
 }
 
 export async function getICRC2Actor(canisterId: string, requiresSigning: boolean = true) {
-  return getActor(canisterId, 'icrc2', requiresSigning);
+  return getActor(canisterId, ICRC2_IDL, requiresSigning);
 }
 
 // Initialize without delegations by default

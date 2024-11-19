@@ -39,7 +39,7 @@ export class NNSAdapter implements Adapter.Interface {
 
   // Helper method to initialize the HttpAgent
   private async initAgent(identity: Identity, host: string): Promise<void> {
-    this.agent = new HttpAgent({
+    this.agent = HttpAgent.createSync({
       identity,
       host,
     });

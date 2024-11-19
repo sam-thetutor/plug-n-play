@@ -1,6 +1,18 @@
 import { AnonymousIdentity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
-import { createPNP, walletsList } from './pnp';
+import { 
+  createPNP, 
+  walletsList,
+  type PnPState,
+  createInitialState,
+  getAccountId,
+  getPrincipalId,
+  connect,
+  disconnect,
+  callCanister,
+  getActor,
+  isWalletConnected,
+} from './pnp';
 import { BatchTransact } from "./utils/batchTransact";
 import { getAccountIdentifier } from './utils/identifierUtils.js';
 import { HOSTURL, NNS_CANISTER_ID } from './constants';
@@ -31,14 +43,25 @@ if (typeof window !== 'undefined') {
   };
 }
 
-export { 
-  createPNP, 
-  walletsList, 
-  BatchTransact, 
-  principalIdFromHex, 
-  getAccountIdentifier, 
-  getPNPAdapter,
-  // Type exports
+export {
+  createPNP,
+  walletsList,
+  BatchTransact,
+  principalIdFromHex,
+  AnonymousIdentity,
+  Principal,
+  HOSTURL,
+  NNS_CANISTER_ID,
   type Wallet,
-  type Adapter
+  type Adapter,
+  // Functional implementation exports
+  type PnPState,
+  createInitialState,
+  getAccountId,
+  getPrincipalId,
+  connect,
+  disconnect,
+  callCanister,
+  getActor,
+  isWalletConnected,
 };

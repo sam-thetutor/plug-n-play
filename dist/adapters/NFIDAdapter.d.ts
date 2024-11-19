@@ -1,48 +1,55 @@
 import { Principal } from '../@dfinity/principal';
 import { ActorSubclass } from '../@dfinity/agent';
-import { DelegationChain } from '../@dfinity/identity';
 import { Wallet, Adapter } from '../types/index';
-export interface PermissionScope<Method extends string = string> {
-    method: Method;
+import { IDL } from '../@dfinity/candid';
+export declare enum AccountType {
+    GLOBAL = "GLOBAL",
+    SESSION = "SESSION"
 }
-export type DelegationPermissionScope = PermissionScope<"icrc34_delegation"> & {
-    targets?: Principal[];
-};
-export interface DelegationParams {
-    targets?: Principal[];
-    maxTimeToLive?: bigint;
+export interface NFIDAccount {
+    id: string;
+    displayName: string;
+    principal: string;
+    subaccount: Uint8Array;
+    type: AccountType;
 }
-export interface RequestPermissionsParams {
-    targets?: Principal[];
-    canisterId?: string;
+export declare enum AdapterState {
+    READY = "READY",
+    LOADING = "LOADING",
+    PROCESSING = "PROCESSING",
+    ERROR = "ERROR"
 }
 export declare class NFIDAdapter implements Adapter.Interface {
-    private authClient;
+    private signer;
     private agent;
+    private signerAgent;
     private identity;
-    private signIdentity;
+    private delegationStorage;
+    private signatureQueue;
+    private lastConnectionAttempt;
+    private readonly CONNECTION_COOLDOWN;
+    private state;
+    private accounts;
+    private actorCache;
     static readonly logo: string;
     name: string;
     logo: string;
-    readyState: string;
     url: string;
     config: Wallet.PNPConfig;
-    private delegationState;
-    private resetDelegationState;
-    private waitForDelegation;
     constructor();
-    private initAuthClient;
-    private refreshLogin;
+    private setState;
+    private getDelegationChain;
+    private setDelegationChain;
+    private removeDelegationChain;
+    private initSigner;
     isAvailable(): Promise<boolean>;
-    connect(config: Wallet.PNPConfig): Promise<Wallet.Account>;
-    private _continueLogin;
-    requestPermissions(params: RequestPermissionsParams): Promise<boolean>;
-    createActor<T>(canisterId: string, idl: any): Promise<ActorSubclass<T>>;
-    disconnect(): Promise<void>;
+    isConnected(): Promise<boolean>;
     getPrincipal(): Promise<Principal>;
     getAccountId(): Promise<string>;
-    isConnected(): Promise<boolean>;
-    getDelegation(params: DelegationParams): Promise<DelegationChain | null>;
-    createDelegation(params: DelegationParams): Promise<DelegationChain>;
-    private calculateExpiryTime;
+    connect(config: Wallet.PNPConfig): Promise<Wallet.Account>;
+    disconnect(): Promise<void>;
+    createActor<T>(canisterId: string, idlFactory: IDL.InterfaceFactory, requiresSigning?: boolean): Promise<ActorSubclass<T>>;
+    queueSignatureRequest<T>(request: () => Promise<T>): Promise<T>;
+    getState(): AdapterState;
+    getAccounts(): NFIDAccount[];
 }
