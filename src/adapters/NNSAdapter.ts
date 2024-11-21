@@ -7,6 +7,7 @@ import { Principal } from "@dfinity/principal";
 import { principalToSubAccount } from "@dfinity/utils";
 import dfinityLogo from "../../assets/dfinity.svg";
 import { getAccountIdentifier } from "../utils/identifierUtils";
+import { AdapterState } from "./NFIDAdapter";
 
 export class NNSAdapter implements Adapter.Interface {
   static readonly logo: string = dfinityLogo;
@@ -19,9 +20,18 @@ export class NNSAdapter implements Adapter.Interface {
   // Internal properties
   private authClient: AuthClient | null = null;
   private agent: HttpAgent | null = null;
+  private state: AdapterState = AdapterState.READY;
 
   constructor() {
     this.url = "https://identity.ic0.app";
+  }
+
+  private setState(newState: AdapterState) {
+    this.state = newState;
+  }
+
+  getState(): AdapterState {
+    return this.state;
   }
 
   // Helper method to initialize the AuthClient
@@ -29,7 +39,7 @@ export class NNSAdapter implements Adapter.Interface {
     if (!this.authClient) {
       this.authClient = await AuthClient.create({
         idleOptions: {
-          idleTimeout: this.config.timeout || 1000 * 60 * 60 * 24 * 7, // 7 days
+          idleTimeout: Number(1000 * 60 * 60 * 24), // 1 day in milliseconds
           disableDefaultIdleCallback: true, // Disable default reload behavior
         },
       });
@@ -42,8 +52,9 @@ export class NNSAdapter implements Adapter.Interface {
     this.agent = HttpAgent.createSync({
       identity,
       host,
+      verifyQuerySignatures: this.config.verifyQuerySignatures
     });
-    if (host.includes("localhost") || host.includes("127.0.0.1")) {
+    if (this.config.fetchRootKeys) {
       try {
         await this.agent.fetchRootKey();
       } catch (e) {
@@ -59,33 +70,49 @@ export class NNSAdapter implements Adapter.Interface {
     return true;
   }
 
+  getIdentityProvider(isDev: boolean): string {
+    return isDev ? this.config.identityProvider : "https://identity.ic0.app";
+  }
+
   // Connects to the wallet using the provided configuration
   async connect(config: Wallet.PNPConfig): Promise<Wallet.Account> {
-    this.config = config;
-    await this.initAuthClient();
+    try {
+      this.setState(AdapterState.LOADING);
+      this.config = config;
+      await this.initAuthClient();
 
-    const isAuthenticated = await this.authClient!.isAuthenticated();
+      const isAuthenticated = await this.authClient!.isAuthenticated();
 
-    if (!isAuthenticated) {
-      return new Promise<Wallet.Account>((resolve, reject) => {
-        this.authClient!.login({
-          identityProvider: config.identityProvider || this.url,
-          onSuccess: async () => {
-            try {
-              const account = await this._continueLogin(config.hostUrl || this.url);
-              resolve(account);
-            } catch (error) {
-              reject(error);
-            }
-          },
-          onError: (error) => {
-            reject(new Error("Authentication failed: " + error));
-          },
+      if (!isAuthenticated) {
+        return new Promise<Wallet.Account>((resolve, reject) => {
+          this.authClient!.login({
+            identityProvider: this.getIdentityProvider(config.isDev || true),
+            maxTimeToLive: BigInt(Number(config.delegationTimeout || 24 * 60 * 60 * 1000 * 1000 * 1000)), // 24 hours in nanoseconds
+            onSuccess: async () => {
+              try {
+                const account = await this._continueLogin(config.hostUrl || this.url);
+                this.setState(AdapterState.READY);
+                resolve(account);
+              } catch (error) {
+                this.setState(AdapterState.READY);
+                reject(error);
+              }
+            },
+            onError: (error) => {
+              this.setState(AdapterState.READY);
+              reject(new Error("Authentication failed: " + error));
+            },
+          });
         });
-      });
-    } else {
-      // User is already authenticated, proceed with login
-      return this._continueLogin(config.hostUrl || this.url);
+      } else {
+        // User is already authenticated, proceed with login
+        const account = await this._continueLogin(config.hostUrl || this.url);
+        this.setState(AdapterState.READY);
+        return account;
+      }
+    } catch (error) {
+      this.setState(AdapterState.READY);
+      throw error;
     }
   }
 
@@ -150,13 +177,25 @@ export class NNSAdapter implements Adapter.Interface {
     }
   }
 
+  async undelegatedActor<T>(canisterId: string, idlFactory: any): Promise<ActorSubclass<T>> {
+    return this.createActor(canisterId, idlFactory);
+  }
+
   // Disconnects from the wallet
   async disconnect(): Promise<void> {
-    if (this.authClient) {
-      await this.authClient.logout();
-      this.agent = null;
-      this.authClient = null;
-      this.config = {};
+    try {
+      this.setState(AdapterState.LOADING);
+      if (this.authClient) {
+        await this.authClient.logout();
+        this.authClient = null;
+      }
+      if (this.agent) {
+        this.agent = null;
+      }
+      this.setState(AdapterState.READY);
+    } catch (error) {
+      this.setState(AdapterState.READY);
+      throw error;
     }
   }
 }

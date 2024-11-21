@@ -12,4 +12,7 @@ export declare class BatchTransact {
     _adapterObj: any;
     constructor(transactionLlist: Record<string, Wallet.Transaction.Item>, _adapterObj: any);
     _prepareTrxArry(): Wallet.Transaction.Item[][];
+    retryExecute(): Promise<void>;
+    execute(): Promise<void>;
+    _processBatch(): Promise<void>;
 }

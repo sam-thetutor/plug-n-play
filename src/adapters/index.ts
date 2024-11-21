@@ -3,9 +3,9 @@
 import { NNSAdapter } from "./NNSAdapter";
 import { PlugAdapter } from "./PlugAdapter";
 import { NFIDAdapter } from "./NFIDAdapter";
-import { Wallet } from '../types/index';
+import { Adapter } from '../types/index';
 
-export const walletList: Wallet.AdapterInfo[] = [
+export const walletList: Adapter.Info[] = [
   {
     id: "nns",
     name: "Internet Identity",

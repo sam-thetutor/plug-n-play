@@ -1,7 +1,6 @@
 import { Principal } from '../@dfinity/principal';
 import { ActorSubclass } from '../@dfinity/agent';
 import { Wallet, Adapter } from '../types/index';
-import { IDL } from '../@dfinity/candid';
 export declare enum AccountType {
     GLOBAL = "GLOBAL",
     SESSION = "SESSION"
@@ -20,6 +19,7 @@ export declare enum AdapterState {
     ERROR = "ERROR"
 }
 export declare class NFIDAdapter implements Adapter.Interface {
+    private static readonly STORAGE_KEY;
     private signer;
     private agent;
     private signerAgent;
@@ -31,12 +31,16 @@ export declare class NFIDAdapter implements Adapter.Interface {
     private state;
     private accounts;
     private actorCache;
+    private sessionKey;
     static readonly logo: string;
     name: string;
     logo: string;
+    identityProviderUrl: string;
     url: string;
     config: Wallet.PNPConfig;
     constructor();
+    private setIdentityProviderUrl;
+    tryRestoreSession(): Promise<void>;
     private setState;
     private getDelegationChain;
     private setDelegationChain;
@@ -46,9 +50,11 @@ export declare class NFIDAdapter implements Adapter.Interface {
     isConnected(): Promise<boolean>;
     getPrincipal(): Promise<Principal>;
     getAccountId(): Promise<string>;
+    unwrapResponse: <T extends unknown>(response: any) => T;
     connect(config: Wallet.PNPConfig): Promise<Wallet.Account>;
+    undelegatedActor<T>(canisterId: string, idlFactory: any): Promise<ActorSubclass<T>>;
     disconnect(): Promise<void>;
-    createActor<T>(canisterId: string, idlFactory: IDL.InterfaceFactory, requiresSigning?: boolean): Promise<ActorSubclass<T>>;
+    createActor<T>(canisterId: string, idlFactory: any, requiresSigning?: boolean): Promise<ActorSubclass<T>>;
     queueSignatureRequest<T>(request: () => Promise<T>): Promise<T>;
     getState(): AdapterState;
     getAccounts(): NFIDAccount[];

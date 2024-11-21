@@ -3,20 +3,11 @@ import { Principal } from "@dfinity/principal";
 import { 
   createPNP, 
   walletsList,
-  type PnPState,
-  createInitialState,
-  getAccountId,
-  getPrincipalId,
-  connect,
-  disconnect,
-  callCanister,
-  getActor,
-  isWalletConnected,
 } from './pnp';
 import { BatchTransact } from "./utils/batchTransact";
 import { getAccountIdentifier } from './utils/identifierUtils.js';
 import { HOSTURL, NNS_CANISTER_ID } from './constants';
-import type { Wallet, Adapter } from './types';
+import type { Wallet, Adapter, PNP } from './types';
 
 const principalIdFromHex = getAccountIdentifier;
 
@@ -54,14 +45,5 @@ export {
   NNS_CANISTER_ID,
   type Wallet,
   type Adapter,
-  // Functional implementation exports
-  type PnPState,
-  createInitialState,
-  getAccountId,
-  getPrincipalId,
-  connect,
-  disconnect,
-  callCanister,
-  getActor,
-  isWalletConnected,
+  type PNP
 };

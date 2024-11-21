@@ -1,6 +1,7 @@
 import { ActorSubclass } from '../@dfinity/agent';
 import { Wallet, Adapter } from '../types/index';
 import { Principal } from '../@dfinity/principal';
+import { AdapterState } from './NFIDAdapter';
 export declare class NNSAdapter implements Adapter.Interface {
     static readonly logo: string;
     name: string;
@@ -9,10 +10,14 @@ export declare class NNSAdapter implements Adapter.Interface {
     config: Wallet.PNPConfig;
     private authClient;
     private agent;
+    private state;
     constructor();
+    private setState;
+    getState(): AdapterState;
     private initAuthClient;
     private initAgent;
     isAvailable(): Promise<boolean>;
+    getIdentityProvider(isDev: boolean): string;
     connect(config: Wallet.PNPConfig): Promise<Wallet.Account>;
     private _continueLogin;
     isConnected(): Promise<boolean>;
@@ -20,5 +25,6 @@ export declare class NNSAdapter implements Adapter.Interface {
     getPrincipal(): Promise<Principal>;
     getAccountId(): Promise<string>;
     private refreshLogin;
+    undelegatedActor<T>(canisterId: string, idlFactory: any): Promise<ActorSubclass<T>>;
     disconnect(): Promise<void>;
 }

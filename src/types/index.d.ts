@@ -16,9 +16,10 @@ export namespace Wallet {
     hostUrl?: string;
     localStorageKey?: string;
     defaultCanisterId?: string;
-    identityProvider?: string;
     delegationTargets?: Principal[];
     delegationTimeout?: bigint;
+    timeout?: number;
+    isDev?: boolean;
     [key: string]: any;
   }
 
@@ -37,13 +38,6 @@ export namespace Wallet {
   }
 
   export type ConnectionResult = Account;
-
-  export interface AdapterInfo {
-    id: string;
-    icon: string;
-    name: string;
-    adapter: AdapterConstructor;
-  }
 
   export interface WalletState {
     account: Account | null;
@@ -67,9 +61,28 @@ export namespace Wallet {
     plug: Adapter.Interface;
     bitfinity: Adapter.Interface;
   };
+
+  export namespace Transaction {
+    export interface Item {
+      stepIndex?: number;
+      state?: string;
+      updateNextStep?: (data: any, nextStep: Item) => Promise<void>;
+      onSuccess?: (data: any) => Promise<void>;
+      onFail?: (error: any) => Promise<void>;
+      onSuccessMain?: (data: any, _this: Item) => Promise<boolean | undefined>;
+      onFailMain?: (error: any, _this: Item) => Promise<boolean>;
+    }
+  }
 }
 
 export namespace Adapter {
+  export interface Info {
+    id: string;
+    icon: string;
+    name: string;
+    adapter: AdapterConstructor;
+  }
+
   export interface Interface {
     // Required properties
     name: string;
@@ -86,7 +99,26 @@ export namespace Adapter {
     
     // Actor creation
     createActor<T>(canisterId: string, idl: any): Promise<ActorSubclass<T>>;
+    undelegatedActor?<T>(canisterId: string, idlFactory: any): Promise<ActorSubclass<T>>;
   }
+}
+
+export class PNP {
+  account: Wallet.Account | null;
+  activeWallet: Adapter.Info | null;
+  provider: Adapter.Interface | null;
+  config: Wallet.PNPConfig;
+  actorCache: Map<string, ActorSubclass<any>>;
+  isDev: boolean;
+  fetchRootKeys: boolean;
+
+  constructor(config?: Wallet.PNPConfig);
+
+  connect(walletId: string): Promise<Wallet.Account>;
+  disconnect(): Promise<void>;
+  isWalletConnected(): boolean;
+  getActor<T>(canisterId: string, idl: any, isAnon?: boolean): Promise<ActorSubclass<T>>;
+  private createAnonymousActor<T>(canisterId: string, idl: any): Promise<ActorSubclass<T>>;
 }
 
 declare global {
