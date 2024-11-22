@@ -192,6 +192,7 @@ export class NNSAdapter implements Adapter.Interface {
       if (this.agent) {
         this.agent = null;
       }
+      localStorage.removeItem(this.config.localStorageKey);
       this.setState(AdapterState.READY);
     } catch (error) {
       this.setState(AdapterState.READY);

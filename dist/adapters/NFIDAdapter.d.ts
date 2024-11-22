@@ -40,7 +40,7 @@ export declare class NFIDAdapter implements Adapter.Interface {
     config: Wallet.PNPConfig;
     constructor();
     private setIdentityProviderUrl;
-    tryRestoreSession(): Promise<void>;
+    private tryRestoreSession;
     private setState;
     private getDelegationChain;
     private setDelegationChain;
@@ -52,9 +52,13 @@ export declare class NFIDAdapter implements Adapter.Interface {
     getAccountId(): Promise<string>;
     unwrapResponse: <T extends unknown>(response: any) => T;
     connect(config: Wallet.PNPConfig): Promise<Wallet.Account>;
+    private isDelegationReady;
+    private waitForDelegation;
+    createActor<T>(canisterId: string, idlFactory: any, options?: {
+        requiresSigning?: boolean;
+    }): Promise<ActorSubclass<T>>;
     undelegatedActor<T>(canisterId: string, idlFactory: any): Promise<ActorSubclass<T>>;
     disconnect(): Promise<void>;
-    createActor<T>(canisterId: string, idlFactory: any, requiresSigning?: boolean): Promise<ActorSubclass<T>>;
     queueSignatureRequest<T>(request: () => Promise<T>): Promise<T>;
     getState(): AdapterState;
     getAccounts(): NFIDAccount[];

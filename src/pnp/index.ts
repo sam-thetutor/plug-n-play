@@ -68,20 +68,30 @@ class PNP implements PNP {
     idl: any,
     options?: {
       anon?: boolean;
+      requiresSigning?: boolean;
     }
   ): Promise<ActorSubclass<T>> {
-    const { anon = false } = options || {};
+    const { anon = false, requiresSigning = false } = options || {};
 
     // Generate a cache key based on the parameters
-    const cacheKey = `${this.account?.owner.toString() || 'anonymous'}-${canisterId}-${anon}`;
+    const cacheKey = `${this.account?.owner.toString() || 'anonymous'}-${canisterId}-${JSON.stringify(options)}}`;
 
+    // // Check if the actor is already cached
+    // if (this.actorCache.has(cacheKey)) {
+    //   return this.actorCache.get(cacheKey) as ActorSubclass<T>;
+    // }
+
+    // Create the actor
     let actor: ActorSubclass<T>;
 
     if (anon || !this.provider) {
       actor = await  this.createAnonymousActor<T>(canisterId, idl);
     } else {
       console.log('Creating actor with provider');
-      actor = await this.provider.createActor<T>(canisterId, idl);
+      actor = await this.provider.createActor<T>(canisterId, idl, {
+        requiresSigning,
+      });
+    
     }
 
     // Cache the actor

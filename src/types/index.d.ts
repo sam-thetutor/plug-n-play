@@ -98,8 +98,8 @@ export namespace Adapter {
     getAccountId(): Promise<string>;
     
     // Actor creation
-    createActor<T>(canisterId: string, idl: any): Promise<ActorSubclass<T>>;
-    undelegatedActor?<T>(canisterId: string, idlFactory: any): Promise<ActorSubclass<T>>;
+    createActor<T>(canisterId: string, idl: any, options?: { requiresSigning?: boolean }): Promise<ActorSubclass<T>>;
+    undelegatedActor?<T>(canisterId: string, idlFactory: any, options?: { requiresSigning?: boolean }): Promise<ActorSubclass<T>>;
   }
 }
 
@@ -118,7 +118,7 @@ export class PNP {
   disconnect(): Promise<void>;
   isWalletConnected(): boolean;
   getActor<T>(canisterId: string, idl: any, isAnon?: boolean): Promise<ActorSubclass<T>>;
-  private createAnonymousActor<T>(canisterId: string, idl: any): Promise<ActorSubclass<T>>;
+  private createAnonymousActor<T>(canisterId: string, idl: any, options?: { requiresSigning?: boolean }): Promise<ActorSubclass<T>>;
 }
 
 declare global {

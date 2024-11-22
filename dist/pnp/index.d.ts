@@ -13,6 +13,7 @@ declare class PNP implements PNP {
     disconnect(): Promise<void>;
     getActor<T>(canisterId: string, idl: any, options?: {
         anon?: boolean;
+        requiresSigning?: boolean;
     }): Promise<ActorSubclass<T>>;
     private createAnonymousActor;
     isWalletConnected(): boolean;

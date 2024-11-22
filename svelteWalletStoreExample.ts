@@ -108,7 +108,7 @@ function createAuthStore() {
         });
 
         // If we're not connected or explicitly requesting anonymous actor, create anonymous
-        if (options.anon || !this.isWalletConnected()) {
+        if (options.anon) {
           console.log('Creating anonymous actor...');
           const idl = typeof idlOrType === 'string' ? canisterIDLs[idlOrType] : idlOrType;
           const actorPromise = createAnonymousActorHelper(canisterId, idl);
