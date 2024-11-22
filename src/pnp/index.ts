@@ -76,10 +76,10 @@ class PNP implements PNP {
     // Generate a cache key based on the parameters
     const cacheKey = `${this.account?.owner.toString() || 'anonymous'}-${canisterId}-${JSON.stringify(options)}}`;
 
-    // // Check if the actor is already cached
-    // if (this.actorCache.has(cacheKey)) {
-    //   return this.actorCache.get(cacheKey) as ActorSubclass<T>;
-    // }
+    // Check if the actor is already cached
+    if (this.actorCache.has(cacheKey)) {
+      return this.actorCache.get(cacheKey) as ActorSubclass<T>;
+    }
 
     // Create the actor
     let actor: ActorSubclass<T>;

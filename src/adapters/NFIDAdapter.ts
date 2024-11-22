@@ -486,17 +486,17 @@ export class NFIDAdapter implements Adapter.Interface {
 
     try {
       const cacheKey = `${canisterId}${requiresSigning ? "-signed" : ""}`;
-      //   const cachedActor = this.actorCache.get(cacheKey);
-      //   console.log("[NFID Debug] Cached actor:", cachedActor);
-      //   if (cachedActor) {
-      //     console.log("[NFID Debug] Returning cached actor", cachedActor);
-      //     // Verify delegation is still valid before returning cached actor
-      //     if (requiresSigning && !(await this.isDelegationReady())) {
-      //       this.actorCache.delete(cacheKey);
-      //     } else {
-      //       return cachedActor as ActorSubclass<T>;
-      //     }
-      //   }
+        const cachedActor = this.actorCache.get(cacheKey);
+        console.log("[NFID Debug] Cached actor:", cachedActor);
+        if (cachedActor) {
+          console.log("[NFID Debug] Returning cached actor", cachedActor);
+          // Verify delegation is still valid before returning cached actor
+          if (requiresSigning && !(await this.isDelegationReady())) {
+            this.actorCache.delete(cacheKey);
+          } else {
+            return cachedActor as ActorSubclass<T>;
+          }
+        }
 
       if (!this.identity) {
         throw new Error("Identity not initialized");

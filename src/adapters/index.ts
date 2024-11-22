@@ -7,6 +7,12 @@ import { Adapter } from '../types/index';
 
 export const walletList: Adapter.Info[] = [
   {
+    id: "nfid",
+    name: "NFID",
+    icon: NFIDAdapter.logo,
+    adapter: NFIDAdapter,
+  },
+  {
     id: "nns",
     name: "Internet Identity",
     icon: NNSAdapter.logo,
@@ -17,13 +23,7 @@ export const walletList: Adapter.Info[] = [
     name: "Plug Wallet",
     icon: PlugAdapter.logo,
     adapter: PlugAdapter,
-  },
-  {
-    id: "nfid",
-    name: "NFID",
-    icon: NFIDAdapter.logo,
-    adapter: NFIDAdapter,
-  },
+  }
 ];
 
 export {
