@@ -13,14 +13,12 @@ import {
 } from "@dfinity/identity";
 import type { Wallet, Adapter } from "../types/index";
 import { getAccountIdentifier } from "../utils/identifierUtils";
-import nfidLogo from "../../assets/nfid.svg";
+import nfidLogo from "../../assets/nfid.webp";
 import { principalToSubAccount } from "@dfinity/utils";
 import { Signer } from "@slide-computer/signer";
 import { PostMessageTransport } from "@slide-computer/signer-web";
 import { SignerAgent } from "@slide-computer/signer-agent";
-import { IDL } from "@dfinity/candid";
 import {
-  type DelegationRequest,
   type DelegationResponse,
   SignerError,
   toBase64,

@@ -5,7 +5,7 @@ import { AuthClient } from "@dfinity/auth-client";
 import type { Wallet, Adapter } from "../types/index";
 import { Principal } from "@dfinity/principal";
 import { principalToSubAccount } from "@dfinity/utils";
-import dfinityLogo from "../../assets/dfinity.svg";
+import dfinityLogo from "../../assets/dfinity.webp";
 import { getAccountIdentifier } from "../utils/identifierUtils";
 import { AdapterState } from "./NFIDAdapter";
 
