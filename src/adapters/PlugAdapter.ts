@@ -3,11 +3,12 @@
 import { ActorSubclass } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { Adapter, Wallet } from "../types";
-import { ICRC1_IDL } from "../did/icrc1.idl.js";
+import plugLogo from "../../assets/plug.webp";
 
 export class PlugAdapter implements Adapter.Interface {
+  static logo: string = plugLogo;
+  logo: string = PlugAdapter.logo;
   name: string = "Plug";
-  logo: string = "path_to_plug_logo.svg";
   url: string = "https://plugwallet.ooo/";
 
   private readyState:
@@ -39,11 +40,6 @@ export class PlugAdapter implements Adapter.Interface {
 
   // Connect to Plug wallet
   async connect(config: Wallet.AdapterConfig): Promise<Wallet.Account> {
-    if (this.readyState === "NotDetected") {
-      window.open(this.url, "_blank");
-      throw new Error("Plug wallet is not available");
-    }
-
     const isConnected = await window.ic!.plug!.isConnected();
 
     if (!isConnected) {
@@ -53,7 +49,7 @@ export class PlugAdapter implements Adapter.Interface {
           whitelist: config.whitelist || [],
           host: config.hostUrl || "https://mainnet.dfinity.network",
           timeout: config.timeout || 1000 * 60 * 60 * 24 * 7,
-          onConnectionUpdate: this.handleConnectionUpdate.bind(this),
+          onConnectionUpdate: () => console.log("Plug connection updated"),
         });
         if (!connected) {
           throw new Error("User declined the connection request");
@@ -129,39 +125,47 @@ export class PlugAdapter implements Adapter.Interface {
     }
   }
 
-  // Request balance
-  async getBalance(): Promise<bigint> {
-    if (window.ic && window.ic.plug && window.ic.plug.requestBalance) {
-      try {
-        const balances = await window.ic.plug.requestBalance();
-        const icpBalance = balances.find((b) => b.currency === "ICP");
-        return BigInt(icpBalance ? icpBalance.amount : 0);
-      } catch (e) {
-        console.error("Failed to get balance:", e);
-        throw e;
-      }
+  async isConnected(): Promise<boolean> {
+    if (window.ic && window.ic.plug && window.ic.plug.isConnected) {
+      return await window.ic.plug.isConnected();
     } else {
-      throw new Error("Plug wallet is not available or not connected");
-    }
-  }
-
-  // Perform an ICRC-1 token transfer
-  async icrc1Transfer(
-    canisterId: Principal,
-    params: Wallet.TransferParams
-  ): Promise<void> {
-    const actor = await this.createActor<any>(canisterId.toText(), ICRC1_IDL);
-    try {
-      await actor.icrc1_transfer(params);
-    } catch (e) {
-      console.error("ICRC-1 transfer failed:", e);
-      throw e;
+      return false;
     }
   }
 
   // Handle connection updates (e.g., account switching)
   private handleConnectionUpdate(): void {
-    console.log("Plug connection updated");
-    // You can add logic here to handle when the user switches accounts in Plug
+    if (window.ic?.plug?.principalId && window.ic?.plug?.accountId) {
+      const { principalId, accountId } = window.ic.plug;
+      this.readyState = "Connected";
+      
+      // Emit an event that can be listened to by the application
+      const event = new CustomEvent("plug-connection-update", {
+        detail: {
+          principalId,
+          accountId,
+          readyState: this.readyState
+        }
+      });
+      window.dispatchEvent(event);
+    } else {
+      this.readyState = "Disconnected";
+      
+      // Emit disconnection event
+      const event = new CustomEvent("plug-connection-update", {
+        detail: {
+          principalId: null,
+          accountId: null,
+          readyState: this.readyState
+        }
+      });
+      window.dispatchEvent(event);
+    }
+    
+    console.log("Plug connection updated:", {
+      readyState: this.readyState,
+      principalId: window.ic?.plug?.principalId,
+      accountId: window.ic?.plug?.accountId
+    });
   }
 }

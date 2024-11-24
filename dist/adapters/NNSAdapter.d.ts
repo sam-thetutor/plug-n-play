@@ -1,24 +1,30 @@
 import { ActorSubclass } from '../@dfinity/agent';
-import { Wallet, Adapter } from '../../types/index';
+import { Wallet, Adapter } from '../types/index';
 import { Principal } from '../@dfinity/principal';
+import { AdapterState } from './NFIDAdapter';
 export declare class NNSAdapter implements Adapter.Interface {
+    static readonly logo: string;
+    name: string;
+    logo: string;
     url: string;
+    config: Wallet.PNPConfig;
     private authClient;
     private agent;
-    private whitelist;
+    private state;
     constructor();
+    private setState;
+    getState(): AdapterState;
     private initAuthClient;
     private initAgent;
     isAvailable(): Promise<boolean>;
+    getIdentityProvider(isDev: boolean): string;
     connect(config: Wallet.PNPConfig): Promise<Wallet.Account>;
     private _continueLogin;
-    private refreshLogin;
-    disconnect(): Promise<void>;
+    isConnected(): Promise<boolean>;
     createActor<T>(canisterId: string, idl: any): Promise<ActorSubclass<T>>;
-    createAgent(options: {
-        whitelist?: string[];
-        host?: string;
-    }): Promise<void>;
-    icrc1BalanceOf(canisterId: string, account: Wallet.Account): Promise<bigint>;
-    icrc1Transfer(canisterId: Principal | string, params: Wallet.TransferParams): Promise<any>;
+    getPrincipal(): Promise<Principal>;
+    getAccountId(): Promise<string>;
+    private refreshLogin;
+    undelegatedActor<T>(canisterId: string, idlFactory: any): Promise<ActorSubclass<T>>;
+    disconnect(): Promise<void>;
 }
