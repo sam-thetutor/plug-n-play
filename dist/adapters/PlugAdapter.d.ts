@@ -1,20 +1,19 @@
 import { ActorSubclass } from '../@dfinity/agent';
-import { Adapter, Wallet } from '../types';
 import { Principal } from '../@dfinity/principal';
+import { Adapter, Wallet } from '../types';
 export declare class PlugAdapter implements Adapter.Interface {
-    static readonly logo: string;
+    static logo: string;
     name: string;
-    logo: string;
     url: string;
     private readyState;
     constructor();
     private initPlug;
     isAvailable(): Promise<boolean>;
-    isConnected(): Promise<boolean>;
     connect(config: Wallet.AdapterConfig): Promise<Wallet.Account>;
     disconnect(): Promise<void>;
     getPrincipal(): Promise<Principal>;
     getAccountId(): Promise<string>;
-    createActor<T>(canisterId: string, idl: any): Promise<ActorSubclass<T>>;
+    createActor<T>(canisterId: string, idlFactory: any): Promise<ActorSubclass<T>>;
+    isConnected(): Promise<boolean>;
     private handleConnectionUpdate;
 }

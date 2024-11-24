@@ -1,15 +1,13 @@
 // src/adapters/PlugAdapter.ts
 
-import { HttpAgent, type ActorSubclass } from "@dfinity/agent";
-import type { Adapter, Wallet } from "../types";
-import plugLogo from "../../assets/plug.webp";
-import { hexStringToUint8Array } from "@dfinity/utils";
+import { ActorSubclass } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
+import { Adapter, Wallet } from "../types";
+import plugLogo from "../../assets/plug.webp";
 
 export class PlugAdapter implements Adapter.Interface {
-  static readonly logo: string = plugLogo;
+  static logo: string = plugLogo;
   name: string = "Plug";
-  logo: string = PlugAdapter.logo;
   url: string = "https://plugwallet.ooo/";
 
   private readyState:
@@ -39,11 +37,6 @@ export class PlugAdapter implements Adapter.Interface {
     return this.readyState !== "NotDetected";
   }
 
-  // Check if the wallet is connected
-  async isConnected(): Promise<boolean> {
-    return window.ic?.plug?.isConnected() || false;
-  }
-
   // Connect to Plug wallet
   async connect(config: Wallet.AdapterConfig): Promise<Wallet.Account> {
     if (this.readyState === "NotDetected") {
@@ -57,7 +50,7 @@ export class PlugAdapter implements Adapter.Interface {
       try {
         console.log("Connecting to Plug wallet...", config);
         const connected = await window.ic!.plug!.requestConnect({
-          whitelist: config.whitelist || null,
+          whitelist: config.whitelist || [],
           host: config.hostUrl || "https://mainnet.dfinity.network",
           timeout: config.timeout || 1000 * 60 * 60 * 24 * 7,
           onConnectionUpdate: this.handleConnectionUpdate.bind(this),
@@ -79,7 +72,7 @@ export class PlugAdapter implements Adapter.Interface {
 
     return {
       owner: principal,
-      subaccount: hexStringToUint8Array(accountId),
+      subaccount: null,
     };
   }
 
@@ -111,21 +104,42 @@ export class PlugAdapter implements Adapter.Interface {
     }
   }
 
-  // Create an actor for interacting with a canister
-  async createActor<T>(canisterId: string, idl: any): Promise<ActorSubclass<T>> {
-    if (!window.ic?.plug) {
-      throw new Error("Plug wallet is not available");
+  // Create an actor to interact with a canister
+  async createActor<T>(
+    canisterId: string,
+    idlFactory: any
+  ): Promise<ActorSubclass<T>> {
+    if (!canisterId || !idlFactory) {
+      throw new Error("Canister ID and IDL factory are required");
     }
-    return window.ic.plug.createActor({
-      canisterId,
-      interfaceFactory: idl,
-    });
+
+    if (window.ic && window.ic.plug && window.ic.plug.createActor) {
+      try {
+        const actor = await window.ic.plug.createActor<T>({
+          canisterId,
+          interfaceFactory: idlFactory,
+        });
+        return actor;
+      } catch (e) {
+        console.error("Failed to create actor through Plug:", e);
+        throw e;
+      }
+    } else {
+      throw new Error("Plug wallet is not available or not connected");
+    }
   }
 
-  // Handle connection updates
-  private handleConnectionUpdate(status: { sessionExpired: boolean }): void {
-    if (status.sessionExpired) {
-      this.readyState = "Disconnected";
+  async isConnected(): Promise<boolean> {
+    if (window.ic && window.ic.plug && window.ic.plug.isConnected) {
+      return await window.ic.plug.isConnected();
+    } else {
+      return false;
     }
+  }
+
+  // Handle connection updates (e.g., account switching)
+  private handleConnectionUpdate(): void {
+    console.log("Plug connection updated");
+    // You can add logic here to handle when the user switches accounts in Plug
   }
 }
