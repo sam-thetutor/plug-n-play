@@ -145,7 +145,7 @@ export class NFIDAdapter implements Adapter.Interface {
   }
 
   private setIdentityProviderUrl(isDev: boolean) {
-    this.identityProviderUrl = `https://nfid.one/authenticate/?applicationName=${window.location.hostname}`;
+    this.identityProviderUrl = `https://nfid.one/authenticate/?applicationName=${window.location.hostname}&left=${window.screen.width / 2 - 525 / 2}&top=${window.screen.height / 2 - 705 / 2}&toolbar=0&location=0&menubar=0&width=525&height=705`;
   }
 
   private async tryRestoreSession(): Promise<void> {
@@ -405,7 +405,7 @@ export class NFIDAdapter implements Adapter.Interface {
       }
 
       const principal = delegationIdentity.getPrincipal();
-      console.log("NFID Principal:", principal.toString());
+
       if (principal.isAnonymous()) {
         throw new Error(
           "Failed to authenticate with NFID - got anonymous principal"
@@ -416,10 +416,10 @@ export class NFIDAdapter implements Adapter.Interface {
         signer: this.signer,
         account: principal,
       });
+      console.log("[NFID Debug] Signer agent:", this.signerAgent);
 
       this.identity = delegationIdentity;
 
-      const accountId = getAccountIdentifier(principal.toText()) || "";
       const subaccount = principalToSubAccount(principal);
       const account: NFIDAccount = {
         id: principal.toText(),
@@ -474,28 +474,7 @@ export class NFIDAdapter implements Adapter.Interface {
     }
   ): Promise<ActorSubclass<T>> {
     const { requiresSigning = true } = options;
-    console.log("[NFID Debug] Creating actor:", {
-      canisterId,
-      requiresSigning,
-      hasIdentity: !!this.identity,
-      hasAgent: !!this.agent,
-      delegationTargets: this.config?.delegationTargets?.map((p) => p.toText()),
-    });
-
     try {
-      const cacheKey = `${canisterId}${requiresSigning ? "-signed" : ""}`;
-        const cachedActor = this.actorCache.get(cacheKey);
-        console.log("[NFID Debug] Cached actor:", cachedActor);
-        if (cachedActor) {
-          console.log("[NFID Debug] Returning cached actor", cachedActor);
-          // Verify delegation is still valid before returning cached actor
-          if (requiresSigning && !(await this.isDelegationReady())) {
-            this.actorCache.delete(cacheKey);
-          } else {
-            return cachedActor as ActorSubclass<T>;
-          }
-        }
-
       if (!this.identity) {
         throw new Error("Identity not initialized");
       }
@@ -511,14 +490,30 @@ export class NFIDAdapter implements Adapter.Interface {
       }
 
       // check if canister id is in the delegation targets
-      const inTargets = this.config.delegationTargets.some(
-        (p) => p.toText() === canisterId
+      const inTargets = this.identity.getDelegation().delegations.some(
+        (d) => d.delegation.targets?.some((p) => p.toText() === canisterId)
       );
-      if (!inTargets) {
-        console.log(
-          `[NFID Debug] Canister ${canisterId} not in delegation targets, using undelegated actor`
-        );
-        return this.undelegatedActor<T>(canisterId, idlFactory);
+
+      const isUndelegated = (inTargets && !requiresSigning) || (!inTargets && requiresSigning) || (!inTargets && !requiresSigning);
+      const cacheKey = `${canisterId}${requiresSigning ? "-signed" : ""}${isUndelegated ? "-undelegated" : ""}`;
+      const cachedActor = this.actorCache.get(cacheKey);
+      console.log("[NFID Debug] Checking cached actor for key:", cacheKey);
+      
+      if (cachedActor) {
+        // Verify delegation is still valid before returning cached actor
+        if (!isUndelegated && requiresSigning && !(await this.isDelegationReady())) {
+          console.warn("[NFID Debug] Delegation expired, removing cached actor");
+          this.actorCache.delete(cacheKey);
+        } else {
+          console.log("[NFID Debug] Returning valid cached actor");
+          return cachedActor as ActorSubclass<T>;
+        }
+      }
+
+      if (isUndelegated) {
+        const actor = this.undelegatedActor<T>(canisterId, idlFactory);
+        this.actorCache.set(cacheKey, actor);
+        return actor;
       }
 
       // Create base actor with delegation identity for authenticated calls
@@ -528,7 +523,6 @@ export class NFIDAdapter implements Adapter.Interface {
       });
 
       if (requiresSigning) {
-        console.log("[NFID Debug] Creating signed actor with signer agent");
         if (!this.signerAgent) {
           throw new Error("No signer agent available. Please connect first.");
         }
@@ -551,7 +545,6 @@ export class NFIDAdapter implements Adapter.Interface {
                     agent: this.signerAgent,
                     canisterId,
                   });
-                  console.log("[NFID Debug] WRAPPED ACTOR:", wrappedActor);
                   return wrappedActor[prop](...args);
                 });
               };

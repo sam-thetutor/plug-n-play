@@ -3,106 +3,129 @@
 import { HttpAgent, type ActorSubclass } from "@dfinity/agent";
 import type { Adapter, Wallet } from "../types";
 import plugLogo from "../../assets/plug.webp";
-import { principalToSubAccount } from "@dfinity/utils";
+import { hexStringToUint8Array } from "@dfinity/utils";
 import { Principal } from "@dfinity/principal";
-
-declare global {
-  interface Window {
-    ic: {
-      plug: {
-        agent: HttpAgent;
-        principalId: string;
-        accountId: string;
-        requestConnect: (params?: {
-          whitelist?: string[];
-          host?: string;
-          timeout?: number;
-          onConnectionUpdate?: () => void;
-        }) => Promise<string>;
-        isConnected: () => Promise<boolean>;
-        createActor: <T>(params: { canisterId: string; interfaceFactory: any }) => Promise<ActorSubclass<T>>;
-        disconnect: () => Promise<void>;
-      };
-    };
-  }
-}
 
 export class PlugAdapter implements Adapter.Interface {
   static readonly logo: string = plugLogo;
   name: string = "Plug";
   logo: string = PlugAdapter.logo;
   url: string = "https://plugwallet.ooo/";
-  private activeActors: Map<string, { actor: ActorSubclass<any>; idl: any }> = new Map();
 
-  async isAvailable(): Promise<boolean> {
-    return typeof window !== "undefined" && !!window.ic?.plug;
+  private readyState:
+    | "NotDetected"
+    | "Installed"
+    | "Connected"
+    | "Disconnected" = "NotDetected";
+
+  constructor() {
+    this.initPlug();
   }
 
-  async isConnected(): Promise<boolean> {
-    if (!(await this.isAvailable())) return false;
-    return window.ic.plug.isConnected();
-  }
-
-  async connect(config: Wallet.PNPConfig): Promise<Wallet.Account> {
-    if (!(await this.isAvailable())) {
-      window.open(this.url, "_blank");
-      throw new Error("Plug wallet extension not detected. Please install Plug first.");
-    }
-
-    try {
-      await window.ic.plug.requestConnect({
-        whitelist: config.delegationTargets?.map(p => p.toText()),
-        host: config.hostUrl,
-        timeout: Number(config.timeout),
+  // Initialize Plug and set readyState accordingly
+  private initPlug(): void {
+    if (typeof window !== "undefined" && window.ic && window.ic.plug) {
+      this.readyState = "Installed";
+      window.ic.plug.isConnected().then((connected) => {
+        this.readyState = connected ? "Connected" : "Installed";
       });
-
-      const principal = Principal.fromText(window.ic.plug.principalId);
-      
-      return {
-        owner: principal,
-        subaccount: principalToSubAccount(principal),
-      };
-    } catch (error) {
-      console.error("Connection error:", error);
-      throw error;
+    } else {
+      this.readyState = "NotDetected";
     }
   }
 
+  // Check if the wallet is available
+  async isAvailable(): Promise<boolean> {
+    return this.readyState !== "NotDetected";
+  }
+
+  // Check if the wallet is connected
+  async isConnected(): Promise<boolean> {
+    return window.ic?.plug?.isConnected() || false;
+  }
+
+  // Connect to Plug wallet
+  async connect(config: Wallet.AdapterConfig): Promise<Wallet.Account> {
+    if (this.readyState === "NotDetected") {
+      window.open(this.url, "_blank");
+      throw new Error("Plug wallet is not available");
+    }
+
+    const isConnected = await window.ic!.plug!.isConnected();
+
+    if (!isConnected) {
+      try {
+        console.log("Connecting to Plug wallet...", config);
+        const connected = await window.ic!.plug!.requestConnect({
+          whitelist: config.whitelist || null,
+          host: config.hostUrl || "https://mainnet.dfinity.network",
+          timeout: config.timeout || 1000 * 60 * 60 * 24 * 7,
+          onConnectionUpdate: this.handleConnectionUpdate.bind(this),
+        });
+        if (!connected) {
+          throw new Error("User declined the connection request");
+        }
+        this.readyState = "Connected";
+      } catch (e) {
+        console.error("Failed to connect to Plug wallet:", e);
+        throw e;
+      }
+    } else {
+      this.readyState = "Connected";
+    }
+
+    const principal = await this.getPrincipal();
+    const accountId = await this.getAccountId();
+
+    return {
+      owner: principal,
+      subaccount: hexStringToUint8Array(accountId),
+    };
+  }
+
+  // Disconnect from Plug wallet
   async disconnect(): Promise<void> {
-    if (window.ic?.plug?.disconnect) {
+    if (window.ic && window.ic.plug && window.ic.plug.disconnect) {
       await window.ic.plug.disconnect();
+      this.readyState = "Disconnected";
+    } else {
+      throw new Error("Plug wallet is not available");
     }
-    this.activeActors.clear();
   }
 
+  // Get the user's principal ID
   async getPrincipal(): Promise<Principal> {
-    if (!(await this.isConnected())) {
-      throw new Error("Not connected to Plug wallet");
+    if (window.ic && window.ic.plug && window.ic.plug.principalId) {
+      return Principal.fromText(window.ic.plug.principalId);
+    } else {
+      throw new Error("Plug wallet is not available or principal ID is unavailable");
     }
-    return Principal.fromText(window.ic.plug.principalId);
   }
 
+  // Get the user's account ID
   async getAccountId(): Promise<string> {
-    if (!(await this.isConnected())) {
-      throw new Error("Not connected to Plug wallet");
+    if (window.ic && window.ic.plug && window.ic.plug.accountId) {
+      return window.ic.plug.accountId;
+    } else {
+      throw new Error("Plug wallet is not available or account ID is unavailable");
     }
-    return window.ic.plug.accountId;
   }
 
-  async createActor<T>(
-    canisterId: string,
-    idlFactory: any,
-  ): Promise<ActorSubclass<T>> {
-    if (!(await this.isConnected())) {
-      throw new Error("Not connected to Plug wallet");
+  // Create an actor for interacting with a canister
+  async createActor<T>(canisterId: string, idl: any): Promise<ActorSubclass<T>> {
+    if (!window.ic?.plug) {
+      throw new Error("Plug wallet is not available");
     }
-
-    const actor = await window.ic.plug.createActor<T>({
+    return window.ic.plug.createActor({
       canisterId,
-      interfaceFactory: idlFactory,
+      interfaceFactory: idl,
     });
+  }
 
-    this.activeActors.set(canisterId, { actor, idl: idlFactory });
-    return actor;
+  // Handle connection updates
+  private handleConnectionUpdate(status: { sessionExpired: boolean }): void {
+    if (status.sessionExpired) {
+      this.readyState = "Disconnected";
+    }
   }
 }

@@ -26,6 +26,7 @@ class PNP implements PNP {
       timeout: config.timeout || 1000 * 60 * 60 * 24, // 1 day in milliseconds
       verifyQuerySignatures: config.verifyQuerySignatures ?? false,
       delegationTimeout: config.delegationTimeout || BigInt(24 * 60 * 60 * 1000 * 1000 * 1000),
+      delegationTargets: config.delegationTargets || [],
       isDev: config.isDev ?? true,
       ...config,
     };
@@ -72,15 +73,6 @@ class PNP implements PNP {
     }
   ): Promise<ActorSubclass<T>> {
     const { anon = false, requiresSigning = false } = options || {};
-
-    // Generate a cache key based on the parameters
-    const cacheKey = `${this.account?.owner.toString() || 'anonymous'}-${canisterId}-${JSON.stringify(options)}}`;
-
-    // Check if the actor is already cached
-    if (this.actorCache.has(cacheKey)) {
-      return this.actorCache.get(cacheKey) as ActorSubclass<T>;
-    }
-
     // Create the actor
     let actor: ActorSubclass<T>;
 
@@ -93,9 +85,6 @@ class PNP implements PNP {
       });
     
     }
-
-    // Cache the actor
-    this.actorCache.set(cacheKey, actor);
     return actor;
   }
 
