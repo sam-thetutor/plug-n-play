@@ -152,7 +152,7 @@ export class NFIDAdapter implements Adapter.Interface {
     try {
       const stored = await this.delegationStorage.get(NFIDAdapter.STORAGE_KEY);
       if (!stored) {
-        console.log("[NFID Debug] No stored session found");
+        console.warn("[NFID] No stored session found");
         return;
       }
 
@@ -173,7 +173,7 @@ export class NFIDAdapter implements Adapter.Interface {
         (d) => d.delegation.expiration <= now
       );
       if (isExpired) {
-        console.log("[NFID Debug] Stored delegation chain is expired");
+        console.warn("[NFID] Stored delegation chain is expired");
         await this.delegationStorage.remove(NFIDAdapter.STORAGE_KEY);
         return;
       }
@@ -416,7 +416,6 @@ export class NFIDAdapter implements Adapter.Interface {
         signer: this.signer,
         account: principal,
       });
-      console.log("[NFID Debug] Signer agent:", this.signerAgent);
 
       this.identity = delegationIdentity;
 
@@ -497,15 +496,12 @@ export class NFIDAdapter implements Adapter.Interface {
       const isUndelegated = (inTargets && !requiresSigning) || (!inTargets && requiresSigning) || (!inTargets && !requiresSigning);
       const cacheKey = `${canisterId}${requiresSigning ? "-signed" : ""}${isUndelegated ? "-undelegated" : ""}`;
       const cachedActor = this.actorCache.get(cacheKey);
-      console.log("[NFID Debug] Checking cached actor for key:", cacheKey);
       
       if (cachedActor) {
         // Verify delegation is still valid before returning cached actor
         if (!isUndelegated && requiresSigning && !(await this.isDelegationReady())) {
-          console.warn("[NFID Debug] Delegation expired, removing cached actor");
           this.actorCache.delete(cacheKey);
         } else {
-          console.log("[NFID Debug] Returning valid cached actor");
           return cachedActor as ActorSubclass<T>;
         }
       }
@@ -583,7 +579,6 @@ export class NFIDAdapter implements Adapter.Interface {
       agent: agent,
       canisterId,
     });
-    console.log("[NFID Debug] Created undelegated actor:", actor);
     return actor;
   }
 

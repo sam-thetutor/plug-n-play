@@ -3,6 +3,7 @@ import { Principal } from '../@dfinity/principal';
 import { Adapter, Wallet } from '../types';
 export declare class PlugAdapter implements Adapter.Interface {
     static logo: string;
+    logo: string;
     name: string;
     url: string;
     private readyState;

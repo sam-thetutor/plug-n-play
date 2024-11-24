@@ -7,6 +7,7 @@ import plugLogo from "../../assets/plug.webp";
 
 export class PlugAdapter implements Adapter.Interface {
   static logo: string = plugLogo;
+  logo: string = PlugAdapter.logo;
   name: string = "Plug";
   url: string = "https://plugwallet.ooo/";
 
@@ -39,11 +40,6 @@ export class PlugAdapter implements Adapter.Interface {
 
   // Connect to Plug wallet
   async connect(config: Wallet.AdapterConfig): Promise<Wallet.Account> {
-    if (this.readyState === "NotDetected") {
-      window.open(this.url, "_blank");
-      throw new Error("Plug wallet is not available");
-    }
-
     const isConnected = await window.ic!.plug!.isConnected();
 
     if (!isConnected) {
@@ -53,7 +49,7 @@ export class PlugAdapter implements Adapter.Interface {
           whitelist: config.whitelist || [],
           host: config.hostUrl || "https://mainnet.dfinity.network",
           timeout: config.timeout || 1000 * 60 * 60 * 24 * 7,
-          onConnectionUpdate: this.handleConnectionUpdate.bind(this),
+          onConnectionUpdate: () => console.log("Plug connection updated"),
         });
         if (!connected) {
           throw new Error("User declined the connection request");
@@ -139,7 +135,37 @@ export class PlugAdapter implements Adapter.Interface {
 
   // Handle connection updates (e.g., account switching)
   private handleConnectionUpdate(): void {
-    console.log("Plug connection updated");
-    // You can add logic here to handle when the user switches accounts in Plug
+    if (window.ic?.plug?.principalId && window.ic?.plug?.accountId) {
+      const { principalId, accountId } = window.ic.plug;
+      this.readyState = "Connected";
+      
+      // Emit an event that can be listened to by the application
+      const event = new CustomEvent("plug-connection-update", {
+        detail: {
+          principalId,
+          accountId,
+          readyState: this.readyState
+        }
+      });
+      window.dispatchEvent(event);
+    } else {
+      this.readyState = "Disconnected";
+      
+      // Emit disconnection event
+      const event = new CustomEvent("plug-connection-update", {
+        detail: {
+          principalId: null,
+          accountId: null,
+          readyState: this.readyState
+        }
+      });
+      window.dispatchEvent(event);
+    }
+    
+    console.log("Plug connection updated:", {
+      readyState: this.readyState,
+      principalId: window.ic?.plug?.principalId,
+      accountId: window.ic?.plug?.accountId
+    });
   }
 }
