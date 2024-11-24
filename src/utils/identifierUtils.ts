@@ -2,7 +2,6 @@ import { Principal } from '@dfinity/principal';
 import crc32 from 'buffer-crc32';
 import { Buffer } from 'buffer';
 import crypto from 'crypto-js';
-import { err } from '@fort-major/msq-shared';
 
 // Global declarations
 declare global {

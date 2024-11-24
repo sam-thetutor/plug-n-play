@@ -112,6 +112,8 @@ export enum AdapterState {
 
 export class NFIDAdapter implements Adapter.Interface {
   private static readonly STORAGE_KEY = "nfid_session";
+  private static readonly MAX_RECONNECT_ATTEMPTS = 3;
+  private static readonly RECONNECT_DELAY = 1000; // 1 second
 
   private signer: Signer | null = null;
   private agent: HttpAgent | SignerAgent<any> | null = null;
@@ -125,6 +127,7 @@ export class NFIDAdapter implements Adapter.Interface {
   private accounts: NFIDAccount[] = [];
   private actorCache: Map<string, ActorSubclass<any>> = new Map();
   private sessionKey: Ed25519KeyIdentity | null = null;
+  private reconnectAttempts = 0;
   static readonly logo: string = nfidLogo;
   name: string = "NFID";
   logo: string = NFIDAdapter.logo;
@@ -156,73 +159,136 @@ export class NFIDAdapter implements Adapter.Interface {
         return;
       }
 
-      const { sessionKey, delegationChain } = JSON.parse(stored);
+      let parsedData;
+      try {
+        parsedData = JSON.parse(stored);
+      } catch (parseError) {
+        console.warn("[NFID] Failed to parse stored session:", parseError);
+        await this.delegationStorage.remove(NFIDAdapter.STORAGE_KEY);
+        return;
+      }
+
+      const { sessionKey, delegationChain } = parsedData;
+      if (!sessionKey || !delegationChain) {
+        console.warn("[NFID] Invalid stored session format");
+        await this.delegationStorage.remove(NFIDAdapter.STORAGE_KEY);
+        return;
+      }
 
       // Restore session key
-      this.sessionKey = Ed25519KeyIdentity.fromJSON(sessionKey);
+      try {
+        this.sessionKey = Ed25519KeyIdentity.fromParsedJson(sessionKey);
+      } catch (keyError) {
+        console.warn("[NFID] Failed to restore session key:", keyError);
+        await this.delegationStorage.remove(NFIDAdapter.STORAGE_KEY);
+        return;
+      }
+
       if (!this.sessionKey) {
-        throw new Error("Failed to restore session key");
+        console.warn("[NFID] Session key restoration returned null");
+        await this.delegationStorage.remove(NFIDAdapter.STORAGE_KEY);
+        return;
       }
 
       // Restore delegation chain and verify it's not expired
-      const chain = DelegationChain.fromJSON(delegationChain);
+      let chain;
+      try {
+        chain = DelegationChain.fromJSON(delegationChain);
+      } catch (chainError) {
+        console.warn("[NFID] Failed to restore delegation chain:", chainError);
+        await this.delegationStorage.remove(NFIDAdapter.STORAGE_KEY);
+        return;
+      }
+
       const now = BigInt(Date.now()) * BigInt(1000000); // Convert to nanoseconds
 
       // Check if any delegation in the chain is expired
       const isExpired = chain.delegations.some(
         (d) => d.delegation.expiration <= now
       );
+      
       if (isExpired) {
         console.warn("[NFID] Stored delegation chain is expired");
         await this.delegationStorage.remove(NFIDAdapter.STORAGE_KEY);
+        // Attempt to reconnect if delegation is expired
+        await this.attemptReconnect();
         return;
       }
 
       // Create delegation identity
-      this.identity = DelegationIdentity.fromDelegation(this.sessionKey, chain);
+      try {
+        this.identity = DelegationIdentity.fromDelegation(this.sessionKey, chain);
+      } catch (identityError) {
+        console.warn("[NFID] Failed to create delegation identity:", identityError);
+        await this.delegationStorage.remove(NFIDAdapter.STORAGE_KEY);
+        await this.attemptReconnect();
+        return;
+      }
 
       if (!this.identity) {
-        throw new Error("Failed to create delegation identity");
+        console.warn("[NFID] Identity creation returned null");
+        await this.delegationStorage.remove(NFIDAdapter.STORAGE_KEY);
+        await this.attemptReconnect();
+        return;
       }
 
       const principal = this.identity.getPrincipal();
       if (principal.isAnonymous()) {
-        throw new Error("Restored identity is anonymous");
+        console.warn("[NFID] Restored identity is anonymous");
+        await this.delegationStorage.remove(NFIDAdapter.STORAGE_KEY);
+        await this.attemptReconnect();
+        return;
       }
 
       // Initialize signer and agents
-      await this.initSigner();
-      if (!this.signer) {
-        throw new Error("Failed to initialize signer");
+      try {
+        await this.initSigner();
+        if (!this.signer) {
+          throw new Error("Failed to initialize signer");
+        }
+
+        this.signerAgent = SignerAgent.createSync({
+          signer: this.signer,
+          account: principal,
+        });
+
+        // Create HTTP agent
+        this.agent = HttpAgent.createSync({
+          host: this.config?.hostUrl || "https://icp0.io",
+          identity: this.identity,
+          verifyQuerySignatures: this.config?.verifyQuerySignatures,
+        });
+
+        // Set up account
+        const accountId = getAccountIdentifier(principal.toText()) || "";
+        const subaccount = principalToSubAccount(principal);
+        const account: NFIDAccount = {
+          id: accountId,
+          displayName: "NFID Account",
+          principal: principal.toText(),
+          subaccount: new Uint8Array(subaccount),
+          type: AccountType.SESSION,
+        };
+
+        this.accounts = [account];
+        this.setState(AdapterState.READY);
+        // Reset reconnect attempts on successful connection
+        this.reconnectAttempts = 0;
+        console.debug("[NFID] Session restored successfully");
+      } catch (error) {
+        console.warn("[NFID] Failed to initialize session components:", error);
+        // Clean up any partial state
+        this.identity = null;
+        this.agent = null;
+        this.signerAgent = null;
+        this.signer = null;
+        this.accounts = [];
+        await this.delegationStorage.remove(NFIDAdapter.STORAGE_KEY);
+        this.setState(AdapterState.ERROR);
+        await this.attemptReconnect();
       }
-
-      this.signerAgent = SignerAgent.createSync({
-        signer: this.signer,
-        account: principal,
-      });
-
-      // Create HTTP agent
-      this.agent = HttpAgent.createSync({
-        host: this.config?.hostUrl || "https://icp0.io",
-        identity: this.identity,
-        verifyQuerySignatures: this.config?.verifyQuerySignatures,
-      });
-
-      // Set up account
-      const accountId = getAccountIdentifier(principal.toText()) || "";
-      const subaccount = principalToSubAccount(principal);
-      const account: NFIDAccount = {
-        id: accountId,
-        displayName: "NFID Account",
-        principal: principal.toText(),
-        subaccount: new Uint8Array(subaccount),
-        type: AccountType.SESSION,
-      };
-
-      this.accounts = [account];
-      this.setState(AdapterState.READY);
     } catch (error) {
-      console.warn("[NFID Debug] Error restoring session:", error);
+      console.warn("[NFID] Error restoring session:", error);
       // Clean up any partial state
       this.identity = null;
       this.agent = null;
@@ -231,6 +297,15 @@ export class NFIDAdapter implements Adapter.Interface {
       this.accounts = [];
       await this.delegationStorage.remove(NFIDAdapter.STORAGE_KEY);
       this.setState(AdapterState.ERROR);
+      await this.attemptReconnect();
+    }
+  }
+
+  private async attemptReconnect(): Promise<void> {
+    if (this.reconnectAttempts >= NFIDAdapter.MAX_RECONNECT_ATTEMPTS) {
+      console.error("[NFID] Max reconnection attempts reached");
+      this.setState(AdapterState.ERROR);
+      return;
     }
   }
 

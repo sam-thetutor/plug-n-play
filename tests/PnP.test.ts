@@ -12,7 +12,10 @@ describe("NNSAdapter", () => {
   let mockHttpAgent: any;
 
   beforeEach(async () => {
-    adapter = new NNSAdapter();
+    adapter = new NNSAdapter({
+      verifyQuerySignatures: false,
+      fetchRootKeys: true
+    });
 
     const mockAuthClient = {
       isAuthenticated: vi.fn().mockResolvedValue(false),
@@ -53,6 +56,7 @@ describe("NNSAdapter", () => {
     expect(HttpAgent).toHaveBeenCalledWith({
       identity,
       host: "https://localhost:8000",
+      verifyQuerySignatures: false
     });
     expect(mockHttpAgent.fetchRootKey).toHaveBeenCalled();
   });

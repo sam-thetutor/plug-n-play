@@ -11,7 +11,7 @@ export declare class NNSAdapter implements Adapter.Interface {
     private authClient;
     private agent;
     private state;
-    constructor();
+    constructor(config?: Partial<Wallet.PNPConfig>);
     private setState;
     getState(): AdapterState;
     private initAuthClient;

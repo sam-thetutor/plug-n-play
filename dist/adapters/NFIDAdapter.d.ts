@@ -20,6 +20,8 @@ export declare enum AdapterState {
 }
 export declare class NFIDAdapter implements Adapter.Interface {
     private static readonly STORAGE_KEY;
+    private static readonly MAX_RECONNECT_ATTEMPTS;
+    private static readonly RECONNECT_DELAY;
     private signer;
     private agent;
     private signerAgent;
@@ -32,6 +34,7 @@ export declare class NFIDAdapter implements Adapter.Interface {
     private accounts;
     private actorCache;
     private sessionKey;
+    private reconnectAttempts;
     static readonly logo: string;
     name: string;
     logo: string;
@@ -41,6 +44,7 @@ export declare class NFIDAdapter implements Adapter.Interface {
     constructor();
     private setIdentityProviderUrl;
     private tryRestoreSession;
+    private attemptReconnect;
     private setState;
     private getDelegationChain;
     private setDelegationChain;

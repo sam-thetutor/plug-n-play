@@ -22,8 +22,13 @@ export class NNSAdapter implements Adapter.Interface {
   private agent: HttpAgent | null = null;
   private state: AdapterState = AdapterState.READY;
 
-  constructor() {
+  constructor(config?: Partial<Wallet.PNPConfig>) {
     this.url = "https://identity.ic0.app";
+    this.config = {
+      verifyQuerySignatures: false,
+      fetchRootKeys: true,
+      ...config
+    };
   }
 
   private setState(newState: AdapterState) {
@@ -49,7 +54,7 @@ export class NNSAdapter implements Adapter.Interface {
 
   // Helper method to initialize the HttpAgent
   private async initAgent(identity: Identity, host: string): Promise<void> {
-    this.agent = HttpAgent.createSync({
+    this.agent = new HttpAgent({
       identity,
       host,
       verifyQuerySignatures: this.config.verifyQuerySignatures
