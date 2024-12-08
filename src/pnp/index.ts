@@ -72,19 +72,14 @@ class PNP implements PNP {
       requiresSigning?: boolean;
     }
   ): Promise<ActorSubclass<T>> {
-    const { anon = false, requiresSigning = false } = options || {};
+    const { anon = false, requiresSigning = true } = options || {};
     // Create the actor
     let actor: ActorSubclass<T>;
 
-    if (anon || !this.provider) {
-      actor = await  this.createAnonymousActor<T>(canisterId, idl);
-    } else {
       console.log('Creating actor with provider');
       actor = await this.provider.createActor<T>(canisterId, idl, {
         requiresSigning,
       });
-    
-    }
     return actor;
   }
 

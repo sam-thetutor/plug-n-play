@@ -5,7 +5,7 @@ export declare enum AccountType {
     GLOBAL = "GLOBAL",
     SESSION = "SESSION"
 }
-export interface NFIDAccount {
+export interface StoicAccount {
     id: string;
     displayName: string;
     principal: string;
@@ -18,13 +18,13 @@ export declare enum AdapterState {
     PROCESSING = "PROCESSING",
     ERROR = "ERROR"
 }
-export declare class NFIDAdapter implements Adapter.Interface {
+export declare class StoicAdapter implements Adapter.Interface {
     private static readonly STORAGE_KEY;
     private static readonly MAX_RECONNECT_ATTEMPTS;
     private static readonly CONNECTION_COOLDOWN;
     private static readonly CONNECTION_TIMEOUT;
+    private static readonly WINDOW_FEATURES;
     private static readonly TRANSPORT_CONFIG;
-    private static readonly HIDDEN_TRANSPORT_CONFIG;
     private signer;
     private agent;
     private signerAgent;
@@ -55,14 +55,6 @@ export declare class NFIDAdapter implements Adapter.Interface {
     private removeDelegationChain;
     private setupWindowTracking;
     private initSigner;
-    private cleanupTransport;
-    isAvailable(): Promise<boolean>;
-    isConnected(): Promise<boolean>;
-    getPrincipal(): Promise<Principal>;
-    getAccountId(): Promise<string>;
-    unwrapResponse: <T extends unknown>(response: any) => T;
-    connect(config: Wallet.PNPConfig): Promise<Wallet.Account>;
-    private _connect;
     private isDelegationReady;
     private waitForDelegation;
     private createAnonymousActor;
@@ -74,5 +66,13 @@ export declare class NFIDAdapter implements Adapter.Interface {
     disconnect(): Promise<void>;
     queueSignatureRequest<T>(request: () => Promise<T>): Promise<T>;
     getState(): AdapterState;
-    getAccounts(): NFIDAccount[];
+    getAccounts(): StoicAccount[];
+    private cleanupTransport;
+    isAvailable(): Promise<boolean>;
+    isConnected(): Promise<boolean>;
+    getPrincipal(): Promise<Principal>;
+    getAccountId(): Promise<string>;
+    connect(config: Wallet.PNPConfig): Promise<Wallet.Account>;
+    unwrapResponse: <T>(response: any) => T;
+    private _connect;
 }

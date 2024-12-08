@@ -5,39 +5,34 @@ import { viteStaticCopy } from 'vite-plugin-static-copy';
 
 export default defineConfig({
   build: {
-    logLevel: 'debug',
-    sourcemap: true,
+    sourcemap: 'inline',
+    minify: false,
     lib: {
       entry: path.resolve(__dirname, 'src/index.ts'),
       name: 'PlugNPlay',
-      formats: ['es', 'umd'],
+      formats: ['es'],
       fileName: (format) => `plug-n-play.${format}.js`,
     },
     rollupOptions: {
       external: [
-        '@astrox/sdk-web',
-        '@astrox/sdk-webview',
         '@dfinity/auth-client',
         '@dfinity/principal',
         '@dfinity/candid',
         '@dfinity/agent',
         '@dfinity/identity',
-        '@fort-major/msq-client',
-        '@fort-major/msq-shared',
+        '@dfinity/utils',
+        '@astrox/sdk-web',
+        '@astrox/sdk-webview'
       ],
       output: {
-        globals: {
-          '@astrox/sdk-web': 'astrox.sdkWeb',
-          '@astrox/sdk-webview': 'astrox.sdkWebview',
-          '@dfinity/auth-client': 'dfinity.authClient',
-          '@dfinity/principal': 'dfinity.principal',
-          '@dfinity/candid': 'dfinity.candid',
-          '@dfinity/agent': 'dfinity.agent',
-          '@dfinity/identity': 'dfinity.identity',
-          '@fort-major/msq-client': 'fortMajor.msqClient',
-          '@fort-major/msq-shared': 'fortMajor.msqShared',
-        },
-      },
+        format: 'es',
+        exports: 'named'
+      }
+    },
+    commonjsOptions: {
+      include: [/node_modules/],
+      transformMixedEsModules: true,
+      esmExternals: true
     },
     outDir: 'dist',
     emptyOutDir: true,
@@ -52,10 +47,23 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src'),
+      '@': path.resolve(__dirname, './src'),
       '@types': path.resolve(__dirname, 'src/types'),
       '@src': path.resolve(__dirname, 'src'),
     },
+  },
+  optimizeDeps: {
+    include: [
+      'js-sha256',
+      '@astrox/sdk-web',
+      '@astrox/sdk-webview'
+    ],
+    esbuildOptions: {
+      target: 'es2020',
+      format: 'esm',
+      mainFields: ['module', 'main'],
+      conditions: ['module', 'import', 'default']
+    }
   },
   plugins: [
     dts({
@@ -72,5 +80,14 @@ export default defineConfig({
         },
       ],
     }),
+    // viteCompression({
+    //   verbose: true,
+    //   disable: false,
+    //   threshold: 1024,
+    //   algorithm: 'brotliCompress',
+    //   ext: '.br',
+    //   compressionOptions: { level: 10 },
+    //   deleteOriginFile: false
+    // })
   ],
 });

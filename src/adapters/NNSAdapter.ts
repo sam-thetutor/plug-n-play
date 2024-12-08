@@ -25,8 +25,9 @@ export class NNSAdapter implements Adapter.Interface {
   constructor(config?: Partial<Wallet.PNPConfig>) {
     this.url = "https://identity.ic0.app";
     this.config = {
-      verifyQuerySignatures: false,
-      fetchRootKeys: true,
+      verifyQuerySignatures: config?.verifyQuerySignatures,
+      fetchRootKeys: config?.fetchRootKeys,
+      identityProviderUrl: config?.isDev ? "https://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943/#authorize" : "https://identity.ic0.app/authenticate",
       ...config
     };
   }
