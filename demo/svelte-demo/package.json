@@ -19,8 +19,6 @@
     "@dfinity/candid": "2.2.0",
     "@dfinity/identity": "2.2.0",
     "@dfinity/principal": "2.2.0",
-    "@dfinity/utils": "2.7.1",
-    "@slide-computer/signer-transport-plug": "3.8.1",
-    "@windoge98/plug-n-play": "file:../../"
+    "@dfinity/utils": "2.7.1"
   }
 }

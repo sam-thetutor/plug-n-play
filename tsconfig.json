@@ -16,7 +16,8 @@
       "@windoge98/plug-n-play": ["src/*"],
       "*": ["src/*"],
       "$lib/*": ["./src/lib/*"],
-      "$app/*": ["./node_modules/@sveltejs/kit/types/*"]
+      "$app/*": ["./node_modules/@sveltejs/kit/types/*"],
+      "@pnp/*": ["../../../../src/*"]
     },
     "resolveJsonModule": true,
     "forceConsistentCasingInFileNames": true,

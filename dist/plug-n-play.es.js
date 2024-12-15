@@ -11344,27 +11344,22 @@ const _NNSAdapter = class _NNSAdapter {
       identityProviderUrl: (config == null ? void 0 : config.isDev) ? "https://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943/#authorize" : "https://identity.ic0.app/authenticate",
       ...config
     };
+    AuthClient.create({
+      idleOptions: {
+        idleTimeout: Number(1e3 * 60 * 60 * 24),
+        disableDefaultIdleCallback: true
+      }
+    }).then((client) => {
+      var _a2, _b;
+      this.authClient = client;
+      (_b = (_a2 = this.authClient.idleManager) == null ? void 0 : _a2.registerCallback) == null ? void 0 : _b.call(_a2, () => this.refreshLogin());
+    });
   }
   setState(newState) {
     this.state = newState;
   }
   getState() {
     return this.state;
-  }
-  // Helper method to initialize the AuthClient
-  async initAuthClient() {
-    var _a2, _b;
-    if (!this.authClient) {
-      this.authClient = await AuthClient.create({
-        idleOptions: {
-          idleTimeout: Number(1e3 * 60 * 60 * 24),
-          // 1 day in milliseconds
-          disableDefaultIdleCallback: true
-          // Disable default reload behavior
-        }
-      });
-      (_b = (_a2 = this.authClient.idleManager) == null ? void 0 : _a2.registerCallback) == null ? void 0 : _b.call(_a2, () => this.refreshLogin());
-    }
   }
   // Helper method to initialize the HttpAgent
   async initAgent(identity, host) {
@@ -11394,23 +11389,20 @@ const _NNSAdapter = class _NNSAdapter {
     try {
       this.setState(AdapterState.LOADING);
       this.config = config;
-      await this.initAuthClient();
+      while (!this.authClient) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
       const isAuthenticated = await this.authClient.isAuthenticated();
       if (!isAuthenticated) {
         return new Promise((resolve, reject) => {
           this.authClient.login({
             identityProvider: this.getIdentityProvider(config.isDev || true),
             maxTimeToLive: BigInt(Number(config.delegationTimeout || 24 * 60 * 60 * 1e3 * 1e3 * 1e3)),
-            // 24 hours in nanoseconds
-            onSuccess: async () => {
-              try {
-                const account = await this._continueLogin(config.hostUrl || this.url);
+            onSuccess: () => {
+              this._continueLogin(config.hostUrl || this.url).then((account2) => {
                 this.setState(AdapterState.READY);
-                resolve(account);
-              } catch (error) {
-                this.setState(AdapterState.READY);
-                reject(error);
-              }
+                resolve(account2);
+              }).catch(reject);
             },
             onError: (error) => {
               this.setState(AdapterState.READY);
@@ -11418,11 +11410,10 @@ const _NNSAdapter = class _NNSAdapter {
             }
           });
         });
-      } else {
-        const account = await this._continueLogin(config.hostUrl || this.url);
-        this.setState(AdapterState.READY);
-        return account;
       }
+      const account = await this._continueLogin(config.hostUrl || this.url);
+      this.setState(AdapterState.READY);
+      return account;
     } catch (error) {
       this.setState(AdapterState.READY);
       throw error;
@@ -11654,7 +11645,6 @@ const _OisyAdapter = class _OisyAdapter {
     this.agent = null;
     this.signerAgent = null;
     this.accounts = [];
-    this.transport = null;
     this.connectionPromise = null;
     this.isProcessing = false;
     this.requestQueue = [];
@@ -11683,6 +11673,16 @@ const _OisyAdapter = class _OisyAdapter {
     const principal = await this.getPrincipal();
     return getAccountIdentifier(principal.toText()) || "";
   }
+  async establishChannel() {
+    if (!_OisyAdapter.transport) {
+      _OisyAdapter.transport = new PostMessageTransport({
+        url: this.url,
+        ..._OisyAdapter.TRANSPORT_CONFIG,
+        detectNonClickEstablishment: true
+      });
+    }
+    await _OisyAdapter.transport.establishChannel();
+  }
   async connect(config) {
     if (this.connectionPromise) {
       return this.connectionPromise.then(async () => ({
@@ -11696,44 +11696,15 @@ const _OisyAdapter = class _OisyAdapter {
       await this.disconnect();
       this.isProcessing = true;
       this.config = config;
-      this.connectionPromise = (async () => {
-        this.transport = new PostMessageTransport({
-          url: this.url,
-          ..._OisyAdapter.TRANSPORT_CONFIG
-        });
-        this.signer = new Signer({ transport: this.transport });
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        console.debug("[Oisy] Permissions:", await this.signer.permissions());
-        const accounts = await this.signer.accounts();
-        if (!accounts || accounts.length === 0) {
-          throw new Error("No accounts returned from Oisy");
-        }
-        const principal2 = accounts[0].owner;
-        if (principal2.isAnonymous()) {
-          throw new Error("Failed to authenticate with Oisy - got anonymous principal");
-        }
-        this.signerAgent = SignerAgent.createSync({
-          signer: this.signer,
-          account: principal2
-        });
-        this.agent = HttpAgent.createSync({
-          host: config.hostUrl || "https://icp0.io",
-          verifyQuerySignatures: config.verifyQuerySignatures
-        });
-        if (config.fetchRootKeys) {
-          await this.agent.fetchRootKey();
-          await this.signerAgent.fetchRootKey();
-        }
-        this.accounts = accounts.map((acc) => ({
-          id: acc.owner.toText(),
-          displayName: `Oisy Account ${acc.owner.toText().slice(0, 8)}...`,
-          principal: acc.owner.toText(),
-          subaccount: new Uint8Array(principalToSubAccount(acc.owner)),
-          type: "SESSION"
-          /* SESSION */
-        }));
-      })();
-      await this.connectionPromise;
+      if (!_OisyAdapter.transport) {
+        throw new Error("Channel not established. Call establishChannel first.");
+      }
+      this.signer = new Signer({ transport: _OisyAdapter.transport });
+      this.signerAgent = new SignerAgent({
+        signer: this.signer,
+        host: this.config.hostUrl || "https://icp0.io"
+      });
+      this.agent = this.signerAgent;
       const principal = await this.getPrincipal();
       return {
         owner: principal,
@@ -11741,13 +11712,9 @@ const _OisyAdapter = class _OisyAdapter {
         hasDelegation: false
       };
     } catch (error) {
-      console.error("[Oisy] Connection error:", error);
-      await this.disconnect();
-      throw error;
-    } finally {
       this.isProcessing = false;
-      this.connectionPromise = null;
       releaseLock();
+      throw error;
     }
   }
   async createActor(canisterId, idlFactory, options = {
@@ -11797,8 +11764,8 @@ const _OisyAdapter = class _OisyAdapter {
       }
       this.signer = null;
     }
-    if (this.transport) {
-      this.transport = null;
+    if (_OisyAdapter.transport) {
+      _OisyAdapter.transport = null;
     }
     this.agent = null;
     this.signerAgent = null;
@@ -11858,6 +11825,7 @@ _OisyAdapter.TRANSPORT_CONFIG = {
   establishTimeout: 45e3,
   disconnectTimeout: 35e3
 };
+_OisyAdapter.transport = null;
 _OisyAdapter.REQUEST_TIMEOUT = 3e4;
 _OisyAdapter.OPERATION_LOCK_TIMEOUT = 1e4;
 _OisyAdapter.logo = oisyLogo;
@@ -11921,7 +11889,7 @@ class PNP {
       ...config
     };
   }
-  async connect(walletId) {
+  async prepareConnection(walletId) {
     const adapter = walletList.find((w) => w.id === walletId);
     if (!adapter) {
       throw new Error(`Wallet ${walletId} not found`);
@@ -11930,12 +11898,20 @@ class PNP {
     if (!await instance.isAvailable()) {
       throw new Error(`Wallet ${walletId} is not available`);
     }
-    const account = await instance.connect(this.config);
-    this.account = account;
-    this.activeWallet = walletList.find((w) => w.id === walletId);
-    this.provider = instance;
-    localStorage.setItem(this.config.localStorageKey, walletId);
-    return account;
+    return {
+      connect: async () => {
+        const account = await instance.connect(this.config);
+        this.account = account;
+        this.activeWallet = adapter;
+        this.provider = instance;
+        localStorage.setItem(this.config.localStorageKey, walletId);
+        return account;
+      }
+    };
+  }
+  async connect(walletId) {
+    const connection = await this.prepareConnection(walletId);
+    return connection.connect();
   }
   async disconnect() {
     if (this.provider) {
@@ -11950,13 +11926,17 @@ class PNP {
   async getActor(canisterId, idl, options) {
     const { anon = false, requiresSigning = true } = options || {};
     let actor;
-    console.log("Creating actor with provider");
-    actor = await this.provider.createActor(canisterId, idl, {
-      requiresSigning
-    });
+    if (anon) {
+      actor = await this.createAnonymousActor(canisterId, idl);
+    } else {
+      console.log("Creating actor with provider");
+      actor = await this.provider.createActor(canisterId, idl, {
+        requiresSigning
+      });
+    }
     return actor;
   }
-  async createAnonymousActor(canisterId, idl) {
+  async createAnonymousActor(canisterId, idl, options) {
     const agent = HttpAgent.createSync({
       host: this.config.hostUrl,
       verifyQuerySignatures: this.config.verifyQuerySignatures

@@ -411,19 +411,6 @@ export class NFIDAdapter implements Adapter.Interface {
               }
             }
             
-            // Wait for connection establishment
-            await Promise.race([
-              this.signer.sendRequest({
-                id: window.crypto.randomUUID(),
-                jsonrpc: "2.0",
-                method: "icrc34_is_connected",
-                params: {},
-              }),
-              new Promise((_, reject) => 
-                setTimeout(() => reject(new Error("Connection timeout")), 30000)
-              ),
-            ]);
-            
             // If we get here, connection was successful
             break;
           } catch (error) {
@@ -510,6 +497,19 @@ export class NFIDAdapter implements Adapter.Interface {
     });
   };
 
+  async prepareConnection(): Promise<Wallet.Account> {
+    this.transport = new PostMessageTransport({
+      url: this.url,
+      ...this.config,
+    });
+
+    this.signer = new Signer({ 
+      transport: this.transport,
+    });
+
+    return this.signer.accounts[0];
+  }
+
   async connect(config: Wallet.PNPConfig): Promise<Wallet.Account> {
     try {
       this.config = config;
@@ -536,14 +536,6 @@ export class NFIDAdapter implements Adapter.Interface {
       // Don't try to connect if we already have a valid session
       if (this.identity && this.signer && this.agent && this.signerAgent) {
         try {
-          // Use a simpler verification method
-          await this.signer.sendRequest({
-            id: window.crypto.randomUUID(),
-            jsonrpc: "2.0",
-            method: "icrc34_is_connected",
-            params: {},
-          });
-          
           // Return existing account if session is valid
           return {
             owner: this.identity.getPrincipal(),
@@ -560,7 +552,6 @@ export class NFIDAdapter implements Adapter.Interface {
         if (this.identity) {
           try {
             // Initialize signer
-            await this.initSigner(false);
             if (!this.signer) {
               throw new Error("Failed to initialize signer");
             }

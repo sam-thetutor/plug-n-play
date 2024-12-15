@@ -1,6 +1,6 @@
 import { Adapter, Wallet } from '../types/index';
 import { ActorSubclass } from '../@dfinity/agent';
-declare class PNP implements PNP {
+declare class PNP {
     account: Wallet.Account | null;
     activeWallet: Adapter.Info | null;
     provider: Adapter.Interface | null;
@@ -9,13 +9,18 @@ declare class PNP implements PNP {
     isDev: boolean;
     fetchRootKeys: boolean;
     constructor(config?: Wallet.PNPConfig);
+    prepareConnection(walletId: string): Promise<{
+        connect: () => Promise<Wallet.Account>;
+    }>;
     connect(walletId: string): Promise<Wallet.Account>;
     disconnect(): Promise<void>;
     getActor<T>(canisterId: string, idl: any, options?: {
         anon?: boolean;
         requiresSigning?: boolean;
     }): Promise<ActorSubclass<T>>;
-    private createAnonymousActor;
+    createAnonymousActor<T>(canisterId: string, idl: any, options?: {
+        requiresSigning?: boolean;
+    }): Promise<ActorSubclass<T>>;
     isWalletConnected(): boolean;
 }
 export declare const walletsList: Adapter.Info[];

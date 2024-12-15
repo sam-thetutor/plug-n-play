@@ -5,8 +5,11 @@
     principalId,
     connectWallet,
     disconnectWallet,
+    pnpInstance,
+    selectedWalletId,
   } from "../stores/pnp";
   import { balance, fetchBalance } from "../stores/ledger";
+  import { get } from "svelte/store";
 
   let connecting = false;
   let error: string | null = null;
@@ -25,15 +28,50 @@
       : integerPart;
   }
 
-  async function handleConnect(walletId: string) {
+  function handleConnect(walletId: string, event: MouseEvent) {
+    if (connecting) return;
     connecting = true;
     error = null;
+    
     try {
-      await connectWallet(walletId);
-      await fetchBalance();
+      const pnp = get(pnpInstance);
+      if (!pnp) {
+        throw new Error('PNP not initialized');
+      }
+
+      // Get the adapter
+      const adapter = pnp.getAdapter(walletId);
+      
+      // Open the window synchronously in the click handler
+      if ('establishChannel' in adapter) {
+        adapter.establishChannel();
+      }
+
+      // Now proceed with the async connection
+      adapter.connect(pnp.config)
+        .then((account) => {
+          // Update PNP instance
+          pnp.account = account;
+          pnp.activeWallet = availableWallets.find(w => w.id === walletId) || null;
+          pnp.provider = adapter;
+          localStorage.setItem(pnp.config.localStorageKey, walletId);
+
+          // Update stores
+          selectedWalletId.set(walletId);
+          isConnected.set(true);
+          principalId.set(account.owner.toString());
+          return fetchBalance();
+        })
+        .catch((e) => {
+          error = e.message;
+          console.error('Failed to connect:', e);
+        })
+        .finally(() => {
+          connecting = false;
+        });
     } catch (e) {
       error = e.message;
-    } finally {
+      console.error('Failed to establish connection:', e);
       connecting = false;
     }
   }
@@ -83,23 +121,23 @@
       <p class="subtitle">Choose your preferred wallet to sign in</p>
 
       <div class="wallet-list">
-        {#each availableWallets as wallet}
-          <button
-            class="wallet-button"
-            disabled={connecting}
-            on:click={() => handleConnect(wallet.id)}
-          >
-            <span class="wallet-name">{wallet.name}</span>
-            <span class="wallet-arrow">→</span>
-          </button>
-        {/each}
-      </div>
-
-      {#if error}
-        <div class="error">
-          {error}
+        <h2>Connect your wallet</h2>
+        <div class="wallets">
+          {#each availableWallets as wallet}
+            <button
+              class="wallet-button"
+              disabled={connecting}
+              on:click|preventDefault={(event) => handleConnect(wallet.id, event)}
+            >
+              <img src={wallet.logo} alt={wallet.name} />
+              <span>{wallet.name}</span>
+            </button>
+          {/each}
         </div>
-      {/if}
+        {#if error}
+          <div class="error">{error}</div>
+        {/if}
+      </div>
     </div>
   {/if}
 </div>

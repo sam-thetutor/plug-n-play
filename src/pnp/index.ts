@@ -9,7 +9,7 @@ import { walletList } from "../adapters";
 import { Principal } from "@dfinity/principal";
 import { getAccountIdentifier } from "../utils/identifierUtils";
 
-class PNP implements PNP {
+class PNP {
   account: Wallet.Account | null = null;
   activeWallet: Adapter.Info | null = null;
   provider: Adapter.Interface | null = null;
@@ -17,6 +17,7 @@ class PNP implements PNP {
   actorCache: Map<string, ActorSubclass<any>> = new Map();
   isDev: boolean = true;
   fetchRootKeys: boolean = false;
+  isConnecting: boolean = false;
 
   constructor(config: Wallet.PNPConfig = {}) {
     this.config = {
@@ -32,25 +33,76 @@ class PNP implements PNP {
     };
   }
 
-  async connect(walletId: string): Promise<Wallet.Account> {
+  async prepareConnection(walletId: string): Promise<{ 
+    connect: () => Promise<Wallet.Account>
+  }> {
     const adapter = walletList.find((w) => w.id === walletId);
     if (!adapter) {
       throw new Error(`Wallet ${walletId} not found`);
     }
 
     const instance = new adapter.adapter();
-    if (!(await instance.isAvailable())) {
+    const isAvailable = await instance.isAvailable();
+    if (!isAvailable) {
       throw new Error(`Wallet ${walletId} is not available`);
     }
 
-    const account = await instance.connect(this.config);
-    this.account = account;
-    this.activeWallet = walletList.find((w) => w.id === walletId);
-    this.provider = instance;
+    // Return a connect function that establishes channel and connects in click handler context
+    return {
+      connect: () => {
+        // Execute in click handler context
+        return new Promise<Wallet.Account>((resolve, reject) => {
+          // Check if adapter needs channel establishment
+          if ('establishChannel' in instance) {
+            instance.establishChannel()
+              .then(() => {
+                this.provider = instance;
+                return instance.connect(this.config);
+              })
+              .then(account => {
+                this.account = account;
+                this.activeWallet = adapter;
+                this.provider = instance;
+                localStorage.setItem(this.config.localStorageKey, walletId);
+                resolve(account);
+              })
+              .catch(reject);
+          } else {
+            instance.connect(this.config)
+              .then(account => {
+                this.account = account;
+                this.activeWallet = adapter;
+                this.provider = instance;
+                localStorage.setItem(this.config.localStorageKey, walletId);
+                resolve(account);
+              })
+              .catch(reject);
+          }
+        });
+      }
+    };
+  }
 
-    localStorage.setItem(this.config.localStorageKey, walletId);
+  async connect(walletId: string): Promise<Wallet.Account> {
+    if (this.isConnecting) {
+      throw new Error("Connection in progress");
+    }
 
-    return account;
+    this.isConnecting = true;
+    try {
+      const prepared = await this.prepareConnection(walletId);
+      return await prepared.connect();
+    } finally {
+      this.isConnecting = false;
+    }
+  }
+
+  getAdapter(walletId: string): Adapter.Interface {
+    const wallet = walletList.find((w) => w.id === walletId);
+    if (!wallet) {
+      throw new Error(`Wallet ${walletId} not found`);
+    }
+    return new wallet.adapter();
   }
 
   async disconnect(): Promise<void> {
@@ -76,16 +128,21 @@ class PNP implements PNP {
     // Create the actor
     let actor: ActorSubclass<T>;
 
+    if (anon) {
+      actor = await this.createAnonymousActor<T>(canisterId, idl);
+    } else {
       console.log('Creating actor with provider');
       actor = await this.provider.createActor<T>(canisterId, idl, {
         requiresSigning,
       });
+    }
     return actor;
   }
 
-  private async createAnonymousActor<T>(
+  public async createAnonymousActor<T>(
     canisterId: string,
-    idl: any
+    idl: any,
+    options?: { requiresSigning?: boolean }
   ): Promise<ActorSubclass<T>> {
     const agent = HttpAgent.createSync({
       host: this.config.hostUrl,

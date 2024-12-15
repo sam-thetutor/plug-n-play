@@ -30,6 +30,16 @@ export class NNSAdapter implements Adapter.Interface {
       identityProviderUrl: config?.isDev ? "https://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943/#authorize" : "https://identity.ic0.app/authenticate",
       ...config
     };
+    // Initialize AuthClient immediately
+    AuthClient.create({
+      idleOptions: {
+        idleTimeout: Number(1000 * 60 * 60 * 24),
+        disableDefaultIdleCallback: true,
+      },
+    }).then(client => {
+      this.authClient = client;
+      this.authClient.idleManager?.registerCallback?.(() => this.refreshLogin());
+    });
   }
 
   private setState(newState: AdapterState) {
@@ -38,19 +48,6 @@ export class NNSAdapter implements Adapter.Interface {
 
   getState(): AdapterState {
     return this.state;
-  }
-
-  // Helper method to initialize the AuthClient
-  private async initAuthClient(): Promise<void> {
-    if (!this.authClient) {
-      this.authClient = await AuthClient.create({
-        idleOptions: {
-          idleTimeout: Number(1000 * 60 * 60 * 24), // 1 day in milliseconds
-          disableDefaultIdleCallback: true, // Disable default reload behavior
-        },
-      });
-      this.authClient.idleManager?.registerCallback?.(() => this.refreshLogin());
-    }
   }
 
   // Helper method to initialize the HttpAgent
@@ -85,24 +82,28 @@ export class NNSAdapter implements Adapter.Interface {
     try {
       this.setState(AdapterState.LOADING);
       this.config = config;
-      await this.initAuthClient();
 
-      const isAuthenticated = await this.authClient!.isAuthenticated();
+      // Wait for AuthClient to be ready
+      while (!this.authClient) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+
+      const isAuthenticated = await this.authClient.isAuthenticated();
 
       if (!isAuthenticated) {
         return new Promise<Wallet.Account>((resolve, reject) => {
+          // Call login directly within the click handler context
           this.authClient!.login({
             identityProvider: this.getIdentityProvider(config.isDev || true),
-            maxTimeToLive: BigInt(Number(config.delegationTimeout || 24 * 60 * 60 * 1000 * 1000 * 1000)), // 24 hours in nanoseconds
-            onSuccess: async () => {
-              try {
-                const account = await this._continueLogin(config.hostUrl || this.url);
-                this.setState(AdapterState.READY);
-                resolve(account);
-              } catch (error) {
-                this.setState(AdapterState.READY);
-                reject(error);
-              }
+            maxTimeToLive: BigInt(Number(config.delegationTimeout || 24 * 60 * 60 * 1000 * 1000 * 1000)),
+            onSuccess: () => {
+              // Properly handle void return type for onSuccess
+              this._continueLogin(config.hostUrl || this.url)
+                .then(account => {
+                  this.setState(AdapterState.READY);
+                  resolve(account);
+                })
+                .catch(reject);
             },
             onError: (error) => {
               this.setState(AdapterState.READY);
@@ -110,12 +111,12 @@ export class NNSAdapter implements Adapter.Interface {
             },
           });
         });
-      } else {
-        // User is already authenticated, proceed with login
-        const account = await this._continueLogin(config.hostUrl || this.url);
-        this.setState(AdapterState.READY);
-        return account;
       }
+
+      // User is already authenticated, proceed with login
+      const account = await this._continueLogin(config.hostUrl || this.url);
+      this.setState(AdapterState.READY);
+      return account;
     } catch (error) {
       this.setState(AdapterState.READY);
       throw error;

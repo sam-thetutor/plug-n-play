@@ -1,8 +1,26 @@
 import { writable, derived, get } from 'svelte/store';
-import { walletsList, createPNP, type PNP } from '@windoge98/plug-n-play';
+import { walletsList, createPNP, type PNP, type Wallet, type Adapter, type ActorSubclass } from '../../../../../src';
 
 // Export available wallets
 export const availableWallets = walletsList;
+
+// Update PNP interface to include prepareConnection
+interface PNP {
+    account: Wallet.Account | null;
+    activeWallet: Adapter.Info | null;
+    provider: Adapter.Interface | null;
+    config: Wallet.PNPConfig;
+    actorCache: Map<string, ActorSubclass<any>>;
+    isDev: boolean;
+    fetchRootKeys: boolean;
+    getActor: <T>(canisterId: string, idl: any, isAnon?: boolean) => Promise<ActorSubclass<T>>;
+    connect: (walletId: string) => Promise<Wallet.Account>;
+    prepareConnection: (walletId: string) => Promise<{ connect: () => Promise<Wallet.Account> }>;
+    disconnect: () => Promise<void>;
+    isWalletConnected: () => Promise<boolean>;
+    createAnonymousActor: <T>(canisterId: string, idl: any, options?: { requiresSigning?: boolean }) => Promise<ActorSubclass<T>>;
+    getAdapter: (walletId: string) => Adapter.Interface;
+}
 
 // Create stores
 export const selectedWalletId = writable<string | null>(null);
@@ -16,8 +34,37 @@ export const initializePNP = () => {
         hostUrl: 'https://icp0.io',
         isDev: false,
     });
-    pnpInstance.set(pnp);
-    return pnp;
+    
+    // Create a wrapper that matches the expected interface
+    const wrappedPnp: PNP = {
+        account: pnp.account,
+        activeWallet: pnp.activeWallet,
+        provider: pnp.provider,
+        config: pnp.config,
+        actorCache: pnp.actorCache,
+        isDev: pnp.isDev,
+        fetchRootKeys: pnp.fetchRootKeys,
+        getActor: <T>(canisterId: string, idl: any, isAnon?: boolean) => {
+            return pnp.getActor<T>(canisterId, idl, { anon: isAnon });
+        },
+        connect: (walletId: string) => {
+            return pnp.connect(walletId);
+        },
+        prepareConnection: (walletId: string) => {
+            return pnp.prepareConnection(walletId);
+        },
+        disconnect: () => pnp.disconnect(),
+        isWalletConnected: () => pnp.isWalletConnected(),
+        createAnonymousActor: <T>(canisterId: string, idl: any, options?: { requiresSigning?: boolean }) => {
+            return pnp.createAnonymousActor<T>(canisterId, idl, options);
+        },
+        getAdapter: (walletId: string) => {
+            return pnp.getAdapter(walletId);
+        }
+    };
+    
+    pnpInstance.set(wrappedPnp);
+    return wrappedPnp;
 };
 
 // Connect wallet
@@ -28,10 +75,11 @@ export const connectWallet = async (walletId: string) => {
     }
 
     try {
-        const account = await pnp.connect(walletId);
+        // Use prepareConnection to maintain click handler context
+        const prepared = await pnp.prepareConnection(walletId);
+        const account = await prepared.connect();
         selectedWalletId.set(walletId);
         isConnected.set(true);
-        // Convert Principal object to string
         principalId.set(account.owner.toString());
         return account;
     } catch (error) {
