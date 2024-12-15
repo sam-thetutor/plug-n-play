@@ -1,14 +1,14 @@
 import { defineConfig } from 'vite';
-import path from 'path';
+import { resolve } from 'path';
 import dts from 'vite-plugin-dts';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 
 export default defineConfig({
   build: {
-    sourcemap: 'inline',
+    sourcemap: true,
     minify: false,
     lib: {
-      entry: path.resolve(__dirname, 'src/index.ts'),
+      entry: resolve(__dirname, 'src/index.ts'),
       name: 'PlugNPlay',
       formats: ['es'],
       fileName: (format) => `plug-n-play.${format}.js`,
@@ -22,7 +22,8 @@ export default defineConfig({
         '@dfinity/identity',
         '@dfinity/utils',
         '@astrox/sdk-web',
-        '@astrox/sdk-webview'
+        '@astrox/sdk-webview',
+        '@dfinity/oisy-wallet-signer'
       ],
       output: {
         format: 'es',
@@ -47,9 +48,10 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
-      '@types': path.resolve(__dirname, 'src/types'),
-      '@src': path.resolve(__dirname, 'src'),
+      '@': resolve(__dirname, './src'),
+      '@types': resolve(__dirname, 'src/types'),
+      '@src': resolve(__dirname, 'src'),
+      'iso-url': resolve(__dirname, 'src/utils/url-node.ts')
     },
   },
   optimizeDeps: {
@@ -80,14 +82,8 @@ export default defineConfig({
         },
       ],
     }),
-    // viteCompression({
-    //   verbose: true,
-    //   disable: false,
-    //   threshold: 1024,
-    //   algorithm: 'brotliCompress',
-    //   ext: '.br',
-    //   compressionOptions: { level: 10 },
-    //   deleteOriginFile: false
-    // })
   ],
+  ssr: {
+    noExternal: ['@dfinity/oisy-wallet-signer']
+  }
 });

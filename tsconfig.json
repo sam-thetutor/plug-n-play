@@ -14,12 +14,14 @@
     "baseUrl": ".",
     "paths": {
       "@windoge98/plug-n-play": ["src/*"],
-      "*": ["src/*"]
+      "*": ["src/*"],
+      "$lib/*": ["./src/lib/*"],
+      "$app/*": ["./node_modules/@sveltejs/kit/types/*"]
     },
     "resolveJsonModule": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true
   },
-  "include": ["src/**/*", "src/types/**/*"],
+  "include": ["src/**/*", "src/types/**/*.d.ts"],
   "exclude": ["node_modules", "dist"]
 }

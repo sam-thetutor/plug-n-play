@@ -3,7 +3,6 @@ import {
   Actor,
   HttpAgent,
   type ActorSubclass,
-  AnonymousIdentity,
 } from "@dfinity/agent";
 import type { Wallet, Adapter } from "../types/index";
 import { getAccountIdentifier } from "../utils/identifierUtils";
@@ -37,8 +36,14 @@ export class OisyAdapter implements Adapter.Interface {
   private agent: HttpAgent | SignerAgent<any> | null = null;
   private signerAgent: SignerAgent<any> | null = null;
   private accounts: OisyAccount[] = [];
-  private actorCache: Map<string, ActorSubclass<any>> = new Map();
   private transport: PostMessageTransport | null = null;
+  private connectionPromise: Promise<void> | null = null;
+  private isProcessing: boolean = false;
+  private requestQueue: Array<() => Promise<any>> = [];
+  private isProcessingRequest: boolean = false;
+  private static readonly REQUEST_TIMEOUT = 30000; // 30 seconds
+  private static readonly OPERATION_LOCK_TIMEOUT = 10000; // 10 seconds
+  private operationLock: Promise<void> | null = null;
 
   static readonly logo: string = oisyLogo;
   name: string = "Oisy";
@@ -73,53 +78,70 @@ export class OisyAdapter implements Adapter.Interface {
   }
 
   async connect(config: Wallet.PNPConfig): Promise<Wallet.Account> {
+    if (this.connectionPromise) {
+      return this.connectionPromise.then(async () => ({
+        owner: await this.getPrincipal(),
+        subaccount: principalToSubAccount(await this.getPrincipal()),
+        hasDelegation: false,
+      }));
+    }
+
+    const releaseLock = await this.acquireLock();
     try {
+      await this.disconnect();
+
+      this.isProcessing = true;
       this.config = config;
       
-      this.transport = new PostMessageTransport({
-        url: this.url
-      });
+      this.connectionPromise = (async () => {
+        this.transport = new PostMessageTransport({
+          url: this.url,
+          ...OisyAdapter.TRANSPORT_CONFIG,
+        });
 
-      this.signer = new Signer({ transport: this.transport });
+        this.signer = new Signer({ transport: this.transport });
 
-      console.debug('[Oisy] Permissions:', await this.signer.permissions());
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        console.debug('[Oisy] Permissions:', await this.signer.permissions());
 
-      const accounts = await this.signer.accounts();
-      if (!accounts || accounts.length === 0) {
-        throw new Error("No accounts returned from Oisy");
-      }
+        const accounts = await this.signer.accounts();
+        if (!accounts || accounts.length === 0) {
+          throw new Error("No accounts returned from Oisy");
+        }
 
-      const principal = accounts[0].owner;
-      if (principal.isAnonymous()) {
-        throw new Error("Failed to authenticate with Oisy - got anonymous principal");
-      }
+        const principal = accounts[0].owner;
+        if (principal.isAnonymous()) {
+          throw new Error("Failed to authenticate with Oisy - got anonymous principal");
+        }
 
-      this.signerAgent = SignerAgent.createSync({
-        signer: this.signer,
-        account: principal,
-      });
+        this.signerAgent = SignerAgent.createSync({
+          signer: this.signer,
+          account: principal,
+        });
 
-      // Create HTTP agent
-      this.agent = HttpAgent.createSync({
-        host: config.hostUrl || "https://icp0.io",
-        verifyQuerySignatures: config.verifyQuerySignatures,
-      });
+        this.agent = HttpAgent.createSync({
+          host: config.hostUrl || "https://icp0.io",
+          verifyQuerySignatures: config.verifyQuerySignatures,
+        });
 
-      if (config.fetchRootKeys) {
-        await this.agent.fetchRootKey();
-        await this.signerAgent.fetchRootKey();
-      }
+        if (config.fetchRootKeys) {
+          await this.agent.fetchRootKey();
+          await this.signerAgent.fetchRootKey();
+        }
 
-      this.accounts = accounts.map(acc => {
-        return {
+        this.accounts = accounts.map(acc => ({
           id: acc.owner.toText(),
           displayName: `Oisy Account ${acc.owner.toText().slice(0, 8)}...`,
           principal: acc.owner.toText(),
           subaccount: new Uint8Array(principalToSubAccount(acc.owner)),
           type: AccountType.SESSION,
-        };
-      });
+        }));
+      })();
 
+      await this.connectionPromise;
+      
+      const principal = await this.getPrincipal();
       return {
         owner: principal,
         subaccount: principalToSubAccount(principal),
@@ -130,6 +152,10 @@ export class OisyAdapter implements Adapter.Interface {
       console.error("[Oisy] Connection error:", error);
       await this.disconnect();
       throw error;
+    } finally {
+      this.isProcessing = false;
+      this.connectionPromise = null;
+      releaseLock();
     }
   }
 
@@ -146,7 +172,7 @@ export class OisyAdapter implements Adapter.Interface {
   ): Promise<ActorSubclass<T>> {
     const { requiresSigning = true, anon = false } = options;
 
-    if (anon) {
+    if (anon === true) {
       return this.createAnonymousActor<T>(canisterId, idlFactory);
     }
 
@@ -154,10 +180,16 @@ export class OisyAdapter implements Adapter.Interface {
       throw new Error("No signer agent available. Please connect first.");
     }
 
-    return Actor.createActor<T>(idlFactory, {
-      agent: this.signerAgent,
-      canisterId,
-    });
+    const releaseLock = await this.acquireLock();
+    try {
+      const actor = Actor.createActor<T>(idlFactory, {
+        agent: this.signerAgent,
+        canisterId,
+      });
+      return actor;
+    } finally {
+      releaseLock();
+    }
   }
 
   private async createAnonymousActor<T>(canisterId: string, idl: any): Promise<ActorSubclass<T>> {
@@ -171,25 +203,88 @@ export class OisyAdapter implements Adapter.Interface {
   }
 
   async disconnect(): Promise<void> {
+    this.requestQueue = [];
+    this.isProcessingRequest = false;
+
+    if (this.isProcessing) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+
     if (this.signer) {
       try {
+        await new Promise(resolve => setTimeout(resolve, 200));
         this.signer.closeChannel();
       } catch (error) {
         console.debug("[Oisy] Error cleaning up signer:", error);
       }
+      this.signer = null;
     }
 
     if (this.transport) {
       this.transport = null;
     }
 
-    this.signer = null;
     this.agent = null;
     this.signerAgent = null;
     this.accounts = [];
+    this.connectionPromise = null;
+    this.isProcessing = false;
   }
 
   getAccounts(): OisyAccount[] {
     return this.accounts;
+  }
+
+  private async processQueue() {
+    if (this.isProcessingRequest) return;
+    
+    while (this.requestQueue.length > 0) {
+      this.isProcessingRequest = true;
+      const request = this.requestQueue.shift();
+      
+      if (request) {
+        try {
+          await Promise.race([
+            request(),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error("Request timeout")), OisyAdapter.REQUEST_TIMEOUT)
+            )
+          ]);
+          // Add small delay between requests
+          await new Promise(resolve => setTimeout(resolve, 100));
+        } catch (error) {
+          console.error("[Oisy] Error processing request:", error);
+        }
+      }
+    }
+    
+    this.isProcessingRequest = false;
+  }
+
+  private async acquireLock(): Promise<() => void> {
+    while (this.operationLock) {
+      try {
+        await this.operationLock;
+      } catch {
+        // Ignore errors from previous operations
+      }
+    }
+
+    let releaseLock: () => void;
+    this.operationLock = new Promise<void>((resolve) => {
+      releaseLock = () => {
+        this.operationLock = null;
+        resolve();
+      };
+    });
+
+    setTimeout(() => {
+      if (this.operationLock) {
+        console.warn("[Oisy] Operation lock timeout - forcing release");
+        releaseLock!();
+      }
+    }, OisyAdapter.OPERATION_LOCK_TIMEOUT);
+
+    return releaseLock!;
   }
 }

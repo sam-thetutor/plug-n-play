@@ -18,8 +18,14 @@ export declare class OisyAdapter implements Adapter.Interface {
     private agent;
     private signerAgent;
     private accounts;
-    private actorCache;
     private transport;
+    private connectionPromise;
+    private isProcessing;
+    private requestQueue;
+    private isProcessingRequest;
+    private static readonly REQUEST_TIMEOUT;
+    private static readonly OPERATION_LOCK_TIMEOUT;
+    private operationLock;
     static readonly logo: string;
     name: string;
     logo: string;
@@ -38,4 +44,6 @@ export declare class OisyAdapter implements Adapter.Interface {
     private createAnonymousActor;
     disconnect(): Promise<void>;
     getAccounts(): OisyAccount[];
+    private processQueue;
+    private acquireLock;
 }
