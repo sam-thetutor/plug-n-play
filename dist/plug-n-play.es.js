@@ -11906,6 +11906,7 @@ class PNP {
       delegationTimeout: config.delegationTimeout || BigInt(24 * 60 * 60 * 1e3 * 1e3 * 1e3),
       delegationTargets: config.delegationTargets || [],
       isDev: config.isDev ?? true,
+      derivationOrigin: config.derivationOrigin || "https://identity.ic0.app",
       ...config
     };
   }
