@@ -21,7 +21,7 @@ export const fetchBalance = async () => {
   }
 
   try {
-    const actor = await pnp.getActor(LEDGER_CANISTER_ID, ICRC2_IDL as any, { anon: false });
+    const actor = await pnp.getActor(LEDGER_CANISTER_ID, ICRC2_IDL as any, { anon: false, requiresSigning: false });
     const result = await actor.icrc1_balance_of({
       owner: Principal.fromText(owner),
       subaccount: [],
