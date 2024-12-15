@@ -103,6 +103,15 @@ export namespace Adapter {
   }
 }
 
+export enum AdapterState {
+  READY = "ready",
+  CONNECTING = "connecting",
+  CONNECTED = "connected",
+  DISCONNECTED = "disconnected",
+  LOADING = "loading",
+}
+
+
 export class PNP {
   account: Wallet.Account | null;
   activeWallet: Adapter.Info | null;

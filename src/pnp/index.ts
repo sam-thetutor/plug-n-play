@@ -1,4 +1,4 @@
-import type { Adapter, Wallet } from "../types/index";
+import type { Adapter, Wallet } from "../types/index.d";
 import {
   Actor,
   HttpAgent,

@@ -28,50 +28,29 @@
       : integerPart;
   }
 
-  function handleConnect(walletId: string, event: MouseEvent) {
-    if (connecting) return;
+  async function handleConnect(walletId: string) {
     connecting = true;
     error = null;
-    
     try {
       const pnp = get(pnpInstance);
       if (!pnp) {
         throw new Error('PNP not initialized');
       }
 
-      // Get the adapter
-      const adapter = pnp.getAdapter(walletId);
+      // Prepare connection and connect in click handler context
+      const { connect } = await pnp.prepareConnection(walletId);
+      const account = await connect();
       
-      // Open the window synchronously in the click handler
-      if ('establishChannel' in adapter) {
-        adapter.establishChannel();
-      }
-
-      // Now proceed with the async connection
-      adapter.connect(pnp.config)
-        .then((account) => {
-          // Update PNP instance
-          pnp.account = account;
-          pnp.activeWallet = availableWallets.find(w => w.id === walletId) || null;
-          pnp.provider = adapter;
-          localStorage.setItem(pnp.config.localStorageKey, walletId);
-
-          // Update stores
-          selectedWalletId.set(walletId);
-          isConnected.set(true);
-          principalId.set(account.owner.toString());
-          return fetchBalance();
-        })
-        .catch((e) => {
-          error = e.message;
-          console.error('Failed to connect:', e);
-        })
-        .finally(() => {
-          connecting = false;
-        });
+      // Update stores after successful connection
+      selectedWalletId.set(walletId);
+      isConnected.set(true);
+      principalId.set(account.owner.toString());
+      
+      await fetchBalance();
     } catch (e) {
       error = e.message;
-      console.error('Failed to establish connection:', e);
+      console.error('Failed to connect:', e);
+    } finally {
       connecting = false;
     }
   }
@@ -127,10 +106,9 @@
             <button
               class="wallet-button"
               disabled={connecting}
-              on:click|preventDefault={(event) => handleConnect(wallet.id, event)}
+              on:click|preventDefault={(event) => handleConnect(wallet.id)}
             >
               <img src={wallet.logo} alt={wallet.name} />
-              <span>{wallet.name}</span>
             </button>
           {/each}
         </div>

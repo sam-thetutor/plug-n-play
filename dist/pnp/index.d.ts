@@ -1,4 +1,4 @@
-import { Adapter, Wallet } from '../types/index';
+import { Adapter, Wallet } from '../types/index.d';
 import { ActorSubclass } from '../@dfinity/agent';
 declare class PNP {
     account: Wallet.Account | null;
@@ -8,11 +8,13 @@ declare class PNP {
     actorCache: Map<string, ActorSubclass<any>>;
     isDev: boolean;
     fetchRootKeys: boolean;
+    isConnecting: boolean;
     constructor(config?: Wallet.PNPConfig);
     prepareConnection(walletId: string): Promise<{
         connect: () => Promise<Wallet.Account>;
     }>;
     connect(walletId: string): Promise<Wallet.Account>;
+    getAdapter(walletId: string): Adapter.Interface;
     disconnect(): Promise<void>;
     getActor<T>(canisterId: string, idl: any, options?: {
         anon?: boolean;

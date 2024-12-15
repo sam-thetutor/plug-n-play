@@ -2,12 +2,11 @@
 
 import { Actor, HttpAgent, type ActorSubclass, Identity } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
-import type { Wallet, Adapter } from "../types/index";
+import type { Wallet, Adapter } from "../types/index.d";
 import { Principal } from "@dfinity/principal";
 import { principalToSubAccount } from "@dfinity/utils";
 import dfinityLogo from "../../assets/dfinity.webp";
-import { getAccountIdentifier } from "../utils/identifierUtils";
-import { AdapterState } from "./NFIDAdapter";
+import { AdapterState } from "../types/index.d";
 
 export class NNSAdapter implements Adapter.Interface {
   static readonly logo: string = dfinityLogo;
@@ -28,6 +27,7 @@ export class NNSAdapter implements Adapter.Interface {
       verifyQuerySignatures: config?.verifyQuerySignatures,
       fetchRootKeys: config?.fetchRootKeys,
       identityProviderUrl: config?.isDev ? "https://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943/#authorize" : "https://identity.ic0.app/authenticate",
+      derivationOrigin: config?.derivationOrigin || "https://localhost:5173",
       ...config
     };
     // Initialize AuthClient immediately
@@ -94,6 +94,7 @@ export class NNSAdapter implements Adapter.Interface {
         return new Promise<Wallet.Account>((resolve, reject) => {
           // Call login directly within the click handler context
           this.authClient!.login({
+            derivationOrigin: this.config.derivationOrigin,
             identityProvider: this.getIdentityProvider(config.isDev || true),
             maxTimeToLive: BigInt(Number(config.delegationTimeout || 24 * 60 * 60 * 1000 * 1000 * 1000)),
             onSuccess: () => {

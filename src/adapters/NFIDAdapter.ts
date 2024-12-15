@@ -12,7 +12,7 @@ import {
   Ed25519KeyIdentity,
   Delegation,
 } from "@dfinity/identity";
-import type { Wallet, Adapter } from "../types/index";
+import type { Wallet, Adapter } from "../types/index.d";
 import { getAccountIdentifier } from "../utils/identifierUtils";
 import nfidLogo from "../../assets/nfid.webp";
 import { principalToSubAccount } from "@dfinity/utils";
@@ -396,6 +396,7 @@ export class NFIDAdapter implements Adapter.Interface {
             
             this.transport = new PostMessageTransport({
               url: this.url,
+              detectNonClickEstablishment: false,
               ...config,
             });
 

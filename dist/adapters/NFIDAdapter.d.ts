@@ -1,6 +1,6 @@
 import { Principal } from '../@dfinity/principal';
 import { ActorSubclass } from '../@dfinity/agent';
-import { Wallet, Adapter } from '../types/index';
+import { Wallet, Adapter } from '../types/index.d';
 export declare enum AccountType {
     GLOBAL = "GLOBAL",
     SESSION = "SESSION"
@@ -61,6 +61,7 @@ export declare class NFIDAdapter implements Adapter.Interface {
     getPrincipal(): Promise<Principal>;
     getAccountId(): Promise<string>;
     unwrapResponse: <T extends unknown>(response: any) => T;
+    prepareConnection(): Promise<Wallet.Account>;
     connect(config: Wallet.PNPConfig): Promise<Wallet.Account>;
     private _connect;
     private isDelegationReady;
