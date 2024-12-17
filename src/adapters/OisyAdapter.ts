@@ -34,7 +34,7 @@ export class OisyAdapter implements Adapter.Interface {
 
   private signer: Signer | null = null;
   private agent: HttpAgent | SignerAgent<any> | null = null;
-  private signerAgent: SignerAgent<any> | null = null;
+  private signerAgent: SignerAgent<Signer>;
   private accounts: OisyAccount[] = [];
   private transport: PostMessageTransport | null = null;
   private connectionPromise: Promise<void> | null = null;
@@ -55,6 +55,11 @@ export class OisyAdapter implements Adapter.Interface {
     this.url = "https://oisy.com/sign";
     this.name = "Oisy";
     this.logo = OisyAdapter.logo;
+    this.signerAgent = SignerAgent.createSync({ 
+      signer: new Signer({ transport: new PostMessageTransport({ url: this.url, ...OisyAdapter.TRANSPORT_CONFIG, detectNonClickEstablishment: true }) }), 
+      account: Principal.anonymous(), 
+      agent: HttpAgent.createSync({ host: this.url }) 
+    });
   }
 
   async isAvailable(): Promise<boolean> {
@@ -78,70 +83,34 @@ export class OisyAdapter implements Adapter.Interface {
   }
 
   async connect(config: Wallet.PNPConfig): Promise<Wallet.Account> {
-    if (this.connectionPromise) {
-      return this.connectionPromise.then(async () => ({
-        owner: await this.getPrincipal(),
-        subaccount: principalToSubAccount(await this.getPrincipal()),
-        hasDelegation: false,
-      }));
-    }
-
-    const releaseLock = await this.acquireLock();
     try {
-      await this.disconnect();
+      console.log("connecting to oisy");
+      console.log("SignerAgent", this.signerAgent);
+      await this.signerAgent.signer.transport.establishChannel();
+      const accounts = await this.signerAgent.signer.accounts();
+      if (!accounts || accounts.length === 0) {
+        throw new Error("No accounts returned from Oisy");
+      }
 
-      this.isProcessing = true;
-      this.config = config;
-      
-      this.connectionPromise = (async () => {
-        this.transport = new PostMessageTransport({
-          url: this.url,
-          ...OisyAdapter.TRANSPORT_CONFIG,
-        });
+      const principal = accounts[0].owner;
+      if (principal.isAnonymous()) {
+        throw new Error("Failed to authenticate with Oisy - got anonymous principal");
+      }
 
-        this.signer = new Signer({ transport: this.transport });
+      this.signerAgent.replaceAccount(principal);
 
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        console.debug('[Oisy] Permissions:', await this.signer.permissions());
+      if (config.fetchRootKeys) {
+        await this.signerAgent.fetchRootKey();
+      }
 
-        const accounts = await this.signer.accounts();
-        if (!accounts || accounts.length === 0) {
-          throw new Error("No accounts returned from Oisy");
-        }
+      this.accounts = accounts.map(acc => ({
+        id: acc.owner.toText(),
+        displayName: `Oisy Account ${acc.owner.toText().slice(0, 8)}...`,
+        principal: acc.owner.toText(),
+        subaccount: new Uint8Array(principalToSubAccount(acc.owner)),
+        type: AccountType.SESSION,
+      }));
 
-        const principal = accounts[0].owner;
-        if (principal.isAnonymous()) {
-          throw new Error("Failed to authenticate with Oisy - got anonymous principal");
-        }
-
-        this.signerAgent = SignerAgent.createSync({
-          signer: this.signer,
-          account: principal,
-        });
-
-        this.agent = HttpAgent.createSync({
-          host: config.hostUrl || "https://icp0.io",
-          verifyQuerySignatures: config.verifyQuerySignatures,
-        });
-
-        if (config.fetchRootKeys) {
-          await this.agent.fetchRootKey();
-          await this.signerAgent.fetchRootKey();
-        }
-
-        this.accounts = accounts.map(acc => ({
-          id: acc.owner.toText(),
-          displayName: `Oisy Account ${acc.owner.toText().slice(0, 8)}...`,
-          principal: acc.owner.toText(),
-          subaccount: new Uint8Array(principalToSubAccount(acc.owner)),
-          type: AccountType.SESSION,
-        }));
-      })();
-
-      await this.connectionPromise;
-      
-      const principal = await this.getPrincipal();
       return {
         owner: principal,
         subaccount: principalToSubAccount(principal),
@@ -155,7 +124,6 @@ export class OisyAdapter implements Adapter.Interface {
     } finally {
       this.isProcessing = false;
       this.connectionPromise = null;
-      releaseLock();
     }
   }
 
@@ -287,4 +255,9 @@ export class OisyAdapter implements Adapter.Interface {
 
     return releaseLock!;
   }
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener("click", () => console.log('within'), true);
+  window.addEventListener("click", () => console.log('outside'));
 }

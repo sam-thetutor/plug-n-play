@@ -26,7 +26,8 @@ class PNP {
       localStorageKey: config.localStorageKey || "pnpConnectedWallet",
       timeout: config.timeout || 1000 * 60 * 60 * 24, // 1 day in milliseconds
       verifyQuerySignatures: config.verifyQuerySignatures ?? false,
-      delegationTimeout: config.delegationTimeout || BigInt(24 * 60 * 60 * 1000 * 1000 * 1000),
+      delegationTimeout:
+        config.delegationTimeout || BigInt(24 * 60 * 60 * 1000 * 1000 * 1000),
       delegationTargets: config.delegationTargets || [],
       isDev: config.isDev ?? true,
       derivationOrigin: config.derivationOrigin || "https://identity.ic0.app",
@@ -34,64 +35,27 @@ class PNP {
     };
   }
 
-  async prepareConnection(walletId: string): Promise<{ 
-    connect: () => Promise<Wallet.Account>
-  }> {
+  async connect(walletId: string): Promise<Wallet.Account> {
+    console.log("pnp.connect");
+    if (this.isConnecting) {
+      throw new Error("Connection in progress");
+    }
+
+    this.isConnecting = true;
     const adapter = walletList.find((w) => w.id === walletId);
     if (!adapter) {
       throw new Error(`Wallet ${walletId} not found`);
     }
 
     const instance = new adapter.adapter();
-    const isAvailable = await instance.isAvailable();
-    if (!isAvailable) {
-      throw new Error(`Wallet ${walletId} is not available`);
-    }
 
-    // Return a connect function that establishes channel and connects in click handler context
-    return {
-      connect: () => {
-        // Execute in click handler context
-        return new Promise<Wallet.Account>((resolve, reject) => {
-          // Check if adapter needs channel establishment
-          if ('establishChannel' in instance) {
-            instance.establishChannel()
-              .then(() => {
-                this.provider = instance;
-                return instance.connect(this.config);
-              })
-              .then(account => {
-                this.account = account;
-                this.activeWallet = adapter;
-                this.provider = instance;
-                localStorage.setItem(this.config.localStorageKey, walletId);
-                resolve(account);
-              })
-              .catch(reject);
-          } else {
-            instance.connect(this.config)
-              .then(account => {
-                this.account = account;
-                this.activeWallet = adapter;
-                this.provider = instance;
-                localStorage.setItem(this.config.localStorageKey, walletId);
-                resolve(account);
-              })
-              .catch(reject);
-          }
-        });
-      }
-    };
-  }
-
-  async connect(walletId: string): Promise<Wallet.Account> {
-    if (this.isConnecting) {
-      throw new Error("Connection in progress");
-    }
-
-    this.isConnecting = true;
     try {
-      const prepared = await this.prepareConnection(walletId);
+      const prepared = await instance.connect(this.config).then((account) => {
+        this.account = account;
+        this.activeWallet = adapter;
+        this.provider = instance;
+        localStorage.setItem(this.config.localStorageKey, walletId);
+      });
       return await prepared.connect();
     } finally {
       this.isConnecting = false;
@@ -132,7 +96,7 @@ class PNP {
     if (anon) {
       actor = await this.createAnonymousActor<T>(canisterId, idl);
     } else {
-      console.log('Creating actor with provider');
+      console.log("Creating actor with provider");
       actor = await this.provider.createActor<T>(canisterId, idl, {
         requiresSigning,
       });
@@ -147,13 +111,14 @@ class PNP {
   ): Promise<ActorSubclass<T>> {
     const agent = HttpAgent.createSync({
       host: this.config.hostUrl,
-      verifyQuerySignatures: this.config.verifyQuerySignatures
+      verifyQuerySignatures: this.config.verifyQuerySignatures,
     });
     if (this.fetchRootKeys) {
       await agent.fetchRootKey();
     }
     // Extract the interface factory from the IDL
-    const interfaceFactory = typeof idl === 'function' ? idl : idl._idlFactory || idl.idlFactory;
+    const interfaceFactory =
+      typeof idl === "function" ? idl : idl._idlFactory || idl.idlFactory;
     return Actor.createActor<T>(interfaceFactory, { agent, canisterId });
   }
 

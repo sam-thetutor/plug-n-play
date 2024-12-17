@@ -11639,7 +11639,6 @@ const _OisyAdapter = class _OisyAdapter {
   constructor() {
     this.signer = null;
     this.agent = null;
-    this.signerAgent = null;
     this.accounts = [];
     this.transport = null;
     this.connectionPromise = null;
@@ -11653,6 +11652,11 @@ const _OisyAdapter = class _OisyAdapter {
     this.url = "https://oisy.com/sign";
     this.name = "Oisy";
     this.logo = _OisyAdapter.logo;
+    this.signerAgent = new SignerAgent({
+      signer: new Signer({ transport: new PostMessageTransport({ url: this.url, ..._OisyAdapter.TRANSPORT_CONFIG }) }),
+      account: Principal.anonymous(),
+      agent: HttpAgent.createSync({ host: this.url })
+    });
   }
   async isAvailable() {
     return true;
@@ -11671,57 +11675,28 @@ const _OisyAdapter = class _OisyAdapter {
     return getAccountIdentifier(principal.toText()) || "";
   }
   async connect(config) {
-    if (this.connectionPromise) {
-      return this.connectionPromise.then(async () => ({
-        owner: await this.getPrincipal(),
-        subaccount: principalToSubAccount(await this.getPrincipal()),
-        hasDelegation: false
-      }));
-    }
-    const releaseLock = await this.acquireLock();
     try {
-      await this.disconnect();
-      this.isProcessing = true;
-      this.config = config;
-      this.connectionPromise = (async () => {
-        this.transport = new PostMessageTransport({
-          url: this.url,
-          ..._OisyAdapter.TRANSPORT_CONFIG
-        });
-        this.signer = new Signer({ transport: this.transport });
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        console.debug("[Oisy] Permissions:", await this.signer.permissions());
-        const accounts = await this.signer.accounts();
-        if (!accounts || accounts.length === 0) {
-          throw new Error("No accounts returned from Oisy");
-        }
-        const principal2 = accounts[0].owner;
-        if (principal2.isAnonymous()) {
-          throw new Error("Failed to authenticate with Oisy - got anonymous principal");
-        }
-        this.signerAgent = SignerAgent.createSync({
-          signer: this.signer,
-          account: principal2
-        });
-        this.agent = HttpAgent.createSync({
-          host: config.hostUrl || "https://icp0.io",
-          verifyQuerySignatures: config.verifyQuerySignatures
-        });
-        if (config.fetchRootKeys) {
-          await this.agent.fetchRootKey();
-          await this.signerAgent.fetchRootKey();
-        }
-        this.accounts = accounts.map((acc) => ({
-          id: acc.owner.toText(),
-          displayName: `Oisy Account ${acc.owner.toText().slice(0, 8)}...`,
-          principal: acc.owner.toText(),
-          subaccount: new Uint8Array(principalToSubAccount(acc.owner)),
-          type: "SESSION"
-          /* SESSION */
-        }));
-      })();
-      await this.connectionPromise;
-      const principal = await this.getPrincipal();
+      console.log("connecting to oisy");
+      const accounts = await this.signerAgent.signer.accounts();
+      if (!accounts || accounts.length === 0) {
+        throw new Error("No accounts returned from Oisy");
+      }
+      const principal = accounts[0].owner;
+      if (principal.isAnonymous()) {
+        throw new Error("Failed to authenticate with Oisy - got anonymous principal");
+      }
+      this.signerAgent.replaceAccount(principal);
+      if (config.fetchRootKeys) {
+        await this.signerAgent.fetchRootKey();
+      }
+      this.accounts = accounts.map((acc) => ({
+        id: acc.owner.toText(),
+        displayName: `Oisy Account ${acc.owner.toText().slice(0, 8)}...`,
+        principal: acc.owner.toText(),
+        subaccount: new Uint8Array(principalToSubAccount(acc.owner)),
+        type: "SESSION"
+        /* SESSION */
+      }));
       return {
         owner: principal,
         subaccount: principalToSubAccount(principal),
@@ -11734,7 +11709,6 @@ const _OisyAdapter = class _OisyAdapter {
     } finally {
       this.isProcessing = false;
       this.connectionPromise = null;
-      releaseLock();
     }
   }
   async createActor(canisterId, idlFactory, options = {
@@ -11849,6 +11823,10 @@ _OisyAdapter.REQUEST_TIMEOUT = 3e4;
 _OisyAdapter.OPERATION_LOCK_TIMEOUT = 1e4;
 _OisyAdapter.logo = oisyLogo;
 let OisyAdapter = _OisyAdapter;
+if (typeof window !== "undefined") {
+  window.addEventListener("click", () => console.log("within"), true);
+  window.addEventListener("click", () => console.log("outside"));
+}
 const walletList = [
   {
     id: "nfid",
@@ -11911,6 +11889,7 @@ class PNP {
     };
   }
   async prepareConnection(walletId) {
+    console.log("preparing connection");
     const adapter = walletList.find((w) => w.id === walletId);
     if (!adapter) {
       throw new Error(`Wallet ${walletId} not found`);
@@ -11920,34 +11899,15 @@ class PNP {
     if (!isAvailable) {
       throw new Error(`Wallet ${walletId} is not available`);
     }
-    return {
-      connect: () => {
-        return new Promise((resolve, reject) => {
-          if ("establishChannel" in instance) {
-            instance.establishChannel().then(() => {
-              this.provider = instance;
-              return instance.connect(this.config);
-            }).then((account) => {
-              this.account = account;
-              this.activeWallet = adapter;
-              this.provider = instance;
-              localStorage.setItem(this.config.localStorageKey, walletId);
-              resolve(account);
-            }).catch(reject);
-          } else {
-            instance.connect(this.config).then((account) => {
-              this.account = account;
-              this.activeWallet = adapter;
-              this.provider = instance;
-              localStorage.setItem(this.config.localStorageKey, walletId);
-              resolve(account);
-            }).catch(reject);
-          }
-        });
-      }
-    };
+    return instance.connect(this.config).then((account) => {
+      this.account = account;
+      this.activeWallet = adapter;
+      this.provider = instance;
+      localStorage.setItem(this.config.localStorageKey, walletId);
+    });
   }
   async connect(walletId) {
+    console.log("pnp.connect");
     if (this.isConnecting) {
       throw new Error("Connection in progress");
     }

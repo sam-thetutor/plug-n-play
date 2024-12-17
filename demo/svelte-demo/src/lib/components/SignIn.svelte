@@ -38,8 +38,7 @@
       }
 
       // Prepare connection and connect in click handler context
-      const { connect } = await pnp.prepareConnection(walletId);
-      const account = await connect();
+      const account = await pnp.connect(walletId);
       
       // Update stores after successful connection
       selectedWalletId.set(walletId);
@@ -106,7 +105,7 @@
             <button
               class="wallet-button"
               disabled={connecting}
-              on:click|preventDefault={(event) => handleConnect(wallet.id)}
+              on:click|preventDefault={() => handleConnect(wallet.id)}
             >
               <img src={wallet.logo} alt={wallet.name} />
             </button>

@@ -15,7 +15,6 @@ interface PNP {
     fetchRootKeys: boolean;
     getActor: <T>(canisterId: string, idl: any, isAnon?: boolean) => Promise<ActorSubclass<T>>;
     connect: (walletId: string) => Promise<Wallet.Account>;
-    prepareConnection: (walletId: string) => Promise<{ connect: () => Promise<Wallet.Account> }>;
     disconnect: () => Promise<void>;
     isWalletConnected: () => Promise<boolean>;
     createAnonymousActor: <T>(canisterId: string, idl: any, options?: { requiresSigning?: boolean }) => Promise<ActorSubclass<T>>;
@@ -50,9 +49,6 @@ export const initializePNP = () => {
         connect: (walletId: string) => {
             return pnp.connect(walletId);
         },
-        prepareConnection: (walletId: string) => {
-            return pnp.prepareConnection(walletId);
-        },
         disconnect: () => pnp.disconnect(),
         isWalletConnected: () => pnp.isWalletConnected(),
         createAnonymousActor: <T>(canisterId: string, idl: any, options?: { requiresSigning?: boolean }) => {
@@ -75,9 +71,7 @@ export const connectWallet = async (walletId: string) => {
     }
 
     try {
-        // Use prepareConnection to maintain click handler context
-        const prepared = await pnp.prepareConnection(walletId);
-        const account = await prepared.connect();
+        const account = await pnp.connect(walletId);
         selectedWalletId.set(walletId);
         isConnected.set(true);
         principalId.set(account.owner.toString());
