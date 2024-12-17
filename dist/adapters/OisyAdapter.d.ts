@@ -39,7 +39,7 @@ export declare class OisyAdapter implements Adapter.Interface {
     createActor<T>(canisterId: string, idlFactory: any, options?: {
         requiresSigning?: boolean;
         anon: boolean;
-    }): Promise<ActorSubclass<T>>;
+    }): ActorSubclass<T>;
     private createAnonymousActor;
     disconnect(): Promise<void>;
     getAccounts(): OisyAccount[];

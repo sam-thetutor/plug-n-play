@@ -11390,7 +11390,7 @@ const _OisyAdapter = class _OisyAdapter {
       this.connectionPromise = null;
     }
   }
-  async createActor(canisterId, idlFactory, options = {
+  createActor(canisterId, idlFactory, options = {
     requiresSigning: true,
     anon: false
   }) {
@@ -11412,7 +11412,7 @@ const _OisyAdapter = class _OisyAdapter {
       throw error;
     }
   }
-  async createAnonymousActor(canisterId, idl) {
+  createAnonymousActor(canisterId, idl) {
     var _a2, _b;
     return Actor.createActor(idl, {
       agent: HttpAgent.createSync({
@@ -11551,14 +11551,14 @@ class PNP {
     this.actorCache.clear();
     localStorage.removeItem(this.config.localStorageKey);
   }
-  async getActor(canisterId, idl, options) {
+  getActor(canisterId, idl, options) {
     const { anon = false, requiresSigning = true } = options || {};
     let actor;
     if (anon) {
-      actor = await this.createAnonymousActor(canisterId, idl);
+      actor = this.createAnonymousActor(canisterId, idl);
     } else {
       console.log("Creating actor with provider");
-      actor = await this.provider.createActor(canisterId, idl, {
+      actor = this.provider.createActor(canisterId, idl, {
         requiresSigning
       });
     }

@@ -75,23 +75,23 @@ class PNP {
     localStorage.removeItem(this.config.localStorageKey);
   }
 
-  async getActor<T>(
+  getActor<T>(
     canisterId: string,
     idl: any,
     options?: {
       anon?: boolean;
       requiresSigning?: boolean;
     }
-  ): Promise<ActorSubclass<T>> {
+  ): ActorSubclass<T> {
     const { anon = false, requiresSigning = true } = options || {};
     // Create the actor
     let actor: ActorSubclass<T>;
 
     if (anon) {
-      actor = await this.createAnonymousActor<T>(canisterId, idl);
+      actor = this.createAnonymousActor<T>(canisterId, idl);
     } else {
       console.log("Creating actor with provider");
-      actor = await this.provider.createActor<T>(canisterId, idl, {
+      actor = this.provider.createActor<T>(canisterId, idl, {
         requiresSigning,
       });
     }

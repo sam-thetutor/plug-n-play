@@ -123,7 +123,7 @@ export class OisyAdapter implements Adapter.Interface {
     }
   }
 
-  async createActor<T>(
+  createActor<T>(
     canisterId: string,
     idlFactory: any,
     options: {
@@ -133,7 +133,7 @@ export class OisyAdapter implements Adapter.Interface {
       requiresSigning: true,
       anon: false,
     }
-  ): Promise<ActorSubclass<T>> {
+  ): ActorSubclass<T> {
     const { requiresSigning = true, anon = false } = options;
 
     if (anon === true) {
@@ -155,7 +155,7 @@ export class OisyAdapter implements Adapter.Interface {
     }
   }
 
-  private async createAnonymousActor<T>(canisterId: string, idl: any): Promise<ActorSubclass<T>> {
+  private createAnonymousActor<T>(canisterId: string, idl: any): ActorSubclass<T> {
     return Actor.createActor<T>(idl, {
       agent: HttpAgent.createSync({
         host: this.config?.hostUrl || "https://icp0.io",

@@ -16,7 +16,7 @@ declare class PNP {
     getActor<T>(canisterId: string, idl: any, options?: {
         anon?: boolean;
         requiresSigning?: boolean;
-    }): Promise<ActorSubclass<T>>;
+    }): ActorSubclass<T>;
     createAnonymousActor<T>(canisterId: string, idl: any, options?: {
         requiresSigning?: boolean;
     }): Promise<ActorSubclass<T>>;

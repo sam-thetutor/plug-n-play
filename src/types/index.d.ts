@@ -126,8 +126,8 @@ export class PNP {
   connect(walletId: string): Promise<Wallet.Account>;
   disconnect(): Promise<void>;
   isWalletConnected(): boolean;
-  getActor<T>(canisterId: string, idl: any, isAnon?: boolean): Promise<ActorSubclass<T>>;
-  private createAnonymousActor<T>(canisterId: string, idl: any, options?: { requiresSigning?: boolean }): Promise<ActorSubclass<T>>;
+  getActor<T>(canisterId: string, idl: any, isAnon?: boolean): ActorSubclass<T>;
+  createAnonymousActor<T>(canisterId: string, idl: any, options?: { requiresSigning?: boolean }): ActorSubclass<T>;
 }
 
 declare global {
