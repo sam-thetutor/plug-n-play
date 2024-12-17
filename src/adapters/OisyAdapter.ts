@@ -41,7 +41,6 @@ export class OisyAdapter implements Adapter.Interface {
   private isProcessing: boolean = false;
   private requestQueue: Array<() => Promise<any>> = [];
   private isProcessingRequest: boolean = false;
-  private static readonly REQUEST_TIMEOUT = 30000; // 30 seconds
   private static readonly OPERATION_LOCK_TIMEOUT = 10000; // 10 seconds
   private operationLock: Promise<void> | null = null;
 
@@ -56,7 +55,7 @@ export class OisyAdapter implements Adapter.Interface {
     this.name = "Oisy";
     this.logo = OisyAdapter.logo;
     this.signerAgent = SignerAgent.createSync({ 
-      signer: new Signer({ transport: new PostMessageTransport({ url: this.url, ...OisyAdapter.TRANSPORT_CONFIG, detectNonClickEstablishment: true }) }), 
+      signer: new Signer({ transport: new PostMessageTransport({ url: this.url, ...OisyAdapter.TRANSPORT_CONFIG }) }), 
       account: Principal.anonymous(), 
       agent: HttpAgent.createSync({ host: this.url }) 
     });
@@ -84,9 +83,6 @@ export class OisyAdapter implements Adapter.Interface {
 
   async connect(config: Wallet.PNPConfig): Promise<Wallet.Account> {
     try {
-      console.log("connecting to oisy");
-      console.log("SignerAgent", this.signerAgent);
-      await this.signerAgent.signer.transport.establishChannel();
       const accounts = await this.signerAgent.signer.accounts();
       if (!accounts || accounts.length === 0) {
         throw new Error("No accounts returned from Oisy");
@@ -203,32 +199,6 @@ export class OisyAdapter implements Adapter.Interface {
     return this.accounts;
   }
 
-  private async processQueue() {
-    if (this.isProcessingRequest) return;
-    
-    while (this.requestQueue.length > 0) {
-      this.isProcessingRequest = true;
-      const request = this.requestQueue.shift();
-      
-      if (request) {
-        try {
-          await Promise.race([
-            request(),
-            new Promise((_, reject) => 
-              setTimeout(() => reject(new Error("Request timeout")), OisyAdapter.REQUEST_TIMEOUT)
-            )
-          ]);
-          // Add small delay between requests
-          await new Promise(resolve => setTimeout(resolve, 100));
-        } catch (error) {
-          console.error("[Oisy] Error processing request:", error);
-        }
-      }
-    }
-    
-    this.isProcessingRequest = false;
-  }
-
   private async acquireLock(): Promise<() => void> {
     while (this.operationLock) {
       try {
@@ -255,9 +225,4 @@ export class OisyAdapter implements Adapter.Interface {
 
     return releaseLock!;
   }
-}
-
-if (typeof window !== 'undefined') {
-  window.addEventListener("click", () => console.log('within'), true);
-  window.addEventListener("click", () => console.log('outside'));
 }

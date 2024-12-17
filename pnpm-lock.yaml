@@ -33,23 +33,23 @@ importers:
         specifier: ^2.7.1
         version: 2.7.1(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)
       '@slide-computer/signer':
-        specifier: 3.10.2
-        version: 3.10.2(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)
+        specifier: 3.10.1
+        version: 3.10.1(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)
       '@slide-computer/signer-agent':
-        specifier: 3.10.2
-        version: 3.10.2(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)(@slide-computer/signer@3.10.2(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))
+        specifier: 3.10.3
+        version: 3.10.3(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)(@slide-computer/signer@3.10.1(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))
       '@slide-computer/signer-storage':
-        specifier: 3.10.2
-        version: 3.10.2(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))
+        specifier: 3.10.3
+        version: 3.10.3(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))
       '@slide-computer/signer-transport-plug':
-        specifier: 3.10.2
-        version: 3.10.2(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)(@slide-computer/signer@3.10.2(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))
+        specifier: 3.10.3
+        version: 3.10.3(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)(@slide-computer/signer@3.10.1(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))
       '@slide-computer/signer-transport-stoic':
-        specifier: 3.10.2
-        version: 3.10.2(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)(@slide-computer/signer-storage@3.10.2(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)))(@slide-computer/signer@3.10.2(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))
+        specifier: 3.10.3
+        version: 3.10.3(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)(@slide-computer/signer-storage@3.10.3(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)))(@slide-computer/signer@3.10.1(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))
       '@slide-computer/signer-web':
-        specifier: 3.10.2
-        version: 3.10.2(@slide-computer/signer@3.10.2(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))
+        specifier: 3.10.3
+        version: 3.10.3(@slide-computer/signer@3.10.1(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))
       js-sha256:
         specifier: 0.11.0
         version: 0.11.0
@@ -89,7 +89,7 @@ importers:
         version: 2.1.1(vite@5.4.11(@types/node@22.10.2)(terser@5.37.0))
       vite-plugin-dts:
         specifier: ^4.3.0
-        version: 4.3.0(@types/node@22.10.2)(rollup@4.28.1)(typescript@5.7.2)(vite@5.4.11(@types/node@22.10.2)(terser@5.37.0))
+        version: 4.3.0(@types/node@22.10.2)(rollup@4.28.1)(typescript@5.4.2)(vite@5.4.11(@types/node@22.10.2)(terser@5.37.0))
       vite-plugin-static-copy:
         specifier: 2.2.0
         version: 2.2.0(vite@5.4.11(@types/node@22.10.2)(terser@5.37.0))
@@ -762,44 +762,44 @@ packages:
   '@sinonjs/fake-timers@10.3.0':
     resolution: {integrity: sha512-V4BG07kuYSUkTCSBHG8G8TNhM+F19jXFWnQtzj+we8DrkpSBCee9Z3Ms8yiGer/dlmhe35/Xdgyo3/0rQKg7YA==}
 
-  '@slide-computer/signer-agent@3.10.2':
-    resolution: {integrity: sha512-eRSa+oa6iuPJjK32Xo+KougIHQvCIdmJ9v3WOoUd9FQY80junxdLj2bIoMYoArspzje1R5dXmL/XaPwy6n5I4Q==}
+  '@slide-computer/signer-agent@3.10.3':
+    resolution: {integrity: sha512-hbb8o02XyLgPC4+RSPKuGNG8S7Xhc2pwXPbb2TWv8Fi/G2uCs7rM0NHQCMeUUduMX5zcgzaP75/iHnmPxj4qgg==}
     peerDependencies:
       '@dfinity/agent': ^2.1.3
       '@dfinity/candid': ^2.1.3
       '@dfinity/identity': ^2.1.3
       '@dfinity/principal': ^2.1.3
-      '@slide-computer/signer': ^3.10.2
+      '@slide-computer/signer': ^3.10.3
 
-  '@slide-computer/signer-storage@3.10.2':
-    resolution: {integrity: sha512-RF4JdH8DXfyVNO8u5BGCPcvtyu13vbWkYa+nzaM4G99B7aYw5SinClMWLzQZwc+tptZN+gZrBCWW/Z5VZYRf5g==}
+  '@slide-computer/signer-storage@3.10.3':
+    resolution: {integrity: sha512-VYQIYtsHdRAvNWPO+DVC/K3bzjkPeLy1hGLbecB35NDcdDDBn2cG8nr15+3foyQg4v8mCITjRvU+edGr/d2lDg==}
     peerDependencies:
       '@dfinity/identity': ^2.1.3
 
-  '@slide-computer/signer-transport-plug@3.10.2':
-    resolution: {integrity: sha512-OAJLar6FTrDLpwWAFiz4GD5Xriw7+ntrte4YHfvozr5sqo2+sM4WTIeGyXYxLmuagCquKRfD0TkxMZnCCUJkTw==}
+  '@slide-computer/signer-transport-plug@3.10.3':
+    resolution: {integrity: sha512-NGMl+Dlw5pHkaaQdgbpOuDxONXBFQ6wuSSYDJbdKUy461xQLV0UYleCfMgfLVk97vhDIyHDt8IRHnrCgjDUZGA==}
     peerDependencies:
       '@dfinity/agent': ^2.1.3
       '@dfinity/identity': ^2.1.3
       '@dfinity/principal': ^2.1.3
-      '@slide-computer/signer': ^3.10.2
+      '@slide-computer/signer': ^3.10.3
 
-  '@slide-computer/signer-transport-stoic@3.10.2':
-    resolution: {integrity: sha512-KMtfcdgi4R0Lh3QJ5Pef/EbhpKe/WANRbIFqVaK3a1DlXGbDMzofjYidrCSzOjWzJbQY8H+TcySxnwfUY7ygYw==}
+  '@slide-computer/signer-transport-stoic@3.10.3':
+    resolution: {integrity: sha512-ng0rmGM60GlCWxXkoxCC7prC8cmk4n3KJr0wi06F5+NnzdoVtfTKcX1SpEbwSuYj/kE7qSf+otrmVwKccT1QcA==}
     peerDependencies:
       '@dfinity/agent': ^2.1.3
       '@dfinity/identity': ^2.1.3
       '@dfinity/principal': ^2.1.3
-      '@slide-computer/signer': ^3.10.2
-      '@slide-computer/signer-storage': ^3.10.2
+      '@slide-computer/signer': ^3.10.3
+      '@slide-computer/signer-storage': ^3.10.3
 
-  '@slide-computer/signer-web@3.10.2':
-    resolution: {integrity: sha512-pdiCljhO+mK8O1XZ0zlOPuLTMueoYtHx01X8L19IJJXmENA8UDYBR/R5uKhFJZM+QWg7QIIxE5I+Bo7kndU8yA==}
+  '@slide-computer/signer-web@3.10.3':
+    resolution: {integrity: sha512-NiQ1j0FhbDW/2tNC8mk6gdDwdLK2NJ2nyowhYmU4KkA9ZrriPyyXIBytRMpiMHMxubgvfpkdw7oLJB9h8bFDxA==}
     peerDependencies:
-      '@slide-computer/signer': ^3.10.2
+      '@slide-computer/signer': ^3.10.3
 
-  '@slide-computer/signer@3.10.2':
-    resolution: {integrity: sha512-qILiXkx0WhzhJ8nd4mFU4LJHmluMDymT7YVTP8NAwjVZPY280lZQmcSvsTUH+A18Hg+KYbs9m2UUj5uNjwRQlg==}
+  '@slide-computer/signer@3.10.1':
+    resolution: {integrity: sha512-qGfQUa4Y4IVOXL3YH5cIiSCygi/7w+bLSq6Dfa9bpoBKTqQvypEq8QEBeOAPcJlbDATdaVKGPENbaeSQEFdi7w==}
     peerDependencies:
       '@dfinity/agent': ^2.1.3
       '@dfinity/candid': ^2.1.3
@@ -3265,11 +3265,6 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
-  typescript@5.7.2:
-    resolution: {integrity: sha512-i5t66RHxDvVN40HfDd1PsEThGNnlMCMT3jMUuoh9/0TaqWevNontacunWyN02LA9/fIbEWlcHZcgTKb9QoaLfg==}
-    engines: {node: '>=14.17'}
-    hasBin: true
-
   ufo@1.5.4:
     resolution: {integrity: sha512-UsUk3byDzKd04EyoZ7U4DOlxQaD14JUKQl6/P7wiX4FNvUfm3XL246n9W5AmqwW5RSFJ27NAuM0iLscAOYUiGQ==}
 
@@ -4364,39 +4359,39 @@ snapshots:
     dependencies:
       '@sinonjs/commons': 3.0.1
 
-  '@slide-computer/signer-agent@3.10.2(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)(@slide-computer/signer@3.10.2(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))':
+  '@slide-computer/signer-agent@3.10.3(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)(@slide-computer/signer@3.10.1(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))':
     dependencies:
       '@dfinity/agent': 2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)
       '@dfinity/candid': 2.2.0(@dfinity/principal@2.2.0)
       '@dfinity/identity': 2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)
       '@dfinity/principal': 2.2.0
-      '@slide-computer/signer': 3.10.2(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)
+      '@slide-computer/signer': 3.10.1(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)
 
-  '@slide-computer/signer-storage@3.10.2(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))':
+  '@slide-computer/signer-storage@3.10.3(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))':
     dependencies:
       '@dfinity/identity': 2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)
       idb-keyval: 6.2.1
 
-  '@slide-computer/signer-transport-plug@3.10.2(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)(@slide-computer/signer@3.10.2(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))':
+  '@slide-computer/signer-transport-plug@3.10.3(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)(@slide-computer/signer@3.10.1(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))':
     dependencies:
       '@dfinity/agent': 2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)
       '@dfinity/identity': 2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)
       '@dfinity/principal': 2.2.0
-      '@slide-computer/signer': 3.10.2(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)
+      '@slide-computer/signer': 3.10.1(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)
 
-  '@slide-computer/signer-transport-stoic@3.10.2(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)(@slide-computer/signer-storage@3.10.2(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)))(@slide-computer/signer@3.10.2(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))':
+  '@slide-computer/signer-transport-stoic@3.10.3(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)(@slide-computer/signer-storage@3.10.3(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)))(@slide-computer/signer@3.10.1(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))':
     dependencies:
       '@dfinity/agent': 2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)
       '@dfinity/identity': 2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)
       '@dfinity/principal': 2.2.0
-      '@slide-computer/signer': 3.10.2(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)
-      '@slide-computer/signer-storage': 3.10.2(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))
+      '@slide-computer/signer': 3.10.1(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)
+      '@slide-computer/signer-storage': 3.10.3(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))
 
-  '@slide-computer/signer-web@3.10.2(@slide-computer/signer@3.10.2(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))':
+  '@slide-computer/signer-web@3.10.3(@slide-computer/signer@3.10.1(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))':
     dependencies:
-      '@slide-computer/signer': 3.10.2(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)
+      '@slide-computer/signer': 3.10.1(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)
 
-  '@slide-computer/signer@3.10.2(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)':
+  '@slide-computer/signer@3.10.1(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/identity@2.2.0(@dfinity/agent@2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)':
     dependencies:
       '@dfinity/agent': 2.2.0(@dfinity/candid@2.2.0(@dfinity/principal@2.2.0))(@dfinity/principal@2.2.0)
       '@dfinity/candid': 2.2.0(@dfinity/principal@2.2.0)
@@ -4576,7 +4571,7 @@ snapshots:
       de-indent: 1.0.2
       he: 1.2.0
 
-  '@vue/language-core@2.1.6(typescript@5.7.2)':
+  '@vue/language-core@2.1.6(typescript@5.4.2)':
     dependencies:
       '@volar/language-core': 2.4.11
       '@vue/compiler-dom': 3.5.13
@@ -4587,7 +4582,7 @@ snapshots:
       muggle-string: 0.4.1
       path-browserify: 1.0.1
     optionalDependencies:
-      typescript: 5.7.2
+      typescript: 5.4.2
 
   '@vue/shared@3.5.13': {}
 
@@ -7385,8 +7380,6 @@ snapshots:
 
   typescript@5.4.2: {}
 
-  typescript@5.7.2: {}
-
   ufo@1.5.4: {}
 
   unbox-primitive@1.1.0:
@@ -7486,18 +7479,18 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  vite-plugin-dts@4.3.0(@types/node@22.10.2)(rollup@4.28.1)(typescript@5.7.2)(vite@5.4.11(@types/node@22.10.2)(terser@5.37.0)):
+  vite-plugin-dts@4.3.0(@types/node@22.10.2)(rollup@4.28.1)(typescript@5.4.2)(vite@5.4.11(@types/node@22.10.2)(terser@5.37.0)):
     dependencies:
       '@microsoft/api-extractor': 7.48.1(@types/node@22.10.2)
       '@rollup/pluginutils': 5.1.4(rollup@4.28.1)
       '@volar/typescript': 2.4.11
-      '@vue/language-core': 2.1.6(typescript@5.7.2)
+      '@vue/language-core': 2.1.6(typescript@5.4.2)
       compare-versions: 6.1.1
       debug: 4.4.0
       kolorist: 1.8.0
       local-pkg: 0.5.1
       magic-string: 0.30.17
-      typescript: 5.7.2
+      typescript: 5.4.2
     optionalDependencies:
       vite: 5.4.11(@types/node@22.10.2)(terser@5.37.0)
     transitivePeerDependencies:

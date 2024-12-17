@@ -128,21 +128,17 @@ export class NFIDAdapter implements Adapter.Interface {
     manageFocus: false,
   };
 
-  private signer: Signer | null = null;
-  private agent: HttpAgent | SignerAgent<any> | null = null;
-  private signerAgent: SignerAgent<any> | null = null;
+  private agent: HttpAgent;
   private identity: DelegationIdentity | null = null;
   private delegationStorage: DelegationStorage;
   private signatureQueue: SignatureQueue;
-  private lastConnectionAttempt: number = 0;
-  private connectionPromise: Promise<void> | null = null;
-  private transport: PostMessageTransport | null = null;
   private signerWindow: Window | null = null;
   private state: AdapterState = AdapterState.READY;
   private accounts: NFIDAccount[] = [];
   private actorCache: Map<string, ActorSubclass<any>> = new Map();
   private sessionKey: Ed25519KeyIdentity | null = null;
-  private reconnectAttempts = 0;
+  private signerAgent: SignerAgent<Signer>;
+  private signer: Signer;
 
   static readonly logo: string = nfidLogo;
   name: string = "NFID";
@@ -159,191 +155,20 @@ export class NFIDAdapter implements Adapter.Interface {
     this.delegationStorage = new LocalDelegationStorage();
     this.signatureQueue = new SignatureQueue();
     // Initialize session asynchronously - don't generate key here
-    this.initialize();
+    this.signerAgent = SignerAgent.createSync({ 
+      signer: new Signer({ transport: new PostMessageTransport({ url: this.url, ...NFIDAdapter.TRANSPORT_CONFIG }) }), 
+      account: Principal.anonymous(), 
+      agent: HttpAgent.createSync({ host: this.url }) 
+    });
+    this.signer = this.signerAgent.signer;
+    this.agent = HttpAgent.createSync({ host: this.url });
   }
 
-  private async initialize() {
-    try {
-      // Try to restore existing session first
-      const restored = await this.tryRestoreSession();
-      if (!restored) {
-        this.setState(AdapterState.READY);
-      }
-    } catch (error) {
-      console.error("[NFID] Error during initialization:", error);
-      this.setState(AdapterState.ERROR);
-    }
-  }
 
-  private async tryRestoreSession(): Promise<boolean> {
-    try {
-      const stored = await this.delegationStorage.get(NFIDAdapter.STORAGE_KEY);
-      if (!stored) return false;
-
-      let parsedData;
-      try {
-        parsedData = JSON.parse(stored);
-      } catch (parseError) {
-        console.warn("[NFID] Failed to parse stored session:", parseError);
-        await this.delegationStorage.remove(NFIDAdapter.STORAGE_KEY);
-        return false;
-      }
-
-      const { sessionKey, delegationChain } = parsedData;
-      if (!sessionKey || !delegationChain) {
-        console.warn("[NFID] Invalid stored session format");
-        await this.delegationStorage.remove(NFIDAdapter.STORAGE_KEY);
-        return false;
-      }
-
-      // Restore session key
-      try {
-        this.sessionKey = Ed25519KeyIdentity.fromParsedJson(sessionKey);
-      } catch (keyError) {
-        console.warn("[NFID] Failed to restore session key:", keyError);
-        await this.delegationStorage.remove(NFIDAdapter.STORAGE_KEY);
-        return false;
-      }
-
-      if (!this.sessionKey) {
-        console.warn("[NFID] Session key restoration returned null");
-        await this.delegationStorage.remove(NFIDAdapter.STORAGE_KEY);
-        return false;
-      }
-
-      // Restore delegation chain and verify it's not expired
-      let chain;
-      try {
-        chain = DelegationChain.fromJSON(delegationChain);
-      } catch (chainError) {
-        console.warn("[NFID] Failed to restore delegation chain:", chainError);
-        await this.delegationStorage.remove(NFIDAdapter.STORAGE_KEY);
-        return false;
-      }
-
-      const now = BigInt(Date.now()) * BigInt(1000000); // Convert to nanoseconds
-
-      // Check if any delegation in the chain is expired
-      const isExpired = chain.delegations.some(
-        (d) => d.delegation.expiration <= now
-      );
-      
-      if (isExpired) {
-        console.debug("[NFID] Stored delegation chain is expired");
-        await this.delegationStorage.remove(NFIDAdapter.STORAGE_KEY);
-        return false;
-      }
-
-      // Create delegation identity first
-      this.identity = DelegationIdentity.fromDelegation(this.sessionKey, chain);
-      const principal = this.identity.getPrincipal();
-      
-      if (principal.isAnonymous()) {
-        console.warn("[NFID] Restored identity is anonymous");
-        this.identity = null;
-        return false;
-      }
-
-      // Initialize signer after identity is set
-      await this.initSigner(false);
-      if (!this.signer) {
-        console.warn("[NFID] Failed to initialize signer during session restore");
-        return false;
-      }
-
-      // Create HTTP agent
-      this.agent = HttpAgent.createSync({
-        host: this.config?.hostUrl || "https://icp0.io",
-        identity: this.identity,
-        verifyQuerySignatures: this.config?.verifyQuerySignatures,
-      });
-
-      // Create signer agent
-      this.signerAgent = SignerAgent.createSync({
-        signer: this.signer,
-        account: principal,
-      });
-
-      // Set up account
-      const accountId = getAccountIdentifier(principal.toText()) || "";
-      const subaccount = principalToSubAccount(principal);
-      const account: NFIDAccount = {
-        id: accountId,
-        displayName: "NFID Account",
-        principal: principal.toText(),
-        subaccount: new Uint8Array(subaccount),
-        type: AccountType.SESSION,
-      };
-
-      this.accounts = [account];
-
-      // Verify the restored session works by making a test request
-      try {
-        await Promise.race([
-          this.signer.sendRequest({
-            id: window.crypto.randomUUID(),
-            jsonrpc: "2.0",
-            method: "icrc34_is_connected",
-            params: {},
-          }),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error("Verification timeout")), 5000)
-          ),
-        ]);
-        
-        // Double check that all components are still valid
-        if (!this.identity || !this.agent || !this.signerAgent || !this.signer) {
-          console.warn("[NFID] Components lost during verification");
-          throw new Error("Components lost during verification");
-        }
-
-        this.setState(AdapterState.READY);
-        this.reconnectAttempts = 0;
-        return true;
-      } catch (error) {
-        console.warn("[NFID] Restored session verification failed:", error);
-      }
-
-      // If we get here, something went wrong during verification
-      console.warn("[NFID] Session restore failed, cleaning up");
-      this.cleanupTransport();
-      this.identity = null;
-      this.agent = null;
-      this.signerAgent = null;
-      this.accounts = [];
-      await this.delegationStorage.remove(NFIDAdapter.STORAGE_KEY);
-      this.setState(AdapterState.ERROR);
-      return false;
-    } catch (error) {
-      console.warn("[NFID] Error restoring session:", error);
-      // Clean up any partial state
-      this.cleanupTransport();
-      this.identity = null;
-      this.agent = null;
-      this.signerAgent = null;
-      this.accounts = [];
-      this.setState(AdapterState.ERROR);
-      localStorage.removeItem(NFIDAdapter.STORAGE_KEY);
-      throw error;
-    }
-  }
 
   private setState(newState: AdapterState) {
     this.state = newState;
     // Could emit an event here if needed
-  }
-
-  private async getDelegationChain(
-    key: string
-  ): Promise<DelegationChain | null> {
-    const stored = await this.delegationStorage.get(key);
-    if (!stored) return null;
-    try {
-      return DelegationChain.fromJSON(JSON.parse(stored));
-    } catch (error) {
-      console.error("Error parsing delegation chain:", error);
-      return null;
-    }
   }
 
   private async setDelegationChain(
@@ -357,87 +182,6 @@ export class NFIDAdapter implements Adapter.Interface {
     await this.delegationStorage.set(key, JSON.stringify(sessionData));
   }
 
-  private async removeDelegationChain(key: string): Promise<void> {
-    await this.delegationStorage.remove(key);
-  }
-
-  private setupWindowTracking() {
-    if (this.transport) {
-      const transportWindow = (this.transport as any)._window;
-      if (transportWindow) {
-        this.signerWindow = transportWindow;
-      }
-    }
-  }
-
-  private async initSigner(forceNewTransport: boolean = false): Promise<void> {
-    if (this.connectionPromise) {
-      return this.connectionPromise;
-    }
-
-    const isReconnect = this.reconnectAttempts > 0;
-    
-    this.connectionPromise = (async () => {
-      try {
-        const now = Date.now();
-        if (now - this.lastConnectionAttempt < NFIDAdapter.CONNECTION_COOLDOWN) {
-          const waitTime = NFIDAdapter.CONNECTION_COOLDOWN - (now - this.lastConnectionAttempt);
-          await new Promise(resolve => setTimeout(resolve, waitTime));
-        }
-        this.lastConnectionAttempt = Date.now();
-
-        // Create new transport with retries
-        let attempts = 0;
-        const maxAttempts = 3;
-        
-        while (attempts < maxAttempts) {
-          try {
-            const config = isReconnect ? NFIDAdapter.HIDDEN_TRANSPORT_CONFIG : NFIDAdapter.TRANSPORT_CONFIG;
-            
-            this.transport = new PostMessageTransport({
-              url: this.url,
-              detectNonClickEstablishment: false,
-              ...config,
-            });
-
-            this.signer = new Signer({ 
-              transport: this.transport,
-            });
-
-            // Only track window for initial connection
-            if (!isReconnect) {
-              this.setupWindowTracking();
-              if (this.signerWindow) {
-                this.signerWindow.focus();
-              }
-            }
-            
-            // If we get here, connection was successful
-            break;
-          } catch (error) {
-            attempts++;
-            this.cleanupTransport();
-            
-            if (attempts >= maxAttempts) {
-              throw error;
-            }
-            
-            // Wait before retrying
-            await new Promise(resolve => setTimeout(resolve, 1000));
-          }
-        }
-
-      } catch (error) {
-        console.error("[NFID] Error initializing signer:", error);
-        this.cleanupTransport();
-        throw error;
-      } finally {
-        this.connectionPromise = null;
-      }
-    })();
-
-    return this.connectionPromise;
-  }
 
   private async cleanupTransport() {
     if (this.signer) {
@@ -458,8 +202,6 @@ export class NFIDAdapter implements Adapter.Interface {
       }
       this.signerWindow = null;
     }
-    
-    this.transport = null;
   }
 
   async isAvailable(): Promise<boolean> {
@@ -498,107 +240,13 @@ export class NFIDAdapter implements Adapter.Interface {
     });
   };
 
-  async prepareConnection(): Promise<Wallet.Account> {
-    this.transport = new PostMessageTransport({
-      url: this.url,
-      ...this.config,
-    });
+  private async connect(config: Wallet.PNPConfig): Promise<Wallet.Account> {
+    this.config = config;
 
-    this.signer = new Signer({ 
-      transport: this.transport,
-    });
-
-    return this.signer.accounts[0];
-  }
-
-  async connect(config: Wallet.PNPConfig): Promise<Wallet.Account> {
     try {
-      this.config = config;
-      
-      // Add timeout to the entire connect operation
-      return await Promise.race([
-        this._connect(config),
-        new Promise<never>((_, reject) => 
-          setTimeout(() => {
-            this.cleanupTransport();
-            reject(new Error("Connection timeout"));
-          }, 45000)
-        ),
-      ]);
-    } catch (error) {
-      this.cleanupTransport();
-      this.setState(AdapterState.ERROR);
-      throw error;
-    }
-  }
-
-  private async _connect(config: Wallet.PNPConfig): Promise<Wallet.Account> {
-    try {
-      // Don't try to connect if we already have a valid session
-      if (this.identity && this.signer && this.agent && this.signerAgent) {
-        try {
-          // Return existing account if session is valid
-          return {
-            owner: this.identity.getPrincipal(),
-            subaccount: principalToSubAccount(this.identity.getPrincipal()),
-            hasDelegation: true,
-          };
-        } catch (error) {
-          console.debug("[NFID] Existing session invalid, proceeding with new connection:", error);
-          this.cleanupTransport();
-        }
-      } else {
-
-        // If we have an identity but missing other components, try to recreate them
-        if (this.identity) {
-          try {
-            // Initialize signer
-            if (!this.signer) {
-              throw new Error("Failed to initialize signer");
-            }
-
-            // Create HTTP agent
-            this.agent = HttpAgent.createSync({
-              host: config.hostUrl,
-              identity: this.identity,
-              verifyQuerySignatures: config.verifyQuerySignatures,
-            });
-
-            // Create signer agent
-            this.signerAgent = SignerAgent.createSync({
-              signer: this.signer,
-              account: this.identity.getPrincipal(),
-            });
-
-            // Verify the components work
-            await Promise.race([
-              this.signer.sendRequest({
-                id: window.crypto.randomUUID(),
-                jsonrpc: "2.0",
-                method: "icrc34_is_connected",
-                params: {},
-              }),
-              new Promise((_, reject) => 
-                setTimeout(() => reject(new Error("Verification timeout")), 5000)
-              ),
-            ]);
-
-            return {
-              owner: this.identity.getPrincipal(),
-              subaccount: principalToSubAccount(this.identity.getPrincipal()),
-              hasDelegation: true,
-            };
-          } catch (error) {
-            console.debug("[NFID] Failed to recreate components:", error);
-            this.cleanupTransport();
-          }
-        }
-      }
-
       this.setState(AdapterState.LOADING);
 
       // Force a new transport when explicitly connecting
-      await this.initSigner(true);
       if (!this.signer) {
         throw new Error("Failed to initialize NFID signer");
       }
@@ -648,11 +296,7 @@ export class NFIDAdapter implements Adapter.Interface {
         delegationChain
       );
 
-      this.agent = HttpAgent.createSync({
-        host: config.hostUrl,
-        identity: delegationIdentity,
-        verifyQuerySignatures: config.verifyQuerySignatures,
-      });
+      this.signerAgent.replaceAccount(delegationIdentity.getPrincipal());
 
       if (config.fetchRootKeys) {
         await this.agent.fetchRootKey();
@@ -684,24 +328,9 @@ export class NFIDAdapter implements Adapter.Interface {
 
       this.accounts = [account];
 
-      // Verify the new session works by making a test request
       try {
-        await Promise.race([
-          this.signer.sendRequest({
-            id: window.crypto.randomUUID(),
-            jsonrpc: "2.0",
-            method: "icrc34_is_connected",
-            params: {},
-          }),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error("Verification timeout")), 5000)
-          ),
-        ]);
-        
-        // Only set state to READY if everything is properly initialized
-        if (this.identity && this.agent && this.signerAgent && this.signer) {
+          if (this.identity && this.agent && this.signerAgent && this.signer) {
           this.setState(AdapterState.READY);
-          this.reconnectAttempts = 0;
           console.debug("[NFID] Session established successfully");
           // Let the window close itself
           this.signerWindow = null;
@@ -717,7 +346,6 @@ export class NFIDAdapter implements Adapter.Interface {
 
       // If we get here, something went wrong during verification
       console.error("[NFID] Session establishment failed, cleaning up");
-      this.cleanupTransport();
       this.identity = null;
       this.agent = null;
       this.signerAgent = null;
@@ -879,7 +507,6 @@ export class NFIDAdapter implements Adapter.Interface {
   }
 
   async disconnect(): Promise<void> {
-    this.cleanupTransport();
     this.identity = null;
     this.agent = null;
     this.signerAgent = null;

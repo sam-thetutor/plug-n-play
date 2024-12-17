@@ -37,14 +37,8 @@
         throw new Error('PNP not initialized');
       }
 
-      // Prepare connection and connect in click handler context
-      const account = await pnp.connect(walletId);
-      
-      // Update stores after successful connection
-      selectedWalletId.set(walletId);
-      isConnected.set(true);
-      principalId.set(account.owner.toString());
-      
+      const account = await connectWallet(walletId);
+      console.log("account", account);
       await fetchBalance();
     } catch (e) {
       error = e.message;

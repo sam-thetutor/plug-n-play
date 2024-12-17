@@ -74,6 +74,7 @@ export const connectWallet = async (walletId: string) => {
         const account = await pnp.connect(walletId);
         selectedWalletId.set(walletId);
         isConnected.set(true);
+        console.log("account", account);
         principalId.set(account.owner.toString());
         return account;
     } catch (error) {

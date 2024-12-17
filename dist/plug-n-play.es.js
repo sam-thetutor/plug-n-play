@@ -9305,7 +9305,7 @@ var __classPrivateFieldGet$2 = function(receiver, state, kind, f) {
   if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
   return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
-var _PostMessageTransport_options, _PostMessageTransport_withinClick;
+var _PostMessageTransport_options, _PostMessageTransport_clickState;
 const NON_CLICK_ESTABLISHMENT_LINK = "https://github.com/slide-computer/signer-js/blob/main/packages/signer-web/README.md#channels-must-be-established-in-a-click-handler";
 class PostMessageTransportError extends Error {
   constructor(message) {
@@ -9313,25 +9313,26 @@ class PostMessageTransportError extends Error {
     Object.setPrototypeOf(this, PostMessageTransportError.prototype);
   }
 }
+let withinClick = false;
+if (globalThis.window) {
+  globalThis.window.addEventListener("click", () => withinClick = true, true);
+  globalThis.window.addEventListener("click", () => withinClick = false);
+}
 class PostMessageTransport {
   constructor(options) {
     _PostMessageTransport_options.set(this, void 0);
-    _PostMessageTransport_withinClick.set(this, false);
+    _PostMessageTransport_clickState.set(this, void 0);
     if (!urlIsSecureContext(options.url)) {
       throw new PostMessageTransportError("Invalid signer RPC url");
     }
     __classPrivateFieldSet$2(this, _PostMessageTransport_options, Object.assign({ windowOpenerFeatures: "", window: globalThis.window, establishTimeout: 1e4, disconnectTimeout: 2e3, statusPollingRate: 300, crypto: globalThis.crypto, manageFocus: true, closeOnEstablishTimeout: true, detectNonClickEstablishment: true }, options));
-    if (__classPrivateFieldGet$2(this, _PostMessageTransport_options, "f").detectNonClickEstablishment) {
-      window.addEventListener("click", () => __classPrivateFieldSet$2(this, _PostMessageTransport_withinClick, true), true);
-      window.addEventListener("click", () => __classPrivateFieldSet$2(this, _PostMessageTransport_withinClick, false));
-    }
   }
   async establishChannel() {
     return new Promise((resolve, reject) => {
       let channel;
       let heartbeatInterval;
       let disconnectTimeout;
-      if (__classPrivateFieldGet$2(this, _PostMessageTransport_options, "f").detectNonClickEstablishment && !__classPrivateFieldGet$2(this, _PostMessageTransport_withinClick, "f")) {
+      if (__classPrivateFieldGet$2(this, _PostMessageTransport_options, "f").detectNonClickEstablishment && !withinClick) {
         reject(new PostMessageTransportError(`Signer window should not be opened outside of click handler, see: ${NON_CLICK_ESTABLISHMENT_LINK}`));
         return;
       }
@@ -9375,7 +9376,7 @@ class PostMessageTransport {
     });
   }
 }
-_PostMessageTransport_options = /* @__PURE__ */ new WeakMap(), _PostMessageTransport_withinClick = /* @__PURE__ */ new WeakMap();
+_PostMessageTransport_options = /* @__PURE__ */ new WeakMap(), _PostMessageTransport_clickState = /* @__PURE__ */ new WeakMap();
 var isNumeric = /^-?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i, mathceil = Math.ceil, mathfloor = Math.floor, bignumberError = "[BigNumber Error] ", tooManyDigits = bignumberError + "Number primitive has more than 15 significant digits: ", BASE = 1e14, LOG_BASE = 14, MAX_SAFE_INTEGER = 9007199254740991, POWS_TEN = [1, 10, 100, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11, 1e12, 1e13], SQRT_BASE = 1e7, MAX = 1e9;
 function clone(configObject) {
   var div, convertBase, parseNumeric, P = BigNumber.prototype = { constructor: BigNumber, toString: null, valueOf: null }, ONE = new BigNumber(1), DECIMAL_PLACES = 20, ROUNDING_MODE = 4, TO_EXP_NEG = -7, TO_EXP_POS = 21, MIN_EXP = -1e7, MAX_EXP = 1e7, CRYPTO = false, MODULO_MODE = 1, POW_PRECISION = 0, FORMAT = {
@@ -10966,19 +10967,12 @@ class SignatureQueue {
 }
 const _NFIDAdapter = class _NFIDAdapter {
   constructor() {
-    this.signer = null;
-    this.agent = null;
-    this.signerAgent = null;
     this.identity = null;
-    this.lastConnectionAttempt = 0;
-    this.connectionPromise = null;
-    this.transport = null;
     this.signerWindow = null;
     this.state = "READY";
     this.accounts = [];
     this.actorCache = /* @__PURE__ */ new Map();
     this.sessionKey = null;
-    this.reconnectAttempts = 0;
     this.name = "NFID";
     this.logo = _NFIDAdapter.logo;
     this.identityProviderUrl = "https://nfid.one/authenticate/?applicationName=kong";
@@ -11000,169 +10994,16 @@ const _NFIDAdapter = class _NFIDAdapter {
     this.logo = _NFIDAdapter.logo;
     this.delegationStorage = new LocalDelegationStorage();
     this.signatureQueue = new SignatureQueue();
-    this.initialize();
-  }
-  async initialize() {
-    try {
-      const restored = await this.tryRestoreSession();
-      if (!restored) {
-        this.setState(
-          "READY"
-          /* READY */
-        );
-      }
-    } catch (error) {
-      console.error("[NFID] Error during initialization:", error);
-      this.setState(
-        "ERROR"
-        /* ERROR */
-      );
-    }
-  }
-  async tryRestoreSession() {
-    var _a2, _b;
-    try {
-      const stored = await this.delegationStorage.get(_NFIDAdapter.STORAGE_KEY);
-      if (!stored) return false;
-      let parsedData;
-      try {
-        parsedData = JSON.parse(stored);
-      } catch (parseError) {
-        console.warn("[NFID] Failed to parse stored session:", parseError);
-        await this.delegationStorage.remove(_NFIDAdapter.STORAGE_KEY);
-        return false;
-      }
-      const { sessionKey, delegationChain } = parsedData;
-      if (!sessionKey || !delegationChain) {
-        console.warn("[NFID] Invalid stored session format");
-        await this.delegationStorage.remove(_NFIDAdapter.STORAGE_KEY);
-        return false;
-      }
-      try {
-        this.sessionKey = Ed25519KeyIdentity.fromParsedJson(sessionKey);
-      } catch (keyError) {
-        console.warn("[NFID] Failed to restore session key:", keyError);
-        await this.delegationStorage.remove(_NFIDAdapter.STORAGE_KEY);
-        return false;
-      }
-      if (!this.sessionKey) {
-        console.warn("[NFID] Session key restoration returned null");
-        await this.delegationStorage.remove(_NFIDAdapter.STORAGE_KEY);
-        return false;
-      }
-      let chain;
-      try {
-        chain = DelegationChain.fromJSON(delegationChain);
-      } catch (chainError) {
-        console.warn("[NFID] Failed to restore delegation chain:", chainError);
-        await this.delegationStorage.remove(_NFIDAdapter.STORAGE_KEY);
-        return false;
-      }
-      const now = BigInt(Date.now()) * BigInt(1e6);
-      const isExpired = chain.delegations.some(
-        (d) => d.delegation.expiration <= now
-      );
-      if (isExpired) {
-        console.debug("[NFID] Stored delegation chain is expired");
-        await this.delegationStorage.remove(_NFIDAdapter.STORAGE_KEY);
-        return false;
-      }
-      this.identity = DelegationIdentity.fromDelegation(this.sessionKey, chain);
-      const principal = this.identity.getPrincipal();
-      if (principal.isAnonymous()) {
-        console.warn("[NFID] Restored identity is anonymous");
-        this.identity = null;
-        return false;
-      }
-      await this.initSigner(false);
-      if (!this.signer) {
-        console.warn("[NFID] Failed to initialize signer during session restore");
-        return false;
-      }
-      this.agent = HttpAgent.createSync({
-        host: ((_a2 = this.config) == null ? void 0 : _a2.hostUrl) || "https://icp0.io",
-        identity: this.identity,
-        verifyQuerySignatures: (_b = this.config) == null ? void 0 : _b.verifyQuerySignatures
-      });
-      this.signerAgent = SignerAgent.createSync({
-        signer: this.signer,
-        account: principal
-      });
-      const accountId = getAccountIdentifier(principal.toText()) || "";
-      const subaccount = principalToSubAccount(principal);
-      const account = {
-        id: accountId,
-        displayName: "NFID Account",
-        principal: principal.toText(),
-        subaccount: new Uint8Array(subaccount),
-        type: "SESSION"
-        /* SESSION */
-      };
-      this.accounts = [account];
-      try {
-        await Promise.race([
-          this.signer.sendRequest({
-            id: window.crypto.randomUUID(),
-            jsonrpc: "2.0",
-            method: "icrc34_is_connected",
-            params: {}
-          }),
-          new Promise(
-            (_, reject) => setTimeout(() => reject(new Error("Verification timeout")), 5e3)
-          )
-        ]);
-        if (!this.identity || !this.agent || !this.signerAgent || !this.signer) {
-          console.warn("[NFID] Components lost during verification");
-          throw new Error("Components lost during verification");
-        }
-        this.setState(
-          "READY"
-          /* READY */
-        );
-        this.reconnectAttempts = 0;
-        return true;
-      } catch (error) {
-        console.warn("[NFID] Restored session verification failed:", error);
-      }
-      console.warn("[NFID] Session restore failed, cleaning up");
-      this.cleanupTransport();
-      this.identity = null;
-      this.agent = null;
-      this.signerAgent = null;
-      this.accounts = [];
-      await this.delegationStorage.remove(_NFIDAdapter.STORAGE_KEY);
-      this.setState(
-        "ERROR"
-        /* ERROR */
-      );
-      return false;
-    } catch (error) {
-      console.warn("[NFID] Error restoring session:", error);
-      this.cleanupTransport();
-      this.identity = null;
-      this.agent = null;
-      this.signerAgent = null;
-      this.accounts = [];
-      this.setState(
-        "ERROR"
-        /* ERROR */
-      );
-      localStorage.removeItem(_NFIDAdapter.STORAGE_KEY);
-      throw error;
-    }
+    this.signerAgent = SignerAgent.createSync({
+      signer: new Signer({ transport: new PostMessageTransport({ url: this.url, ..._NFIDAdapter.TRANSPORT_CONFIG }) }),
+      account: Principal.anonymous(),
+      agent: HttpAgent.createSync({ host: this.url })
+    });
+    this.signer = this.signerAgent.signer;
+    this.agent = HttpAgent.createSync({ host: this.url });
   }
   setState(newState) {
     this.state = newState;
-  }
-  async getDelegationChain(key) {
-    const stored = await this.delegationStorage.get(key);
-    if (!stored) return null;
-    try {
-      return DelegationChain.fromJSON(JSON.parse(stored));
-    } catch (error) {
-      console.error("Error parsing delegation chain:", error);
-      return null;
-    }
   }
   async setDelegationChain(key, chain) {
     const sessionData = {
@@ -11170,69 +11011,6 @@ const _NFIDAdapter = class _NFIDAdapter {
       delegationChain: chain.toJSON()
     };
     await this.delegationStorage.set(key, JSON.stringify(sessionData));
-  }
-  async removeDelegationChain(key) {
-    await this.delegationStorage.remove(key);
-  }
-  setupWindowTracking() {
-    if (this.transport) {
-      const transportWindow = this.transport._window;
-      if (transportWindow) {
-        this.signerWindow = transportWindow;
-      }
-    }
-  }
-  async initSigner(forceNewTransport = false) {
-    if (this.connectionPromise) {
-      return this.connectionPromise;
-    }
-    const isReconnect = this.reconnectAttempts > 0;
-    this.connectionPromise = (async () => {
-      try {
-        const now = Date.now();
-        if (now - this.lastConnectionAttempt < _NFIDAdapter.CONNECTION_COOLDOWN) {
-          const waitTime = _NFIDAdapter.CONNECTION_COOLDOWN - (now - this.lastConnectionAttempt);
-          await new Promise((resolve) => setTimeout(resolve, waitTime));
-        }
-        this.lastConnectionAttempt = Date.now();
-        let attempts = 0;
-        const maxAttempts = 3;
-        while (attempts < maxAttempts) {
-          try {
-            const config = isReconnect ? _NFIDAdapter.HIDDEN_TRANSPORT_CONFIG : _NFIDAdapter.TRANSPORT_CONFIG;
-            this.transport = new PostMessageTransport({
-              url: this.url,
-              detectNonClickEstablishment: false,
-              ...config
-            });
-            this.signer = new Signer({
-              transport: this.transport
-            });
-            if (!isReconnect) {
-              this.setupWindowTracking();
-              if (this.signerWindow) {
-                this.signerWindow.focus();
-              }
-            }
-            break;
-          } catch (error) {
-            attempts++;
-            this.cleanupTransport();
-            if (attempts >= maxAttempts) {
-              throw error;
-            }
-            await new Promise((resolve) => setTimeout(resolve, 1e3));
-          }
-        }
-      } catch (error) {
-        console.error("[NFID] Error initializing signer:", error);
-        this.cleanupTransport();
-        throw error;
-      } finally {
-        this.connectionPromise = null;
-      }
-    })();
-    return this.connectionPromise;
   }
   async cleanupTransport() {
     if (this.signer) {
@@ -11252,7 +11030,6 @@ const _NFIDAdapter = class _NFIDAdapter {
       }
       this.signerWindow = null;
     }
-    this.transport = null;
   }
   async isAvailable() {
     return true;
@@ -11273,93 +11050,14 @@ const _NFIDAdapter = class _NFIDAdapter {
     const principal = this.identity.getPrincipal();
     return getAccountIdentifier(principal.toText()) || "";
   }
-  async prepareConnection() {
-    this.transport = new PostMessageTransport({
-      url: this.url,
-      ...this.config
-    });
-    this.signer = new Signer({
-      transport: this.transport
-    });
-    return this.signer.accounts[0];
-  }
   async connect(config) {
-    try {
-      this.config = config;
-      return await Promise.race([
-        this._connect(config),
-        new Promise(
-          (_, reject) => setTimeout(() => {
-            this.cleanupTransport();
-            reject(new Error("Connection timeout"));
-          }, 45e3)
-        )
-      ]);
-    } catch (error) {
-      this.cleanupTransport();
-      this.setState(
-        "ERROR"
-        /* ERROR */
-      );
-      throw error;
-    }
-  }
-  async _connect(config) {
     var _a2;
+    this.config = config;
     try {
-      if (this.identity && this.signer && this.agent && this.signerAgent) {
-        try {
-          return {
-            owner: this.identity.getPrincipal(),
-            subaccount: principalToSubAccount(this.identity.getPrincipal()),
-            hasDelegation: true
-          };
-        } catch (error) {
-          console.debug("[NFID] Existing session invalid, proceeding with new connection:", error);
-          this.cleanupTransport();
-        }
-      } else {
-        if (this.identity) {
-          try {
-            if (!this.signer) {
-              throw new Error("Failed to initialize signer");
-            }
-            this.agent = HttpAgent.createSync({
-              host: config.hostUrl,
-              identity: this.identity,
-              verifyQuerySignatures: config.verifyQuerySignatures
-            });
-            this.signerAgent = SignerAgent.createSync({
-              signer: this.signer,
-              account: this.identity.getPrincipal()
-            });
-            await Promise.race([
-              this.signer.sendRequest({
-                id: window.crypto.randomUUID(),
-                jsonrpc: "2.0",
-                method: "icrc34_is_connected",
-                params: {}
-              }),
-              new Promise(
-                (_, reject) => setTimeout(() => reject(new Error("Verification timeout")), 5e3)
-              )
-            ]);
-            return {
-              owner: this.identity.getPrincipal(),
-              subaccount: principalToSubAccount(this.identity.getPrincipal()),
-              hasDelegation: true
-            };
-          } catch (error) {
-            console.debug("[NFID] Failed to recreate components:", error);
-            this.cleanupTransport();
-          }
-        }
-      }
       this.setState(
         "LOADING"
         /* LOADING */
       );
-      await this.initSigner(true);
       if (!this.signer) {
         throw new Error("Failed to initialize NFID signer");
       }
@@ -11405,11 +11103,7 @@ const _NFIDAdapter = class _NFIDAdapter {
         this.sessionKey,
         delegationChain
       );
-      this.agent = HttpAgent.createSync({
-        host: config.hostUrl,
-        identity: delegationIdentity,
-        verifyQuerySignatures: config.verifyQuerySignatures
-      });
+      this.signerAgent.replaceAccount(delegationIdentity.getPrincipal());
       if (config.fetchRootKeys) {
         await this.agent.fetchRootKey();
       }
@@ -11435,23 +11129,11 @@ const _NFIDAdapter = class _NFIDAdapter {
       };
       this.accounts = [account];
       try {
-        await Promise.race([
-          this.signer.sendRequest({
-            id: window.crypto.randomUUID(),
-            jsonrpc: "2.0",
-            method: "icrc34_is_connected",
-            params: {}
-          }),
-          new Promise(
-            (_, reject) => setTimeout(() => reject(new Error("Verification timeout")), 5e3)
-          )
-        ]);
         if (this.identity && this.agent && this.signerAgent && this.signer) {
           this.setState(
             "READY"
             /* READY */
           );
-          this.reconnectAttempts = 0;
           console.debug("[NFID] Session established successfully");
           this.signerWindow = null;
           return {
@@ -11464,7 +11146,6 @@ const _NFIDAdapter = class _NFIDAdapter {
         console.error("[NFID] New session verification failed:", error);
       }
       console.error("[NFID] Session establishment failed, cleaning up");
-      this.cleanupTransport();
       this.identity = null;
       this.agent = null;
       this.signerAgent = null;
@@ -11597,7 +11278,6 @@ const _NFIDAdapter = class _NFIDAdapter {
     return actor;
   }
   async disconnect() {
-    this.cleanupTransport();
     this.identity = null;
     this.agent = null;
     this.signerAgent = null;
@@ -11652,7 +11332,7 @@ const _OisyAdapter = class _OisyAdapter {
     this.url = "https://oisy.com/sign";
     this.name = "Oisy";
     this.logo = _OisyAdapter.logo;
-    this.signerAgent = new SignerAgent({
+    this.signerAgent = SignerAgent.createSync({
       signer: new Signer({ transport: new PostMessageTransport({ url: this.url, ..._OisyAdapter.TRANSPORT_CONFIG }) }),
       account: Principal.anonymous(),
       agent: HttpAgent.createSync({ host: this.url })
@@ -11676,7 +11356,6 @@ const _OisyAdapter = class _OisyAdapter {
   }
   async connect(config) {
     try {
-      console.log("connecting to oisy");
       const accounts = await this.signerAgent.signer.accounts();
       if (!accounts || accounts.length === 0) {
         throw new Error("No accounts returned from Oisy");
@@ -11770,27 +11449,6 @@ const _OisyAdapter = class _OisyAdapter {
   getAccounts() {
     return this.accounts;
   }
-  async processQueue() {
-    if (this.isProcessingRequest) return;
-    while (this.requestQueue.length > 0) {
-      this.isProcessingRequest = true;
-      const request = this.requestQueue.shift();
-      if (request) {
-        try {
-          await Promise.race([
-            request(),
-            new Promise(
-              (_, reject) => setTimeout(() => reject(new Error("Request timeout")), _OisyAdapter.REQUEST_TIMEOUT)
-            )
-          ]);
-          await new Promise((resolve) => setTimeout(resolve, 100));
-        } catch (error) {
-          console.error("[Oisy] Error processing request:", error);
-        }
-      }
-    }
-    this.isProcessingRequest = false;
-  }
   async acquireLock() {
     while (this.operationLock) {
       try {
@@ -11819,14 +11477,9 @@ _OisyAdapter.TRANSPORT_CONFIG = {
   establishTimeout: 45e3,
   disconnectTimeout: 35e3
 };
-_OisyAdapter.REQUEST_TIMEOUT = 3e4;
 _OisyAdapter.OPERATION_LOCK_TIMEOUT = 1e4;
 _OisyAdapter.logo = oisyLogo;
 let OisyAdapter = _OisyAdapter;
-if (typeof window !== "undefined") {
-  window.addEventListener("click", () => console.log("within"), true);
-  window.addEventListener("click", () => console.log("outside"));
-}
 const walletList = [
   {
     id: "nfid",
@@ -11888,33 +11541,23 @@ class PNP {
       ...config
     };
   }
-  async prepareConnection(walletId) {
-    console.log("preparing connection");
+  async connect(walletId) {
+    this.isConnecting = true;
     const adapter = walletList.find((w) => w.id === walletId);
     if (!adapter) {
       throw new Error(`Wallet ${walletId} not found`);
     }
     const instance = new adapter.adapter();
-    const isAvailable = await instance.isAvailable();
-    if (!isAvailable) {
-      throw new Error(`Wallet ${walletId} is not available`);
-    }
-    return instance.connect(this.config).then((account) => {
-      this.account = account;
-      this.activeWallet = adapter;
-      this.provider = instance;
-      localStorage.setItem(this.config.localStorageKey, walletId);
-    });
-  }
-  async connect(walletId) {
-    console.log("pnp.connect");
-    if (this.isConnecting) {
-      throw new Error("Connection in progress");
-    }
-    this.isConnecting = true;
     try {
-      const prepared = await this.prepareConnection(walletId);
-      return await prepared.connect();
+      const prepared = await instance.connect(this.config).then((account) => {
+        this.account = account;
+        this.activeWallet = adapter;
+        this.provider = instance;
+        console.log("account", account);
+        localStorage.setItem(this.config.localStorageKey, walletId);
+        return account;
+      });
+      return prepared;
     } finally {
       this.isConnecting = false;
     }

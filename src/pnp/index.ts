@@ -3,11 +3,8 @@ import {
   Actor,
   HttpAgent,
   type ActorSubclass,
-  AnonymousIdentity,
 } from "@dfinity/agent";
 import { walletList } from "../adapters";
-import { Principal } from "@dfinity/principal";
-import { getAccountIdentifier } from "../utils/identifierUtils";
 
 class PNP {
   account: Wallet.Account | null = null;
@@ -36,11 +33,6 @@ class PNP {
   }
 
   async connect(walletId: string): Promise<Wallet.Account> {
-    console.log("pnp.connect");
-    if (this.isConnecting) {
-      throw new Error("Connection in progress");
-    }
-
     this.isConnecting = true;
     const adapter = walletList.find((w) => w.id === walletId);
     if (!adapter) {
@@ -54,9 +46,11 @@ class PNP {
         this.account = account;
         this.activeWallet = adapter;
         this.provider = instance;
+        console.log("account", account);
         localStorage.setItem(this.config.localStorageKey, walletId);
+        return account;
       });
-      return await prepared.connect();
+      return prepared;
     } finally {
       this.isConnecting = false;
     }
