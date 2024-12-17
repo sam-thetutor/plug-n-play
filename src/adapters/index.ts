@@ -5,7 +5,6 @@ import { PlugAdapter } from "./PlugAdapter";
 import { NFIDAdapter } from "./NFIDAdapter";
 import { Adapter } from '../types/index';
 import { OisyAdapter } from "./OisyAdapter";
-import { AstroXAdapter } from "./AstroXAdapter";
 import { StoicAdapter } from "./StoicAdapter";
 
 export const walletList: Adapter.Info[] = [
@@ -27,12 +26,6 @@ export const walletList: Adapter.Info[] = [
     icon: PlugAdapter.logo,
     adapter: PlugAdapter,
   },
-  // {
-  //   id: "astrox",
-  //   name: "AstroX",
-  //   icon: AstroXAdapter.logo,
-  //   adapter: AstroXAdapter,
-  // },
   {
     id: "oisy",
     name: "Oisy",
@@ -52,6 +45,5 @@ export {
   PlugAdapter,
   NFIDAdapter,
   OisyAdapter,
-  AstroXAdapter,
   StoicAdapter,
 };

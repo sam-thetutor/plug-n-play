@@ -43,5 +43,4 @@ export declare class OisyAdapter implements Adapter.Interface {
     private createAnonymousActor;
     disconnect(): Promise<void>;
     getAccounts(): OisyAccount[];
-    private acquireLock;
 }

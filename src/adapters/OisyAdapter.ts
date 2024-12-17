@@ -143,16 +143,15 @@ export class OisyAdapter implements Adapter.Interface {
     if (!this.signerAgent) {
       throw new Error("No signer agent available. Please connect first.");
     }
-
-    const releaseLock = await this.acquireLock();
     try {
       const actor = Actor.createActor<T>(idlFactory, {
         agent: this.signerAgent,
         canisterId,
       });
       return actor;
-    } finally {
-      releaseLock();
+    } catch (error) {
+      console.error("[Oisy] Actor creation error:", error);
+      throw error;
     }
   }
 
@@ -197,32 +196,5 @@ export class OisyAdapter implements Adapter.Interface {
 
   getAccounts(): OisyAccount[] {
     return this.accounts;
-  }
-
-  private async acquireLock(): Promise<() => void> {
-    while (this.operationLock) {
-      try {
-        await this.operationLock;
-      } catch {
-        // Ignore errors from previous operations
-      }
-    }
-
-    let releaseLock: () => void;
-    this.operationLock = new Promise<void>((resolve) => {
-      releaseLock = () => {
-        this.operationLock = null;
-        resolve();
-      };
-    });
-
-    setTimeout(() => {
-      if (this.operationLock) {
-        console.warn("[Oisy] Operation lock timeout - forcing release");
-        releaseLock!();
-      }
-    }, OisyAdapter.OPERATION_LOCK_TIMEOUT);
-
-    return releaseLock!;
   }
 }

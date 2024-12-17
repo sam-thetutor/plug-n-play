@@ -11401,15 +11401,15 @@ const _OisyAdapter = class _OisyAdapter {
     if (!this.signerAgent) {
       throw new Error("No signer agent available. Please connect first.");
     }
-    const releaseLock = await this.acquireLock();
     try {
       const actor = Actor.createActor(idlFactory, {
         agent: this.signerAgent,
         canisterId
       });
       return actor;
-    } finally {
-      releaseLock();
+    } catch (error) {
+      console.error("[Oisy] Actor creation error:", error);
+      throw error;
     }
   }
   async createAnonymousActor(canisterId, idl) {
@@ -11449,28 +11449,6 @@ const _OisyAdapter = class _OisyAdapter {
   getAccounts() {
     return this.accounts;
   }
-  async acquireLock() {
-    while (this.operationLock) {
-      try {
-        await this.operationLock;
-      } catch {
-      }
-    }
-    let releaseLock;
-    this.operationLock = new Promise((resolve) => {
-      releaseLock = () => {
-        this.operationLock = null;
-        resolve();
-      };
-    });
-    setTimeout(() => {
-      if (this.operationLock) {
-        console.warn("[Oisy] Operation lock timeout - forcing release");
-        releaseLock();
-      }
-    }, _OisyAdapter.OPERATION_LOCK_TIMEOUT);
-    return releaseLock;
-  }
 };
 _OisyAdapter.TRANSPORT_CONFIG = {
   windowOpenerFeatures: "width=525,height=705",
@@ -11499,12 +11477,6 @@ const walletList = [
     icon: PlugAdapter.logo,
     adapter: PlugAdapter
   },
-  // {
-  //   id: "astrox",
-  //   name: "AstroX",
-  //   icon: AstroXAdapter.logo,
-  //   adapter: AstroXAdapter,
-  // },
   {
     id: "oisy",
     name: "Oisy",
