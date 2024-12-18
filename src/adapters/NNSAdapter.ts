@@ -145,7 +145,7 @@ export class NNSAdapter implements Adapter.Interface {
   }
 
   // Create an actor for interacting with a canister
-  async createActor<T>(canisterId: string, idl: any): Promise<ActorSubclass<T>> {
+  createActor<T>(canisterId: string, idl: any): ActorSubclass<T> {
     if (!this.agent) {
       throw new Error("Agent is not initialized. Ensure the wallet is connected.");
     }
@@ -153,6 +153,17 @@ export class NNSAdapter implements Adapter.Interface {
       agent: this.agent,
       canisterId,
     });
+  }
+
+  createAnonymousActor<T>(canisterId: string, idl: any, options?: { requiresSigning?: boolean }): ActorSubclass<T> {
+    const actor = Actor.createActor<T>(idl, {
+      agent: HttpAgent.createSync({
+        host: this.config.hostUrl,
+        verifyQuerySignatures: this.config.verifyQuerySignatures,
+      }),
+      canisterId,
+    });
+    return actor;
   }
 
   // Get the principal associated with the wallet
@@ -185,7 +196,7 @@ export class NNSAdapter implements Adapter.Interface {
     }
   }
 
-  async undelegatedActor<T>(canisterId: string, idlFactory: any): Promise<ActorSubclass<T>> {
+  undelegatedActor<T>(canisterId: string, idlFactory: any): ActorSubclass<T> {
     return this.createActor(canisterId, idlFactory);
   }
 

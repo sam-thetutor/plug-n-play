@@ -17,5 +17,8 @@ export declare class TemplateAdapter implements Adapter.Interface {
     getPrincipal(): Promise<Principal | null>;
     getAccountId(): Promise<string | null>;
     isConnected(): Promise<boolean>;
-    createActor<T>(canisterId: string, idl: any): Promise<ActorSubclass<T>>;
+    createActor<T>(canisterId: string, idl: any): ActorSubclass<T>;
+    createAnonymousActor<T>(canisterId: string, idl: any, options?: {
+        requiresSigning?: boolean;
+    }): ActorSubclass<T>;
 }

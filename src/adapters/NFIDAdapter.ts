@@ -4,7 +4,6 @@ import {
   HttpAgent,
   type ActorSubclass,
   Signature,
-  AnonymousIdentity,
 } from "@dfinity/agent";
 import {
   DelegationChain,
@@ -62,47 +61,6 @@ class LocalDelegationStorage implements DelegationStorage {
   }
 }
 
-// Queue for managing signature requests
-class SignatureQueue {
-  private queue: Array<() => Promise<any>> = [];
-  private isProcessing = false;
-
-  async add<T>(request: () => Promise<T>): Promise<T> {
-    return new Promise((resolve, reject) => {
-      this.queue.push(async () => {
-        try {
-          const result = await request();
-          resolve(result);
-        } catch (error) {
-          reject(error);
-        }
-      });
-      this.processQueue();
-    });
-  }
-
-  private async processQueue() {
-    if (this.isProcessing || this.queue.length === 0) return;
-    this.isProcessing = true;
-    while (this.queue.length > 0) {
-      const request = this.queue.shift();
-      if (request) {
-        try {
-          await request();
-        } catch (error) {
-          console.error("Error processing signature request:", error);
-        }
-      }
-    }
-    this.isProcessing = false;
-  }
-
-  clear() {
-    this.queue = [];
-    this.isProcessing = false;
-  }
-}
-
 // State management for adapter
 export enum AdapterState {
   READY = "READY",
@@ -113,9 +71,6 @@ export enum AdapterState {
 
 export class NFIDAdapter implements Adapter.Interface {
   private static readonly STORAGE_KEY = "nfid_session";
-  private static readonly MAX_RECONNECT_ATTEMPTS = 3;
-  private static readonly CONNECTION_COOLDOWN = 1000; // 1 second cooldown
-  private static readonly CONNECTION_TIMEOUT = 10000; // 10 seconds
   private static readonly TRANSPORT_CONFIG = {
     windowOpenerFeatures: "width=525,height=705",
     establishTimeout: 45000,
@@ -131,8 +86,6 @@ export class NFIDAdapter implements Adapter.Interface {
   private agent: HttpAgent;
   private identity: DelegationIdentity | null = null;
   private delegationStorage: DelegationStorage;
-  private signatureQueue: SignatureQueue;
-  private signerWindow: Window | null = null;
   private state: AdapterState = AdapterState.READY;
   private accounts: NFIDAccount[] = [];
   private actorCache: Map<string, ActorSubclass<any>> = new Map();
@@ -153,22 +106,22 @@ export class NFIDAdapter implements Adapter.Interface {
     this.name = "NFID";
     this.logo = NFIDAdapter.logo;
     this.delegationStorage = new LocalDelegationStorage();
-    this.signatureQueue = new SignatureQueue();
-    // Initialize session asynchronously - don't generate key here
-    this.signerAgent = SignerAgent.createSync({ 
-      signer: new Signer({ transport: new PostMessageTransport({ url: this.url, ...NFIDAdapter.TRANSPORT_CONFIG }) }), 
-      account: Principal.anonymous(), 
-      agent: HttpAgent.createSync({ host: this.url }) 
+    this.signerAgent = SignerAgent.createSync({
+      signer: new Signer({
+        transport: new PostMessageTransport({
+          url: this.url,
+          ...NFIDAdapter.TRANSPORT_CONFIG,
+        }),
+      }),
+      account: Principal.anonymous(),
+      agent: HttpAgent.createSync({ host: this.url }),
     });
     this.signer = this.signerAgent.signer;
     this.agent = HttpAgent.createSync({ host: this.url });
   }
 
-
-
   private setState(newState: AdapterState) {
     this.state = newState;
-    // Could emit an event here if needed
   }
 
   private async setDelegationChain(
@@ -177,31 +130,9 @@ export class NFIDAdapter implements Adapter.Interface {
   ): Promise<void> {
     const sessionData = {
       sessionKey: this.sessionKey.toJSON(),
-      delegationChain: chain.toJSON()
+      delegationChain: chain.toJSON(),
     };
     await this.delegationStorage.set(key, JSON.stringify(sessionData));
-  }
-
-
-  private async cleanupTransport() {
-    if (this.signer) {
-      try {
-        this.signer.closeChannel();
-      } catch (error) {
-        console.debug("[NFID] Error cleaning up signer:", error);
-      }
-      this.signer = null;
-    }
-
-    if (this.signerWindow && !this.signerWindow.closed) {
-      try {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        this.signerWindow.close();
-      } catch (error) {
-        console.debug("[NFID] Error closing signer window:", error);
-      }
-      this.signerWindow = null;
-    }
   }
 
   async isAvailable(): Promise<boolean> {
@@ -240,7 +171,7 @@ export class NFIDAdapter implements Adapter.Interface {
     });
   };
 
-  private async connect(config: Wallet.PNPConfig): Promise<Wallet.Account> {
+  async connect(config: Wallet.PNPConfig): Promise<Wallet.Account> {
     this.config = config;
 
     try {
@@ -286,10 +217,7 @@ export class NFIDAdapter implements Adapter.Interface {
         fromBase64(result.publicKey)
       );
 
-      await this.setDelegationChain(
-        NFIDAdapter.STORAGE_KEY,
-        delegationChain
-      );
+      await this.setDelegationChain(NFIDAdapter.STORAGE_KEY, delegationChain);
 
       const delegationIdentity = DelegationIdentity.fromDelegation(
         this.sessionKey,
@@ -329,11 +257,8 @@ export class NFIDAdapter implements Adapter.Interface {
       this.accounts = [account];
 
       try {
-          if (this.identity && this.agent && this.signerAgent && this.signer) {
+        if (this.identity && this.agent && this.signerAgent && this.signer) {
           this.setState(AdapterState.READY);
-          console.debug("[NFID] Session established successfully");
-          // Let the window close itself
-          this.signerWindow = null;
           return {
             owner: principal,
             subaccount: principalToSubAccount(principal),
@@ -360,27 +285,7 @@ export class NFIDAdapter implements Adapter.Interface {
     }
   }
 
-  private async isDelegationReady(): Promise<boolean> {
-    return (
-      this.identity !== null &&
-      this.agent !== null &&
-      this.signerAgent !== null &&
-      this.signerAgent.signer !== null
-    );
-  }
-
-  private async waitForDelegation(timeoutMs: number = 5000): Promise<void> {
-    const startTime = Date.now();
-    while (Date.now() - startTime < timeoutMs) {
-      if (await this.isDelegationReady()) {
-        return;
-      }
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    }
-    throw new Error("Delegation initialization timeout");
-  }
-
-  private async createAnonymousActor<T>(canisterId: string, idl: any): Promise<ActorSubclass<T>> {
+  createAnonymousActor<T>(canisterId: string, idl: any): ActorSubclass<T> {
     return Actor.createActor<T>(idl, {
       agent: HttpAgent.createSync({
         host: this.config?.hostUrl || "https://icp0.io",
@@ -390,7 +295,7 @@ export class NFIDAdapter implements Adapter.Interface {
     });
   }
 
-  async createActor<T>(
+  createActor<T>(
     canisterId: string,
     idlFactory: any,
     options: {
@@ -400,33 +305,34 @@ export class NFIDAdapter implements Adapter.Interface {
       requiresSigning: true,
       anon: false,
     }
-  ): Promise<ActorSubclass<T>> {
+  ): ActorSubclass<T> {
     const { requiresSigning = true, anon = false } = options;
     try {
-      if (!this.identity) {
-        throw new Error("Identity not initialized");
-      }
-
-      // Wait for delegation to be ready if signing is required
-      if (requiresSigning) {
-        await this.waitForDelegation();
-      }
-
       // check if canister id is in the delegation targets
-      const inTargets = this.identity.getDelegation().delegations.some(
-        (d) => d.delegation.targets?.some((p) => p.toText() === canisterId)
-      );
+      const inTargets = this.identity
+        .getDelegation()
+        .delegations.some((d) =>
+          d.delegation.targets?.some((p) => p.toText() === canisterId)
+        );
 
-      const isUndelegated = (inTargets && !requiresSigning) || (!inTargets && requiresSigning) || (!inTargets && !requiresSigning);
-      const cacheKey = `${canisterId}-${inTargets}-${requiresSigning}-${isUndelegated}-${this.identity.getPrincipal().toText()}`;
+      const isUndelegated =
+        (inTargets && !requiresSigning) ||
+        (!inTargets && requiresSigning) ||
+        (!inTargets && !requiresSigning);
+      const cacheKey = `${canisterId}-${inTargets}-${requiresSigning}-${isUndelegated}-${this.identity
+        .getPrincipal()
+        .toText()}`;
       const cachedActor = this.actorCache.get(cacheKey);
-      
+
       if (cachedActor) {
         return cachedActor;
       }
 
       if (!inTargets && !requiresSigning && anon) {
-        const anonActor = await this.createAnonymousActor<T>(canisterId, idlFactory);
+        const anonActor = this.createAnonymousActor<T>(
+          canisterId,
+          idlFactory
+        );
         this.actorCache.set(cacheKey, anonActor);
         return anonActor;
       }
@@ -448,34 +354,13 @@ export class NFIDAdapter implements Adapter.Interface {
           throw new Error("No signer agent available. Please connect first.");
         }
 
-        // Use signature queue for signing operations
-        const proxiedActor = new Proxy(actor, {
-          get: (target, prop) => {
-            const original = target[prop];
-            if (typeof original === "function") {
-              return (...args: any[]) => {
-                return this.signatureQueue.add(async () => {
-                  // Verify delegation is still valid before each operation
-                  if (!(await this.isDelegationReady())) {
-                    throw new Error(
-                      "Delegation no longer valid. Please reconnect."
-                    );
-                  }
-
-                  const wrappedActor = Actor.createActor<T>(idlFactory, {
-                    agent: this.signerAgent,
-                    canisterId,
-                  });
-                  return wrappedActor[prop](...args);
-                });
-              };
-            }
-            return original;
-          },
+        const finalActor = Actor.createActor<T>(idlFactory, {
+          agent: this.signerAgent,
+          canisterId,
         });
 
-        this.actorCache.set(cacheKey, proxiedActor);
-        return proxiedActor;
+        this.actorCache.set(cacheKey, finalActor);
+        return finalActor;
       }
 
       return actor;
@@ -489,12 +374,11 @@ export class NFIDAdapter implements Adapter.Interface {
     }
   }
 
-  async undelegatedActor<T>(
+ undelegatedActor<T>(
     canisterId: string,
     idlFactory: any
-  ): Promise<ActorSubclass<T>> {
-    const agent = await HttpAgent.create({
-      shouldFetchRootKey: this.config.fetchRootKeys, // * local only
+  ): ActorSubclass<T> {
+    const agent = HttpAgent.createSync({
       identity: this.identity,
       host: this.config.hostUrl,
       verifyQuerySignatures: this.config.verifyQuerySignatures,
@@ -513,10 +397,6 @@ export class NFIDAdapter implements Adapter.Interface {
     this.accounts = [];
     await this.delegationStorage.remove(NFIDAdapter.STORAGE_KEY);
     this.setState(AdapterState.READY);
-  }
-
-  async queueSignatureRequest<T>(request: () => Promise<T>): Promise<T> {
-    return this.signatureQueue.add(request);
   }
 
   getState(): AdapterState {

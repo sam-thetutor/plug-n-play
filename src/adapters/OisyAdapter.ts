@@ -37,12 +37,7 @@ export class OisyAdapter implements Adapter.Interface {
   private signerAgent: SignerAgent<Signer>;
   private accounts: OisyAccount[] = [];
   private transport: PostMessageTransport | null = null;
-  private connectionPromise: Promise<void> | null = null;
   private isProcessing: boolean = false;
-  private requestQueue: Array<() => Promise<any>> = [];
-  private isProcessingRequest: boolean = false;
-  private static readonly OPERATION_LOCK_TIMEOUT = 10000; // 10 seconds
-  private operationLock: Promise<void> | null = null;
 
   static readonly logo: string = oisyLogo;
   name: string = "Oisy";
@@ -54,10 +49,11 @@ export class OisyAdapter implements Adapter.Interface {
     this.url = "https://oisy.com/sign";
     this.name = "Oisy";
     this.logo = OisyAdapter.logo;
+    this.agent = HttpAgent.createSync({ host: this.url }) 
     this.signerAgent = SignerAgent.createSync({ 
       signer: new Signer({ transport: new PostMessageTransport({ url: this.url, ...OisyAdapter.TRANSPORT_CONFIG }) }), 
       account: Principal.anonymous(), 
-      agent: HttpAgent.createSync({ host: this.url }) 
+      agent: this.agent
     });
   }
 
@@ -117,9 +113,6 @@ export class OisyAdapter implements Adapter.Interface {
       console.error("[Oisy] Connection error:", error);
       await this.disconnect();
       throw error;
-    } finally {
-      this.isProcessing = false;
-      this.connectionPromise = null;
     }
   }
 
@@ -155,27 +148,16 @@ export class OisyAdapter implements Adapter.Interface {
     }
   }
 
-  private createAnonymousActor<T>(canisterId: string, idl: any): ActorSubclass<T> {
+  createAnonymousActor<T>(canisterId: string, idl: any): ActorSubclass<T> {
     return Actor.createActor<T>(idl, {
-      agent: HttpAgent.createSync({
-        host: this.config?.hostUrl || "https://icp0.io",
-        verifyQuerySignatures: this.config?.verifyQuerySignatures,
-      }),
+      agent: this.agent,
       canisterId,
     });
   }
 
   async disconnect(): Promise<void> {
-    this.requestQueue = [];
-    this.isProcessingRequest = false;
-
-    if (this.isProcessing) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    }
-
     if (this.signer) {
       try {
-        await new Promise(resolve => setTimeout(resolve, 200));
         this.signer.closeChannel();
       } catch (error) {
         console.debug("[Oisy] Error cleaning up signer:", error);
@@ -190,8 +172,6 @@ export class OisyAdapter implements Adapter.Interface {
     this.agent = null;
     this.signerAgent = null;
     this.accounts = [];
-    this.connectionPromise = null;
-    this.isProcessing = false;
   }
 
   getAccounts(): OisyAccount[] {

@@ -98,22 +98,12 @@ class PNP {
     return actor;
   }
 
-  public async createAnonymousActor<T>(
+  public createAnonymousActor<T>(
     canisterId: string,
     idl: any,
     options?: { requiresSigning?: boolean }
-  ): Promise<ActorSubclass<T>> {
-    const agent = HttpAgent.createSync({
-      host: this.config.hostUrl,
-      verifyQuerySignatures: this.config.verifyQuerySignatures,
-    });
-    if (this.fetchRootKeys) {
-      await agent.fetchRootKey();
-    }
-    // Extract the interface factory from the IDL
-    const interfaceFactory =
-      typeof idl === "function" ? idl : idl._idlFactory || idl.idlFactory;
-    return Actor.createActor<T>(interfaceFactory, { agent, canisterId });
+  ): ActorSubclass<T> {
+    return this.provider.createAnonymousActor<T>(canisterId, idl, options);
   }
 
   isWalletConnected(): boolean {

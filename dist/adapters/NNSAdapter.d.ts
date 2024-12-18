@@ -19,10 +19,13 @@ export declare class NNSAdapter implements Adapter.Interface {
     connect(config: Wallet.PNPConfig): Promise<Wallet.Account>;
     private _continueLogin;
     isConnected(): Promise<boolean>;
-    createActor<T>(canisterId: string, idl: any): Promise<ActorSubclass<T>>;
+    createActor<T>(canisterId: string, idl: any): ActorSubclass<T>;
+    createAnonymousActor<T>(canisterId: string, idl: any, options?: {
+        requiresSigning?: boolean;
+    }): ActorSubclass<T>;
     getPrincipal(): Promise<Principal>;
     getAccountId(): Promise<string>;
     private refreshLogin;
-    undelegatedActor<T>(canisterId: string, idlFactory: any): Promise<ActorSubclass<T>>;
+    undelegatedActor<T>(canisterId: string, idlFactory: any): ActorSubclass<T>;
     disconnect(): Promise<void>;
 }

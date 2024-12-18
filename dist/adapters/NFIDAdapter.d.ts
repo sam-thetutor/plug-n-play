@@ -20,16 +20,11 @@ export declare enum AdapterState {
 }
 export declare class NFIDAdapter implements Adapter.Interface {
     private static readonly STORAGE_KEY;
-    private static readonly MAX_RECONNECT_ATTEMPTS;
-    private static readonly CONNECTION_COOLDOWN;
-    private static readonly CONNECTION_TIMEOUT;
     private static readonly TRANSPORT_CONFIG;
     private static readonly HIDDEN_TRANSPORT_CONFIG;
     private agent;
     private identity;
     private delegationStorage;
-    private signatureQueue;
-    private signerWindow;
     private state;
     private accounts;
     private actorCache;
@@ -45,23 +40,19 @@ export declare class NFIDAdapter implements Adapter.Interface {
     constructor();
     private setState;
     private setDelegationChain;
-    private cleanupTransport;
     isAvailable(): Promise<boolean>;
     isConnected(): Promise<boolean>;
     getPrincipal(): Promise<Principal>;
     getAccountId(): Promise<string>;
     unwrapResponse: <T extends unknown>(response: any) => T;
-    private connect;
-    private isDelegationReady;
-    private waitForDelegation;
-    private createAnonymousActor;
+    connect(config: Wallet.PNPConfig): Promise<Wallet.Account>;
+    createAnonymousActor<T>(canisterId: string, idl: any): ActorSubclass<T>;
     createActor<T>(canisterId: string, idlFactory: any, options?: {
         requiresSigning?: boolean;
         anon: boolean;
-    }): Promise<ActorSubclass<T>>;
-    undelegatedActor<T>(canisterId: string, idlFactory: any): Promise<ActorSubclass<T>>;
+    }): ActorSubclass<T>;
+    undelegatedActor<T>(canisterId: string, idlFactory: any): ActorSubclass<T>;
     disconnect(): Promise<void>;
-    queueSignatureRequest<T>(request: () => Promise<T>): Promise<T>;
     getState(): AdapterState;
     getAccounts(): NFIDAccount[];
 }

@@ -98,8 +98,9 @@ export namespace Adapter {
     getAccountId(): Promise<string>;
     
     // Actor creation
-    createActor<T>(canisterId: string, idl: any, options?: { requiresSigning?: boolean }): Promise<ActorSubclass<T>>;
-    undelegatedActor?<T>(canisterId: string, idlFactory: any, options?: { requiresSigning?: boolean }): Promise<ActorSubclass<T>>;
+    createActor<T>(canisterId: string, idl: any, options?: { requiresSigning?: boolean }): ActorSubclass<T>;
+    createAnonymousActor<T>(canisterId: string, idl: any, options?: { requiresSigning?: boolean }): ActorSubclass<T>;
+    undelegatedActor?<T>(canisterId: string, idlFactory: any, options?: { requiresSigning?: boolean }): ActorSubclass<T>;
   }
 }
 
@@ -144,7 +145,7 @@ declare global {
         createActor: <T>(options: {
           canisterId: string;
           interfaceFactory: any;
-        }) => Promise<ActorSubclass<T>>;
+        }) => ActorSubclass<T>;
         disconnect: () => Promise<void>;
         principalId?: string;
         accountId?: string;
