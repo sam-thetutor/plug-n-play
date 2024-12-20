@@ -11308,7 +11308,7 @@ const _NFIDAdapter = class _NFIDAdapter {
         id: principal.toText(),
         displayName: "NFID Account",
         principal: principal.toText(),
-        subaccount: new Uint8Array(subaccount),
+        subaccount,
         type: "SESSION"
         /* SESSION */
       };
@@ -11510,7 +11510,7 @@ const _OisyAdapter = class _OisyAdapter {
         id: acc.owner.toText(),
         displayName: `Oisy Account ${acc.owner.toText().slice(0, 8)}...`,
         principal: acc.owner.toText(),
-        subaccount: new Uint8Array(principalToSubAccount(acc.owner)),
+        subaccount: principalToSubAccount(acc.owner),
         type: "SESSION"
         /* SESSION */
       }));

@@ -99,7 +99,7 @@ export class OisyAdapter implements Adapter.Interface {
         id: acc.owner.toText(),
         displayName: `Oisy Account ${acc.owner.toText().slice(0, 8)}...`,
         principal: acc.owner.toText(),
-        subaccount: new Uint8Array(principalToSubAccount(acc.owner)),
+        subaccount: principalToSubAccount(acc.owner),
         type: AccountType.SESSION,
       }));
 

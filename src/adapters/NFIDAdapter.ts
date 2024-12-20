@@ -250,7 +250,7 @@ export class NFIDAdapter implements Adapter.Interface {
         id: principal.toText(),
         displayName: "NFID Account",
         principal: principal.toText(),
-        subaccount: new Uint8Array(subaccount),
+        subaccount: subaccount,
         type: AccountType.SESSION,
       };
 
