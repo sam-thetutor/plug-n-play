@@ -268,13 +268,12 @@ export class PlugAdapter implements Adapter.Interface {
       });
 
       this.identity = delegationIdentity;
-
-      const subaccount = principalToSubAccount(principal);
+        
       const account: PlugAccount = {
         id: principal.toText(),
         displayName: "Plug Account",
         principal: principal.toText(),
-        subaccount: new Uint8Array(subaccount),
+        subaccount: hexStringToUint8Array(getAccountIdentifier(principal.toText()) || ""),
         type: AccountType.SESSION,
       };
 
@@ -285,7 +284,7 @@ export class PlugAdapter implements Adapter.Interface {
           this.setState(AdapterState.READY);
           return {
             owner: principal,
-            subaccount: principalToSubAccount(principal),
+            subaccount: hexStringToUint8Array(getAccountIdentifier(principal.toText()) || ""),
             hasDelegation: true,
           };
         }
