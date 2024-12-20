@@ -1,5 +1,5 @@
-import { ActorSubclass } from '../@dfinity/agent';
-import { Principal } from '../@dfinity/principal';
+import { ActorSubclass } from '@dfinity/agent';
+import { Principal } from '@dfinity/principal';
 import { Adapter, Wallet } from '../types';
 /**
  * Template adapter class that implements the Adapter.Interface

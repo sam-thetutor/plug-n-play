@@ -15,7 +15,7 @@ import {
 import type { Wallet, Adapter } from "../types/index.d";
 import { getAccountIdentifier } from "../utils/identifierUtils";
 import plugLogo from "../../assets/plug.webp";
-import { principalToSubAccount } from "@dfinity/utils";
+import { principalToSubAccount, hexStringToUint8Array } from "@dfinity/utils";
 import { PlugTransport } from "@slide-computer/signer-transport-plug";
 import { SignerAgent } from "@slide-computer/signer-agent";
 import { Signer } from "@slide-computer/signer";
@@ -117,12 +117,11 @@ export class PlugAdapter implements Adapter.Interface {
             this.signerAgent.replaceAccount(delegationIdentity.getPrincipal());
             this.identity = delegationIdentity;
             const principal = delegationIdentity.getPrincipal();
-            const subaccount = principalToSubAccount(principal);
             const account: PlugAccount = {
               id: principal.toText(),
               displayName: "Plug Account",
               principal: principal.toText(),
-              subaccount: new Uint8Array(subaccount),
+              subaccount: hexStringToUint8Array(getAccountIdentifier(principal.toText()) || ""),
               type: AccountType.SESSION,
             };
             this.accounts = [account];

@@ -1,5 +1,5 @@
-import { AnonymousIdentity } from './@dfinity/agent';
-import { Principal } from './@dfinity/principal';
+import { AnonymousIdentity } from '@dfinity/agent';
+import { Principal } from '@dfinity/principal';
 import { createPNP, walletsList } from './pnp';
 import { BatchTransact } from './utils/batchTransact';
 import { HOSTURL, NNS_CANISTER_ID } from './constants';

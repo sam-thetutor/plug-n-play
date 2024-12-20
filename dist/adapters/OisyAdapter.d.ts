@@ -1,5 +1,5 @@
-import { Principal } from '../@dfinity/principal';
-import { ActorSubclass } from '../@dfinity/agent';
+import { Principal } from '@dfinity/principal';
+import { ActorSubclass } from '@dfinity/agent';
 import { Wallet, Adapter } from '../types/index';
 export declare enum AccountType {
     GLOBAL = "GLOBAL",

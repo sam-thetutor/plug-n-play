@@ -1,5 +1,5 @@
 import { Adapter, Wallet } from '../types/index.d';
-import { ActorSubclass } from '../@dfinity/agent';
+import { ActorSubclass } from '@dfinity/agent';
 declare class PNP {
     account: Wallet.Account | null;
     activeWallet: Adapter.Info | null;

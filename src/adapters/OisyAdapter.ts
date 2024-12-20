@@ -7,7 +7,7 @@ import {
 import type { Wallet, Adapter } from "../types/index";
 import { getAccountIdentifier } from "../utils/identifierUtils";
 import oisyLogo from "../../assets/oisy_logo.webp";
-import { principalToSubAccount } from "@dfinity/utils";
+import { principalToSubAccount, hexStringToUint8Array } from "@dfinity/utils";
 import { PostMessageTransport } from "@slide-computer/signer-web";
 import { SignerAgent } from "@slide-computer/signer-agent";
 import { Signer } from "@slide-computer/signer";
@@ -99,13 +99,13 @@ export class OisyAdapter implements Adapter.Interface {
         id: acc.owner.toText(),
         displayName: `Oisy Account ${acc.owner.toText().slice(0, 8)}...`,
         principal: acc.owner.toText(),
-        subaccount: principalToSubAccount(acc.owner),
+        subaccount: hexStringToUint8Array(getAccountIdentifier(acc.owner.toText()) || ""),
         type: AccountType.SESSION,
       }));
 
       return {
         owner: principal,
-        subaccount: principalToSubAccount(principal),
+        subaccount: hexStringToUint8Array(getAccountIdentifier(principal.toText()) || ""),
         hasDelegation: false,
       };
 

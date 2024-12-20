@@ -4,10 +4,10 @@ import { Actor, HttpAgent, type ActorSubclass, Identity } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
 import type { Wallet, Adapter } from "../types/index.d";
 import { Principal } from "@dfinity/principal";
-import { principalToSubAccount } from "@dfinity/utils";
+import { hexStringToUint8Array } from "@dfinity/utils";
 import dfinityLogo from "../../assets/dfinity.webp";
 import { AdapterState } from "../types/index.d";
-
+import { getAccountIdentifier } from "../utils/identifierUtils";
 export class NNSAdapter implements Adapter.Interface {
   static readonly logo: string = dfinityLogo;
   // Required property from Adapter.Interface
@@ -128,10 +128,11 @@ export class NNSAdapter implements Adapter.Interface {
     try {
       const identity = this.authClient!.getIdentity();
       const principal = identity.getPrincipal();
+      
       await this.initAgent(identity, host);
       return {
         owner: principal,
-        subaccount: principalToSubAccount(principal),
+        subaccount: hexStringToUint8Array(getAccountIdentifier(principal.toText()) || ""),
       };
     } catch (error) {
       console.error("Error during _continueLogin:", error);
@@ -180,7 +181,7 @@ export class NNSAdapter implements Adapter.Interface {
       throw new Error("AuthClient is not initialized. Ensure the wallet is connected.");
     }
     const principal = this.authClient.getIdentity().getPrincipal()
-    const subAccount = principalToSubAccount(principal);
+    const subAccount = getAccountIdentifier(principal.toText());
     if (subAccount) {
       return subAccount.toString() || "";
     }

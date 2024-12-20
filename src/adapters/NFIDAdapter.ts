@@ -14,7 +14,6 @@ import {
 import type { Wallet, Adapter } from "../types/index.d";
 import { getAccountIdentifier } from "../utils/identifierUtils";
 import nfidLogo from "../../assets/nfid.webp";
-import { principalToSubAccount } from "@dfinity/utils";
 import { PostMessageTransport } from "@slide-computer/signer-web";
 import { SignerAgent } from "@slide-computer/signer-agent";
 import { Signer } from "@slide-computer/signer";
@@ -24,6 +23,7 @@ import {
   toBase64,
   fromBase64,
 } from "@slide-computer/signer";
+import { hexStringToUint8Array } from "@dfinity/utils";
 
 // Account types for different session types
 export enum AccountType {
@@ -245,12 +245,11 @@ export class NFIDAdapter implements Adapter.Interface {
 
       this.identity = delegationIdentity;
 
-      const subaccount = principalToSubAccount(principal);
       const account: NFIDAccount = {
         id: principal.toText(),
         displayName: "NFID Account",
         principal: principal.toText(),
-        subaccount: subaccount,
+        subaccount: hexStringToUint8Array(getAccountIdentifier(principal.toText()) || ""),
         type: AccountType.SESSION,
       };
 
@@ -261,7 +260,7 @@ export class NFIDAdapter implements Adapter.Interface {
           this.setState(AdapterState.READY);
           return {
             owner: principal,
-            subaccount: principalToSubAccount(principal),
+            subaccount: hexStringToUint8Array(getAccountIdentifier(principal.toText()) || ""),
             hasDelegation: true,
           };
         }

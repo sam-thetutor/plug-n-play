@@ -1,5 +1,5 @@
-import { Buffer } from '../buffer';
-import { default as crypto } from '../crypto-js';
+import { Buffer } from 'buffer';
+import { default as crypto } from 'crypto-js';
 declare global {
     interface Window {
         Buffer: typeof Buffer;

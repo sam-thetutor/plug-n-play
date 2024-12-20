@@ -1,6 +1,6 @@
-import { ActorSubclass } from '../@dfinity/agent';
+import { ActorSubclass } from '@dfinity/agent';
 import { Wallet, Adapter, AdapterState } from '../types/index.d';
-import { Principal } from '../@dfinity/principal';
+import { Principal } from '@dfinity/principal';
 export declare class NNSAdapter implements Adapter.Interface {
     static readonly logo: string;
     name: string;
