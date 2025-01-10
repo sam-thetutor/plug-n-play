@@ -1,9 +1,5 @@
 import type { Adapter, Wallet } from "../types/index.d";
-import {
-  Actor,
-  HttpAgent,
-  type ActorSubclass,
-} from "@dfinity/agent";
+import { type ActorSubclass } from "@dfinity/agent";
 import { walletList } from "../adapters";
 
 class PNP {
@@ -32,25 +28,60 @@ class PNP {
     };
   }
 
-  async connect(walletId: string): Promise<Wallet.Account> {
-    this.isConnecting = true;
-    const adapter = walletList.find((w) => w.id === walletId);
-    if (!adapter) {
-      throw new Error(`Wallet ${walletId} not found`);
-    }
+  async canReconnect(walletId: string): Promise<boolean> {
+    try {
+      const adapter = walletList.find((w) => w.id === walletId);
+      if (!adapter) return false;
 
-    const instance = new adapter.adapter();
+      // Check if the adapter has a stored session
+      const storedData = localStorage.getItem(this.config.localStorageKey);
+      if (!storedData || storedData !== walletId) return false;
+
+      // Special handling for NNS Login
+      if (walletId === "nns") {
+        const instance = new adapter.adapter(this.config);
+        return await instance.isConnected();
+      }
+
+      // For other wallets, check their delegation storage
+      const delegationKey = `${walletId}_session`;
+      const delegationData = localStorage.getItem(delegationKey);
+      if (!delegationData) return false;
+
+      return true;
+    } catch (error) {
+      console.warn("[PNP] Error checking reconnect status:", error);
+      return false;
+    }
+  }
+
+  async connect(walletId?: string): Promise<Wallet.Account | null> {
+    if (this.isConnecting) return null;
+    this.isConnecting = true;
 
     try {
-      const prepared = await instance.connect(this.config).then((account) => {
-        this.account = account;
-        this.activeWallet = adapter;
-        this.provider = instance;
-        console.log("account", account);
-        localStorage.setItem(this.config.localStorageKey, walletId);
-        return account;
-      });
-      return prepared;
+      // If no walletId provided, try to get it from storage
+      const targetWalletId =
+        walletId || localStorage.getItem(this.config.localStorageKey);
+      if (!targetWalletId) return null;
+
+      const adapter = walletList.find((w) => w.id === targetWalletId);
+      if (!adapter) {
+        throw new Error(`Wallet ${targetWalletId} not found`);
+      }
+
+      const instance = new adapter.adapter();
+      const account = await instance.connect(this.config);
+
+      this.account = account;
+      this.activeWallet = adapter;
+      this.provider = instance;
+      localStorage.setItem(this.config.localStorageKey, targetWalletId);
+
+      return account;
+    } catch (error) {
+      console.warn("[PNP] Connection failed:", error);
+      return null;
     } finally {
       this.isConnecting = false;
     }
@@ -90,7 +121,6 @@ class PNP {
     if (anon) {
       actor = this.createAnonymousActor<T>(canisterId, idl);
     } else {
-      console.log("Creating actor with provider");
       actor = this.provider.createActor<T>(canisterId, idl, {
         requiresSigning,
       });

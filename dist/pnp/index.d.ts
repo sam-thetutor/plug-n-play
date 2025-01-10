@@ -10,7 +10,8 @@ declare class PNP {
     fetchRootKeys: boolean;
     isConnecting: boolean;
     constructor(config?: Wallet.PNPConfig);
-    connect(walletId: string): Promise<Wallet.Account>;
+    canReconnect(walletId: string): Promise<boolean>;
+    connect(walletId?: string): Promise<Wallet.Account | null>;
     getAdapter(walletId: string): Adapter.Interface;
     disconnect(): Promise<void>;
     getActor<T>(canisterId: string, idl: any, options?: {

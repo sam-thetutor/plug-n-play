@@ -38,6 +38,7 @@ export declare class NFIDAdapter implements Adapter.Interface {
     url: string;
     config: Wallet.PNPConfig;
     constructor();
+    private tryRestoreSession;
     private setState;
     private setDelegationChain;
     isAvailable(): Promise<boolean>;

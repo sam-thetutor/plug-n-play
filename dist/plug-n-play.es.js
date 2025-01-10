@@ -8782,7 +8782,7 @@ const _NNSAdapter = class _NNSAdapter {
               }).catch(reject);
             },
             onError: (error) => {
-              this.setState(AdapterState.READY);
+              this.disconnect();
               reject(new Error("Authentication failed: " + error));
             }
           });
@@ -8824,15 +8824,15 @@ const _NNSAdapter = class _NNSAdapter {
       canisterId
     });
   }
-  createAnonymousActor(canisterId, idl, options) {
-    const actor = Actor.createActor(idl, {
+  createAnonymousActor(canisterId, idl) {
+    var _a2, _b;
+    return Actor.createActor(idl, {
       agent: HttpAgent.createSync({
-        host: this.config.hostUrl,
-        verifyQuerySignatures: this.config.verifyQuerySignatures
+        host: ((_a2 = this.config) == null ? void 0 : _a2.hostUrl) || "https://icp0.io",
+        verifyQuerySignatures: (_b = this.config) == null ? void 0 : _b.verifyQuerySignatures
       }),
       canisterId
     });
-    return actor;
   }
   // Get the principal associated with the wallet
   async getPrincipal() {
@@ -10707,7 +10707,6 @@ const _PlugAdapter = class _PlugAdapter {
     this.sessionKey = null;
     this.name = "Plug";
     this.logo = _PlugAdapter.logo;
-    this.identityProviderUrl = "https://plug.one/authenticate/?applicationName=kong";
     this.url = "https://plug.one/rpc";
     this.unwrapResponse = (response) => {
       if ("error" in response) {
@@ -10725,6 +10724,14 @@ const _PlugAdapter = class _PlugAdapter {
     this.name = "Plug";
     this.logo = _PlugAdapter.logo;
     this.delegationStorage = new LocalDelegationStorage$1();
+    const transport = new PlugTransport();
+    this.signer = new Signer({ transport });
+    this.agent = HttpAgent.createSync({ host: this.url });
+    this.signerAgent = SignerAgent.createSync({
+      signer: this.signer,
+      account: Principal.anonymous(),
+      agent: this.agent
+    });
     this.delegationStorage.get(_PlugAdapter.STORAGE_KEY).then((stored) => {
       if (stored) {
         try {
@@ -10756,15 +10763,6 @@ const _PlugAdapter = class _PlugAdapter {
         }
       }
     }).catch(console.error);
-    this.signerAgent = SignerAgent.createSync({
-      signer: new Signer({
-        transport: new PlugTransport()
-      }),
-      account: Principal.anonymous(),
-      agent: HttpAgent.createSync({ host: this.url })
-    });
-    this.signer = this.signerAgent.signer;
-    this.agent = HttpAgent.createSync({ host: this.url });
   }
   setState(newState) {
     this.state = newState;
@@ -10796,15 +10794,30 @@ const _PlugAdapter = class _PlugAdapter {
     return getAccountIdentifier(principal.toText()) || "";
   }
   async connect(config) {
-    var _a2;
+    var _a2, _b;
     this.config = config;
     try {
       this.setState(
         "LOADING"
         /* LOADING */
       );
-      if (!this.signer) {
-        throw new Error("Failed to initialize Plug signer");
+      await this.signer.requestPermissions([
+        {
+          method: "icrc27_accounts"
+        },
+        {
+          method: "icrc34_delegation",
+          targets: (_a2 = config.delegationTargets) == null ? void 0 : _a2.map((p) => p.toText())
+        },
+        { method: "icrc49_call_canister" }
+      ]);
+      const accounts = await this.signer.accounts();
+      if (accounts.length === 0) {
+        throw new Error("No accounts available from Plug");
+      }
+      const principal = accounts[0].owner;
+      if (principal.isAnonymous()) {
+        throw new Error("Failed to authenticate with Plug - got anonymous principal");
       }
       this.setState(
         "PROCESSING"
@@ -10819,7 +10832,7 @@ const _PlugAdapter = class _PlugAdapter {
         method: "icrc34_delegation",
         params: {
           publicKey: toBase64(this.sessionKey.getPublicKey().toDer()),
-          targets: (_a2 = config.delegationTargets) == null ? void 0 : _a2.map((p) => p.toText()),
+          targets: (_b = config.delegationTargets) == null ? void 0 : _b.map((p) => p.toText()),
           maxTimeToLive: this.config.delegationTimeout === void 0 ? BigInt(24 * 60 * 60 * 1e3 * 1e3 * 1e3 * 1e3) : String(BigInt(Date.now()) + this.config.delegationTimeout)
         }
       });
@@ -10845,16 +10858,6 @@ const _PlugAdapter = class _PlugAdapter {
         this.sessionKey,
         delegationChain
       );
-      this.signerAgent.replaceAccount(delegationIdentity.getPrincipal());
-      if (config.fetchRootKeys) {
-        await this.agent.fetchRootKey();
-      }
-      const principal = delegationIdentity.getPrincipal();
-      if (principal.isAnonymous()) {
-        throw new Error(
-          "Failed to authenticate with Plug - got anonymous principal"
-        );
-      }
       this.signerAgent = SignerAgent.createSync({
         signer: this.signer,
         account: principal
@@ -11158,10 +11161,12 @@ class PostMessageTransport {
 _PostMessageTransport_options = /* @__PURE__ */ new WeakMap(), _PostMessageTransport_clickState = /* @__PURE__ */ new WeakMap();
 class LocalDelegationStorage2 {
   async get(key) {
-    return localStorage.getItem(key);
+    const storedData = localStorage.getItem(key);
+    if (!storedData) return null;
+    return JSON.parse(storedData);
   }
   async set(key, value) {
-    localStorage.setItem(key, value);
+    localStorage.setItem(key, JSON.stringify(value));
   }
   async remove(key) {
     localStorage.removeItem(key);
@@ -11206,6 +11211,73 @@ const _NFIDAdapter = class _NFIDAdapter {
     });
     this.signer = this.signerAgent.signer;
     this.agent = HttpAgent.createSync({ host: this.url });
+    this.tryRestoreSession();
+  }
+  async tryRestoreSession() {
+    var _a2;
+    try {
+      const storedData = await this.delegationStorage.get(_NFIDAdapter.STORAGE_KEY);
+      if (!storedData) return;
+      this.sessionKey = Ed25519KeyIdentity.fromParsedJson(storedData.sessionKey);
+      const chain = DelegationChain.fromJSON(storedData.delegationChain);
+      const now = BigInt(Date.now()) * BigInt(1e6);
+      const isValid = chain.delegations.every(
+        (d) => d.delegation.expiration > now
+      );
+      if (!isValid) {
+        await this.delegationStorage.remove(_NFIDAdapter.STORAGE_KEY);
+        return;
+      }
+      const delegationIdentity = DelegationIdentity.fromDelegation(
+        this.sessionKey,
+        chain
+      );
+      const principal = delegationIdentity.getPrincipal();
+      if (principal.isAnonymous()) {
+        throw new Error("Got anonymous principal from stored delegation");
+      }
+      this.identity = delegationIdentity;
+      this.agent = HttpAgent.createSync({
+        identity: this.identity,
+        host: ((_a2 = this.config) == null ? void 0 : _a2.hostUrl) || "https://icp0.io"
+      });
+      this.signerAgent = SignerAgent.createSync({
+        signer: this.signer,
+        account: principal,
+        agent: this.agent
+      });
+      const account = {
+        id: principal.toText(),
+        displayName: "NFID Account",
+        principal: principal.toText(),
+        subaccount: hexStringToUint8Array(getAccountIdentifier(principal.toText()) || ""),
+        type: "SESSION"
+        /* SESSION */
+      };
+      this.accounts = [account];
+      this.setState(
+        "READY"
+        /* READY */
+      );
+      if (!await this.isConnected()) {
+        throw new Error("Failed to verify restored connection");
+      }
+      return {
+        owner: principal,
+        subaccount: hexStringToUint8Array(getAccountIdentifier(principal.toText()) || ""),
+        hasDelegation: true
+      };
+    } catch (error) {
+      console.warn("[NFID] Failed to restore session:", error);
+      this.identity = null;
+      this.signerAgent = null;
+      this.accounts = [];
+      await this.delegationStorage.remove(_NFIDAdapter.STORAGE_KEY);
+      this.setState(
+        "READY"
+        /* READY */
+      );
+    }
   }
   setState(newState) {
     this.state = newState;
@@ -11215,7 +11287,7 @@ const _NFIDAdapter = class _NFIDAdapter {
       sessionKey: this.sessionKey.toJSON(),
       delegationChain: chain.toJSON()
     };
-    await this.delegationStorage.set(key, JSON.stringify(sessionData));
+    await this.delegationStorage.set(key, sessionData);
   }
   async isAvailable() {
     return true;
@@ -11244,6 +11316,10 @@ const _NFIDAdapter = class _NFIDAdapter {
         "LOADING"
         /* LOADING */
       );
+      const restored = await this.tryRestoreSession();
+      if (restored) {
+        return restored;
+      }
       if (!this.signer) {
         throw new Error("Failed to initialize NFID signer");
       }
@@ -11626,23 +11702,45 @@ class PNP {
       ...config
     };
   }
-  async connect(walletId) {
-    this.isConnecting = true;
-    const adapter = walletList.find((w) => w.id === walletId);
-    if (!adapter) {
-      throw new Error(`Wallet ${walletId} not found`);
-    }
-    const instance = new adapter.adapter();
+  async canReconnect(walletId) {
     try {
-      const prepared = await instance.connect(this.config).then((account) => {
-        this.account = account;
-        this.activeWallet = adapter;
-        this.provider = instance;
-        console.log("account", account);
-        localStorage.setItem(this.config.localStorageKey, walletId);
-        return account;
-      });
-      return prepared;
+      const adapter = walletList.find((w) => w.id === walletId);
+      if (!adapter) return false;
+      const storedData = localStorage.getItem(this.config.localStorageKey);
+      if (!storedData || storedData !== walletId) return false;
+      if (walletId === "nns") {
+        const instance = new adapter.adapter(this.config);
+        return await instance.isConnected();
+      }
+      const delegationKey = `${walletId}_session`;
+      const delegationData = localStorage.getItem(delegationKey);
+      if (!delegationData) return false;
+      return true;
+    } catch (error) {
+      console.warn("[PNP] Error checking reconnect status:", error);
+      return false;
+    }
+  }
+  async connect(walletId) {
+    if (this.isConnecting) return null;
+    this.isConnecting = true;
+    try {
+      const targetWalletId = walletId || localStorage.getItem(this.config.localStorageKey);
+      if (!targetWalletId) return null;
+      const adapter = walletList.find((w) => w.id === targetWalletId);
+      if (!adapter) {
+        throw new Error(`Wallet ${targetWalletId} not found`);
+      }
+      const instance = new adapter.adapter();
+      const account = await instance.connect(this.config);
+      this.account = account;
+      this.activeWallet = adapter;
+      this.provider = instance;
+      localStorage.setItem(this.config.localStorageKey, targetWalletId);
+      return account;
+    } catch (error) {
+      console.warn("[PNP] Connection failed:", error);
+      return null;
     } finally {
       this.isConnecting = false;
     }
@@ -11670,7 +11768,6 @@ class PNP {
     if (anon) {
       actor = this.createAnonymousActor(canisterId, idl);
     } else {
-      console.log("Creating actor with provider");
       actor = this.provider.createActor(canisterId, idl, {
         requiresSigning
       });

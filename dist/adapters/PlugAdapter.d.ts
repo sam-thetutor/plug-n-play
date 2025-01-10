@@ -33,7 +33,6 @@ export declare class PlugAdapter implements Adapter.Interface {
     static readonly logo: string;
     name: string;
     logo: string;
-    identityProviderUrl: string;
     url: string;
     config: Wallet.PNPConfig;
     constructor();

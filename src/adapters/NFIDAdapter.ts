@@ -24,6 +24,8 @@ import {
   fromBase64,
 } from "@slide-computer/signer";
 import { hexStringToUint8Array } from "@dfinity/utils";
+import { DelegationStorage, LocalDelegationStorage } from "../storage/DelegationStorage";
+import { JsonnableEd25519KeyIdentity } from "@dfinity/identity/lib/cjs/identity/ed25519";
 
 // Account types for different session types
 export enum AccountType {
@@ -37,28 +39,6 @@ export interface NFIDAccount {
   principal: string;
   subaccount: Uint8Array;
   type: AccountType;
-}
-
-// Storage interface for delegation
-interface DelegationStorage {
-  get(key: string): Promise<string | null>;
-  set(key: string, value: string): Promise<void>;
-  remove(key: string): Promise<void>;
-}
-
-// Local storage implementation
-class LocalDelegationStorage implements DelegationStorage {
-  async get(key: string): Promise<string | null> {
-    return localStorage.getItem(key);
-  }
-
-  async set(key: string, value: string): Promise<void> {
-    localStorage.setItem(key, value);
-  }
-
-  async remove(key: string): Promise<void> {
-    localStorage.removeItem(key);
-  }
 }
 
 // State management for adapter
@@ -118,6 +98,90 @@ export class NFIDAdapter implements Adapter.Interface {
     });
     this.signer = this.signerAgent.signer;
     this.agent = HttpAgent.createSync({ host: this.url });
+    
+    // Attempt to restore session on initialization
+    this.tryRestoreSession();
+  }
+
+  private async tryRestoreSession() {
+    try {
+      const storedData = await this.delegationStorage.get(NFIDAdapter.STORAGE_KEY);
+      if (!storedData) return;
+
+      // Recreate the session key
+      this.sessionKey = Ed25519KeyIdentity.fromParsedJson(storedData.sessionKey as JsonnableEd25519KeyIdentity);
+      
+      // Recreate the delegation chain
+      const chain = DelegationChain.fromJSON(storedData.delegationChain);
+      
+      // Check if the delegation is still valid
+      const now = BigInt(Date.now()) * BigInt(1000_000); // Convert to nanoseconds
+      const isValid = chain.delegations.every(
+        (d) => d.delegation.expiration > now
+      );
+      
+      if (!isValid) {
+        await this.delegationStorage.remove(NFIDAdapter.STORAGE_KEY);
+        return;
+      }
+
+      // Create delegation identity
+      const delegationIdentity = DelegationIdentity.fromDelegation(
+        this.sessionKey,
+        chain
+      );
+
+      const principal = delegationIdentity.getPrincipal();
+      if (principal.isAnonymous()) {
+        throw new Error("Got anonymous principal from stored delegation");
+      }
+
+      // Update the adapter state with proper agent initialization
+      this.identity = delegationIdentity;
+      
+      // Create a new agent with the restored identity
+      this.agent = HttpAgent.createSync({
+        identity: this.identity,
+        host: this.config?.hostUrl || "https://icp0.io",
+      });
+
+      // Initialize signer agent with restored identity
+      this.signerAgent = SignerAgent.createSync({
+        signer: this.signer,
+        account: principal,
+        agent: this.agent,
+      });
+
+      const account: NFIDAccount = {
+        id: principal.toText(),
+        displayName: "NFID Account",
+        principal: principal.toText(),
+        subaccount: hexStringToUint8Array(getAccountIdentifier(principal.toText()) || ""),
+        type: AccountType.SESSION,
+      };
+
+      this.accounts = [account];
+      this.setState(AdapterState.READY);
+      
+      
+      // Verify the connection immediately
+      if (!(await this.isConnected())) {
+        throw new Error("Failed to verify restored connection");
+      }
+      return {
+        owner: principal,
+        subaccount: hexStringToUint8Array(getAccountIdentifier(principal.toText()) || ""),
+        hasDelegation: true,
+      };
+    } catch (error) {
+      console.warn("[NFID] Failed to restore session:", error);
+      // Clean up any partial state
+      this.identity = null;
+      this.signerAgent = null;
+      this.accounts = [];
+      await this.delegationStorage.remove(NFIDAdapter.STORAGE_KEY);
+      this.setState(AdapterState.READY);
+    }
   }
 
   private setState(newState: AdapterState) {
@@ -132,7 +196,7 @@ export class NFIDAdapter implements Adapter.Interface {
       sessionKey: this.sessionKey.toJSON(),
       delegationChain: chain.toJSON(),
     };
-    await this.delegationStorage.set(key, JSON.stringify(sessionData));
+    await this.delegationStorage.set(key, sessionData);
   }
 
   async isAvailable(): Promise<boolean> {
@@ -176,6 +240,12 @@ export class NFIDAdapter implements Adapter.Interface {
 
     try {
       this.setState(AdapterState.LOADING);
+
+      // Check for existing session first
+      const restored = await this.tryRestoreSession();
+      if (restored) {
+        return restored;
+      }
 
       // Force a new transport when explicitly connecting
       if (!this.signer) {

@@ -92,8 +92,6 @@ export class PlugAdapter implements Adapter.Interface {
   static readonly logo: string = plugLogo;
   name: string = "Plug";
   logo: string = PlugAdapter.logo;
-  identityProviderUrl: string =
-    "https://plug.one/authenticate/?applicationName=kong";
   url: string = "https://plug.one/rpc";
   config: Wallet.PNPConfig;
 
@@ -102,6 +100,17 @@ export class PlugAdapter implements Adapter.Interface {
     this.name = "Plug";
     this.logo = PlugAdapter.logo;
     this.delegationStorage = new LocalDelegationStorage();
+
+    // Initialize transport and signer like in exampleWTN.ts
+    const transport = new PlugTransport();
+    this.signer = new Signer({ transport });
+    this.agent = HttpAgent.createSync({ host: this.url });
+    this.signerAgent = SignerAgent.createSync({
+      signer: this.signer,
+      account: Principal.anonymous(),
+      agent: this.agent,
+    });
+
     // Attempt to restore existing session if available
     this.delegationStorage
       .get(PlugAdapter.STORAGE_KEY)
@@ -133,15 +142,6 @@ export class PlugAdapter implements Adapter.Interface {
         }
       })
       .catch(console.error);
-    this.signerAgent = SignerAgent.createSync({
-      signer: new Signer({
-        transport: new PlugTransport(),
-      }),
-      account: Principal.anonymous(),
-      agent: HttpAgent.createSync({ host: this.url }),
-    });
-    this.signer = this.signerAgent.signer;
-    this.agent = HttpAgent.createSync({ host: this.url });
   }
 
   private setState(newState: AdapterState) {
@@ -201,9 +201,26 @@ export class PlugAdapter implements Adapter.Interface {
     try {
       this.setState(AdapterState.LOADING);
 
-      // Force a new transport when explicitly connecting
-      if (!this.signer) {
-        throw new Error("Failed to initialize Plug signer");
+      // Request permissions like in exampleWTN.ts
+      await this.signer.requestPermissions([
+        {
+          method: "icrc27_accounts"
+        },
+        { method: "icrc34_delegation",
+          targets: config.delegationTargets?.map((p) => p.toText()),
+         },
+        { method: "icrc49_call_canister" }
+      ]);
+
+      // Get accounts
+      const accounts = await this.signer.accounts();
+      if (accounts.length === 0) {
+        throw new Error("No accounts available from Plug");
+      }
+
+      const principal = accounts[0].owner;
+      if (principal.isAnonymous()) {
+        throw new Error("Failed to authenticate with Plug - got anonymous principal");
       }
 
       this.setState(AdapterState.PROCESSING);
@@ -247,20 +264,6 @@ export class PlugAdapter implements Adapter.Interface {
         this.sessionKey,
         delegationChain,
       );
-
-      this.signerAgent.replaceAccount(delegationIdentity.getPrincipal());
-
-      if (config.fetchRootKeys) {
-        await this.agent.fetchRootKey();
-      }
-
-      const principal = delegationIdentity.getPrincipal();
-
-      if (principal.isAnonymous()) {
-        throw new Error(
-          "Failed to authenticate with Plug - got anonymous principal",
-        );
-      }
 
       this.signerAgent = SignerAgent.createSync({
         signer: this.signer,

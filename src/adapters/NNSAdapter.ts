@@ -107,7 +107,7 @@ export class NNSAdapter implements Adapter.Interface {
                 .catch(reject);
             },
             onError: (error) => {
-              this.setState(AdapterState.READY);
+              this.disconnect();
               reject(new Error("Authentication failed: " + error));
             },
           });
@@ -156,15 +156,14 @@ export class NNSAdapter implements Adapter.Interface {
     });
   }
 
-  createAnonymousActor<T>(canisterId: string, idl: any, options?: { requiresSigning?: boolean }): ActorSubclass<T> {
-    const actor = Actor.createActor<T>(idl, {
+  createAnonymousActor<T>(canisterId: string, idl: any): ActorSubclass<T> {
+    return Actor.createActor<T>(idl, {
       agent: HttpAgent.createSync({
-        host: this.config.hostUrl,
-        verifyQuerySignatures: this.config.verifyQuerySignatures,
+        host: this.config?.hostUrl || "https://icp0.io",
+        verifyQuerySignatures: this.config?.verifyQuerySignatures,
       }),
       canisterId,
     });
-    return actor;
   }
 
   // Get the principal associated with the wallet
