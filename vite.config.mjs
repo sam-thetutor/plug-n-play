@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import { resolve } from 'path';
 import dts from 'vite-plugin-dts';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
+import viteCompression from 'vite-plugin-compression';
 
 export default defineConfig({
   build: {
@@ -82,6 +83,20 @@ export default defineConfig({
         },
       ],
     }),
+    viteCompression({
+      verbose: true,
+      disable: false,
+      threshold: 1024 * 4,
+      algorithm: 'gzip',
+      ext: '.gz',
+    }),
+    viteCompression({
+      verbose: true,
+      disable: false,
+      threshold: 1024 * 4,
+      algorithm: 'brotliCompress',
+      ext: '.br',
+    })
   ],
   ssr: {
     noExternal: ['@dfinity/oisy-wallet-signer']
