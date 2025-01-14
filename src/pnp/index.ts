@@ -32,6 +32,7 @@ class PNP {
     try {
       const adapter = walletList.find((w) => w.id === walletId);
       if (!adapter) return false;
+      if(adapter.id === "oisy") return false;
 
       // Check if the adapter has a stored session
       const storedData = localStorage.getItem(this.config.localStorageKey);

@@ -41,11 +41,11 @@ export class OisyAdapter implements Adapter.Interface {
   static readonly logo: string = oisyLogo;
   name: string = "Oisy";
   logo: string = OisyAdapter.logo;
-  url: string = "https://beta.oisy.com/sign";
+  url: string = "https://oisy.com/sign";
   config: Wallet.PNPConfig;
 
   constructor() {
-    this.url = "https://beta.oisy.com/sign";
+    this.url = "https://oisy.com/sign";
     this.name = "Oisy";
     this.logo = OisyAdapter.logo;
     this.agent = HttpAgent.createSync({ host: this.url }) 

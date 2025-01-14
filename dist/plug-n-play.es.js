@@ -11336,8 +11336,8 @@ const _OisyAdapter = class _OisyAdapter {
     this.transport = null;
     this.name = "Oisy";
     this.logo = _OisyAdapter.logo;
-    this.url = "https://beta.oisy.com/sign";
-    this.url = "https://beta.oisy.com/sign";
+    this.url = "https://oisy.com/sign";
+    this.url = "https://oisy.com/sign";
     this.name = "Oisy";
     this.logo = _OisyAdapter.logo;
     this.agent = HttpAgent.createSync({ host: this.url });
@@ -11496,6 +11496,7 @@ class PNP {
     try {
       const adapter = walletList.find((w) => w.id === walletId);
       if (!adapter) return false;
+      if (adapter.id === "oisy") return false;
       const storedData = localStorage.getItem(this.config.localStorageKey);
       if (!storedData || storedData !== walletId) return false;
       if (walletId === "nns") {
