@@ -2,12 +2,12 @@
 
 import { Actor, HttpAgent, type ActorSubclass, Identity } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
-import type { Wallet, Adapter } from "../types/index";
+import type { Wallet, Adapter } from "../types/index.d";
 import { Principal } from "@dfinity/principal";
-import { principalToSubAccount } from "@dfinity/utils";
+import { hexStringToUint8Array } from "@dfinity/utils";
 import dfinityLogo from "../../assets/dfinity.webp";
+import { AdapterState } from "../types/index.d";
 import { getAccountIdentifier } from "../utils/identifierUtils";
-import { AdapterState } from "./NFIDAdapter";
 
 export class NNSAdapter implements Adapter.Interface {
   static readonly logo: string = dfinityLogo;
@@ -25,10 +25,22 @@ export class NNSAdapter implements Adapter.Interface {
   constructor(config?: Partial<Wallet.PNPConfig>) {
     this.url = "https://identity.ic0.app";
     this.config = {
-      verifyQuerySignatures: false,
-      fetchRootKeys: true,
+      verifyQuerySignatures: config?.verifyQuerySignatures,
+      fetchRootKeys: config?.fetchRootKeys,
+      identityProviderUrl: config?.isDev ? "https://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943/#authorize" : "https://identity.ic0.app/authenticate",
+      derivationOrigin: config?.derivationOrigin || "https://localhost:5173",
       ...config
     };
+    // Initialize AuthClient immediately
+    AuthClient.create({
+      idleOptions: {
+        idleTimeout: Number(1000 * 60 * 60 * 24),
+        disableDefaultIdleCallback: true,
+      },
+    }).then(client => {
+      this.authClient = client;
+      this.authClient.idleManager?.registerCallback?.(() => this.refreshLogin());
+    });
   }
 
   private setState(newState: AdapterState) {
@@ -37,19 +49,6 @@ export class NNSAdapter implements Adapter.Interface {
 
   getState(): AdapterState {
     return this.state;
-  }
-
-  // Helper method to initialize the AuthClient
-  private async initAuthClient(): Promise<void> {
-    if (!this.authClient) {
-      this.authClient = await AuthClient.create({
-        idleOptions: {
-          idleTimeout: Number(1000 * 60 * 60 * 24), // 1 day in milliseconds
-          disableDefaultIdleCallback: true, // Disable default reload behavior
-        },
-      });
-      this.authClient.idleManager?.registerCallback?.(() => this.refreshLogin());
-    }
   }
 
   // Helper method to initialize the HttpAgent
@@ -84,37 +83,42 @@ export class NNSAdapter implements Adapter.Interface {
     try {
       this.setState(AdapterState.LOADING);
       this.config = config;
-      await this.initAuthClient();
 
-      const isAuthenticated = await this.authClient!.isAuthenticated();
+      // Wait for AuthClient to be ready
+      while (!this.authClient) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+
+      const isAuthenticated = await this.authClient.isAuthenticated();
 
       if (!isAuthenticated) {
         return new Promise<Wallet.Account>((resolve, reject) => {
+          // Call login directly within the click handler context
           this.authClient!.login({
+            derivationOrigin: this.config.derivationOrigin,
             identityProvider: this.getIdentityProvider(config.isDev || true),
-            maxTimeToLive: BigInt(Number(config.delegationTimeout || 24 * 60 * 60 * 1000 * 1000 * 1000)), // 24 hours in nanoseconds
-            onSuccess: async () => {
-              try {
-                const account = await this._continueLogin(config.hostUrl || this.url);
-                this.setState(AdapterState.READY);
-                resolve(account);
-              } catch (error) {
-                this.setState(AdapterState.READY);
-                reject(error);
-              }
+            maxTimeToLive: BigInt(Number(config.delegationTimeout || 24 * 60 * 60 * 1000 * 1000 * 1000)),
+            onSuccess: () => {
+              // Properly handle void return type for onSuccess
+              this._continueLogin(config.hostUrl || this.url)
+                .then(account => {
+                  this.setState(AdapterState.READY);
+                  resolve(account);
+                })
+                .catch(reject);
             },
             onError: (error) => {
-              this.setState(AdapterState.READY);
+              this.disconnect();
               reject(new Error("Authentication failed: " + error));
             },
           });
         });
-      } else {
-        // User is already authenticated, proceed with login
-        const account = await this._continueLogin(config.hostUrl || this.url);
-        this.setState(AdapterState.READY);
-        return account;
       }
+
+      // User is already authenticated, proceed with login
+      const account = await this._continueLogin(config.hostUrl || this.url);
+      this.setState(AdapterState.READY);
+      return account;
     } catch (error) {
       this.setState(AdapterState.READY);
       throw error;
@@ -125,10 +129,11 @@ export class NNSAdapter implements Adapter.Interface {
     try {
       const identity = this.authClient!.getIdentity();
       const principal = identity.getPrincipal();
+      
       await this.initAgent(identity, host);
       return {
         owner: principal,
-        subaccount: principalToSubAccount(principal),
+        subaccount: hexStringToUint8Array(getAccountIdentifier(principal.toText()) || ""),
       };
     } catch (error) {
       console.error("Error during _continueLogin:", error);
@@ -142,7 +147,7 @@ export class NNSAdapter implements Adapter.Interface {
   }
 
   // Create an actor for interacting with a canister
-  async createActor<T>(canisterId: string, idl: any): Promise<ActorSubclass<T>> {
+  createActor<T>(canisterId: string, idl: any): ActorSubclass<T> {
     if (!this.agent) {
       throw new Error("Agent is not initialized. Ensure the wallet is connected.");
     }
@@ -166,7 +171,7 @@ export class NNSAdapter implements Adapter.Interface {
       throw new Error("AuthClient is not initialized. Ensure the wallet is connected.");
     }
     const principal = this.authClient.getIdentity().getPrincipal()
-    const subAccount = principalToSubAccount(principal);
+    const subAccount = getAccountIdentifier(principal.toText());
     if (subAccount) {
       return subAccount.toString() || "";
     }
@@ -182,7 +187,7 @@ export class NNSAdapter implements Adapter.Interface {
     }
   }
 
-  async undelegatedActor<T>(canisterId: string, idlFactory: any): Promise<ActorSubclass<T>> {
+  undelegatedActor<T>(canisterId: string, idlFactory: any): ActorSubclass<T> {
     return this.createActor(canisterId, idlFactory);
   }
 

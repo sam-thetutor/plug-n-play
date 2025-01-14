@@ -98,10 +98,19 @@ export namespace Adapter {
     getAccountId(): Promise<string>;
     
     // Actor creation
-    createActor<T>(canisterId: string, idl: any, options?: { requiresSigning?: boolean }): Promise<ActorSubclass<T>>;
-    undelegatedActor?<T>(canisterId: string, idlFactory: any, options?: { requiresSigning?: boolean }): Promise<ActorSubclass<T>>;
+    createActor<T>(canisterId: string, idl: any, options?: { requiresSigning?: boolean }): ActorSubclass<T>;
+    undelegatedActor?<T>(canisterId: string, idlFactory: any, options?: { requiresSigning?: boolean }): ActorSubclass<T>;
   }
 }
+
+export enum AdapterState {
+  READY = "ready",
+  CONNECTING = "connecting",
+  CONNECTED = "connected",
+  DISCONNECTED = "disconnected",
+  LOADING = "loading",
+}
+
 
 export class PNP {
   account: Wallet.Account | null;
@@ -117,8 +126,8 @@ export class PNP {
   connect(walletId: string): Promise<Wallet.Account>;
   disconnect(): Promise<void>;
   isWalletConnected(): boolean;
-  getActor<T>(canisterId: string, idl: any, isAnon?: boolean): Promise<ActorSubclass<T>>;
-  private createAnonymousActor<T>(canisterId: string, idl: any, options?: { requiresSigning?: boolean }): Promise<ActorSubclass<T>>;
+  getActor<T>(canisterId: string, idl: any, isAnon?: boolean): ActorSubclass<T>;
+  createAnonymousActor<T>(canisterId: string, idl: any, options?: { requiresSigning?: boolean }): ActorSubclass<T>;
 }
 
 declare global {
@@ -135,7 +144,7 @@ declare global {
         createActor: <T>(options: {
           canisterId: string;
           interfaceFactory: any;
-        }) => Promise<ActorSubclass<T>>;
+        }) => ActorSubclass<T>;
         disconnect: () => Promise<void>;
         principalId?: string;
         accountId?: string;

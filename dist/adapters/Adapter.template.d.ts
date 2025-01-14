@@ -1,5 +1,5 @@
-import { ActorSubclass } from '../@dfinity/agent';
-import { Principal } from '../@dfinity/principal';
+import { ActorSubclass } from '@dfinity/agent';
+import { Principal } from '@dfinity/principal';
 import { Adapter, Wallet } from '../types';
 /**
  * Template adapter class that implements the Adapter.Interface
@@ -17,5 +17,8 @@ export declare class TemplateAdapter implements Adapter.Interface {
     getPrincipal(): Promise<Principal | null>;
     getAccountId(): Promise<string | null>;
     isConnected(): Promise<boolean>;
-    createActor<T>(canisterId: string, idl: any): Promise<ActorSubclass<T>>;
+    createActor<T>(canisterId: string, idl: any): ActorSubclass<T>;
+    createAnonymousActor<T>(canisterId: string, idl: any, options?: {
+        requiresSigning?: boolean;
+    }): ActorSubclass<T>;
 }

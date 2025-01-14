@@ -1,43 +1,40 @@
 import { defineConfig } from 'vite';
-import path from 'path';
+import { resolve } from 'path';
 import dts from 'vite-plugin-dts';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
+import viteCompression from 'vite-plugin-compression';
 
 export default defineConfig({
   build: {
-    logLevel: 'debug',
     sourcemap: true,
+    minify: false,
     lib: {
-      entry: path.resolve(__dirname, 'src/index.ts'),
+      entry: resolve(__dirname, 'src/index.ts'),
       name: 'PlugNPlay',
-      formats: ['es', 'umd'],
+      formats: ['es'],
       fileName: (format) => `plug-n-play.${format}.js`,
     },
     rollupOptions: {
       external: [
-        '@astrox/sdk-web',
-        '@astrox/sdk-webview',
         '@dfinity/auth-client',
         '@dfinity/principal',
         '@dfinity/candid',
         '@dfinity/agent',
         '@dfinity/identity',
-        '@fort-major/msq-client',
-        '@fort-major/msq-shared',
+        '@dfinity/utils',
+        '@astrox/sdk-web',
+        '@astrox/sdk-webview',
+        '@dfinity/oisy-wallet-signer'
       ],
       output: {
-        globals: {
-          '@astrox/sdk-web': 'astrox.sdkWeb',
-          '@astrox/sdk-webview': 'astrox.sdkWebview',
-          '@dfinity/auth-client': 'dfinity.authClient',
-          '@dfinity/principal': 'dfinity.principal',
-          '@dfinity/candid': 'dfinity.candid',
-          '@dfinity/agent': 'dfinity.agent',
-          '@dfinity/identity': 'dfinity.identity',
-          '@fort-major/msq-client': 'fortMajor.msqClient',
-          '@fort-major/msq-shared': 'fortMajor.msqShared',
-        },
-      },
+        format: 'es',
+        exports: 'named'
+      }
+    },
+    commonjsOptions: {
+      include: [/node_modules/],
+      transformMixedEsModules: true,
+      esmExternals: true
     },
     outDir: 'dist',
     emptyOutDir: true,
@@ -52,10 +49,24 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src'),
-      '@types': path.resolve(__dirname, 'src/types'),
-      '@src': path.resolve(__dirname, 'src'),
+      '@': resolve(__dirname, './src'),
+      '@types': resolve(__dirname, 'src/types'),
+      '@src': resolve(__dirname, 'src'),
+      'iso-url': resolve(__dirname, 'src/utils/url-node.ts')
     },
+  },
+  optimizeDeps: {
+    include: [
+      'js-sha256',
+      '@astrox/sdk-web',
+      '@astrox/sdk-webview'
+    ],
+    esbuildOptions: {
+      target: 'es2020',
+      format: 'esm',
+      mainFields: ['module', 'main'],
+      conditions: ['module', 'import', 'default']
+    }
   },
   plugins: [
     dts({
@@ -72,5 +83,22 @@ export default defineConfig({
         },
       ],
     }),
+    viteCompression({
+      verbose: true,
+      disable: false,
+      threshold: 1024 * 4,
+      algorithm: 'gzip',
+      ext: '.gz',
+    }),
+    viteCompression({
+      verbose: true,
+      disable: false,
+      threshold: 1024 * 4,
+      algorithm: 'brotliCompress',
+      ext: '.br',
+    })
   ],
+  ssr: {
+    noExternal: ['@dfinity/oisy-wallet-signer']
+  }
 });

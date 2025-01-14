@@ -1,0 +1,267 @@
+ Connect your App to Plug¶
+Start interacting with the user's wallet by requesting a connect, and if needed, passing the necessary information to interact with the Agent and Actor.
+
+requestConnect¶
+requestConnect is an asynchronous method to request a new connection by showing a pop-up to the Plug user, that resolves to Promise<PublicKey> if the users response is Approve.
+
+As an example, copy and paste the following code snippet into the console and execute it.
+
+Select Approve or Reject in the pop-up and to see the corresponding result (Approved or Rejected) in the console.
+
+If accepted, the requestConnect method returns an object containing the publicKey of the connected account. If declined, the method will throw an error message.
+
+(async () => {
+  try {
+    const publicKey = await window.ic.plug.requestConnect();
+    console.log(`The connected user's public key is:`, publicKey);
+  } catch (e) {
+    console.log(e);
+  }
+})();
+Optionally, you can pass the following parameters to integrate Plug's Agent features, for authenticating a user's identity and requesting access to the Plug Agent to sign requests to your canisters on behalf of that identity.
+
+The fields are:
+
+whitelist - an Array of Canister Ids of type string
+host - a string representing a network URL that when not set defaults to the https://icp0.io
+Important
+
+Passing a whitelist is telling Plug to pass the user a list of canisters that your app will be able to interact with through the PlugAgent, on their behalf. NOTE: You should only be interacting with whitelisted canisters through an actor created through createActor( ). More on that soon.
+
+This is how it looks:
+
+Object {
+  whitelist?: ['canister-id'],
+  host?: 'https://network-address',
+  timeout: 50000
+}
+Here's an hypothetical example:
+
+(async () => {
+  // Canister Ids
+  const nnsCanisterId = 'qoctq-giaaa-aaaaa-aaaea-cai'
+
+  // Whitelist
+  const whitelist = [
+    nnsCanisterId,
+  ];
+
+  // Host
+  const host = "https://mainnet.dfinity.network";
+
+  // Make the request
+  try {
+    const publicKey = await window.ic.plug.requestConnect({
+      whitelist,
+      host,
+      timeout: 50000
+    });
+    console.log(`The connected user's public key is:`, publicKey);
+  } catch (e) {
+    console.log(e);
+  }
+})();
+You can learn more about this and use a template button implementation by reading our Plug button guide! A ready-to-go "Connect to Plug" button for your app.
+
+isConnected¶
+isConnected is an asynchronous method to check the connection status, that returns a Boolean: true or false.
+
+(async () => {
+  const result = await window.ic.plug.isConnected();
+  console.log(`Plug connection is ${result}`);
+})()
+disconnect¶
+Use window.ic.plug.disconnect method to notify plug of user's intention to terminate dapp's session and reset Plug's internal state.
+
+👾 Accessing Session Data¶
+Once connected, you can access properties exposed by plug
+
+window.ic.plug.agent          // access session agent (HttpAgent)
+window.ic.plug.isWalletLocked // access wallet's locked state (boolean)
+window.ic.plug.principalId    // access principalId of the wallet that was used to connect (string)
+window.ic.plug.accountId      // access accountId of the wallet that was used to connect (string)
+All session data will all automatically be updated by Plug's in-page provider upon any account switch or manual session termination
+
+⚡ Persisting an App/Plug Connection¶
+After initiating a connection to Plug with a whitelist, you can add this check to ensure the connection persists as the user navigates your application/website
+
+const connected = await window.ic.plug.isConnected();
+if (!connected) await window.ic.plug.requestConnect({ whitelist, host });
+You can use this, for example, in a useEffect inside of your apps main component (index/app) to do a check after load. You can pass on the same whitelist as before (won’t require re-approval by the user, unless access was revoked), or a different whitelist Canister ID set (will require the user’s approval).
+
+const verifyConnection = async () => {
+  const connected = await window.ic.plug.isConnected();
+  if (!connected) await window.ic.plug.requestConnect({ whitelist, host });
+};
+
+useEffect(async () => {
+  verifyConnection();
+}, []);
+📞 Plug callbacks¶
+Plug provides the following listeners to track wallet's connection and state:
+
+onExternalDisconnect(callback: () => void)¶
+The callback passed to window.ic.plug.onExternalDisconnect will be called whenever dapp's session is terminated outside of the dapp, for instance, when user switches wallet or revokes dapp's permissions.
+
+You might want to terminate the user's session on the dapp's side as well in this callback.
+
+onLockStateChange(callback: (isLocked: boolean) => void)¶
+The callback passed to window.ic.plug.onLockStateChange will be called whenever the wallet is locked/unlocked.
+
+
+Making Calls to Canisters with Plug¶
+Once connected, you can use Plug to make proxied calls to a canister on behalf of your users. This is the main way your app will be able to call actions on behalf of users, like calling an update method on your app's BE canister to make a post (if it is a social media), or interact with an NFT collection's canister, etc.
+
+First, connect to Plug and pass a whitelist of canisters you need to interact to.
+The user will approve the connection, giving you access to the createActor method.
+Use the createActor method to make safe calls to canisters on behalf of users.
+Important
+
+It is key to use the createActor to talk to a canister on behalf of users. Using the agent on its own, and creating an Actor on your end (without using Plug's method) will show users a warning when they need to approve update calls that affect their assets. This is considered an unsafe practice because it isn't fully transparent to users on the parameters you pass.
+
+createActor - Making Safe Calls¶
+createActor() is an asynchronous method that creates an Actor to interact with the Internet Computer. Returns an Actor for the provided Canister Id and interface factory (Candid or IDL).
+
+The createActor expects that the Agent is initialized beforehand by calling the requestConnect method with the whitelist (canister ID string array) and the host (string).
+
+As mentioned above, on instantiation the Agent is assigned to the window Plug object, as window.ic.plug.agent. Creating an Actor allows you to securely interact with a canister’s interface on behalf of the user.
+
+(async () => {
+  // NNS Canister Id as an example
+  const nnsCanisterId = 'qoctq-giaaa-aaaaa-aaaea-cai'
+  const whitelist = [nnsCanisterId];
+
+  // Initialise Agent, expects no return value
+  await window?.ic?.plug?.requestConnect({
+    whitelist,
+  });
+
+  // A partial Interface factory
+  // for the NNS Canister UI
+  // Check the `plug authentication - nns` for more
+  const nnsPartialInterfaceFactory = ({ IDL }) => {
+    const BlockHeight = IDL.Nat64;
+    const Stats = IDL.Record({
+      'latest_transaction_block_height' : BlockHeight,
+      'seconds_since_last_ledger_sync' : IDL.Nat64,
+      'sub_accounts_count' : IDL.Nat64,
+      'hardware_wallet_accounts_count' : IDL.Nat64,
+      'accounts_count' : IDL.Nat64,
+      'earliest_transaction_block_height' : BlockHeight,
+      'transactions_count' : IDL.Nat64,
+      'block_height_synced_up_to' : IDL.Opt(IDL.Nat64),
+      'latest_transaction_timestamp_nanos' : IDL.Nat64,
+      'earliest_transaction_timestamp_nanos' : IDL.Nat64,
+    });
+    return IDL.Service({
+      'get_stats' : IDL.Func([], [Stats], ['query']),
+    });
+  };
+
+  // Create an actor to interact with the NNS Canister
+  // we pass the NNS Canister id and the interface factory
+  const NNSUiActor = await window.ic.plug.createActor({
+    canisterId: nnsCanisterId,
+    interfaceFactory: nnsPartialInterfaceFactory,
+  });
+
+  // We can use any method described in the Candid (IDL)
+  // for example the get_stats()
+  // See https://github.com/dfinity/nns-dapp/blob/cd755b8/canisters/nns_ui/nns_ui.did
+  const stats = await NNSUiActor.get_stats();
+  console.log('NNS stats', stats);
+})()
+Rebuilding Actors Across Account Switches¶
+We can use requestConnect's callback parameter onConnectionUpdate to make sure that our actors are rebuilt across user identity switches.
+
+Here's an example doing so with a partial Sonic interface:
+
+(async () => {
+
+  // Add the Sonic mainnet canister to whitelist
+  const sonicCanisterId = '3xwpq-ziaaa-aaaah-qcn4a-cai';
+  const whitelist = [sonicCanisterId];
+
+  // Create an interface factory from a canister's IDL
+  const sonicPartialInterfaceFactory = ({ IDL }) => {
+      const TokenInfoExt = IDL.Record({
+        'id' : IDL.Text,
+        'fee' : IDL.Nat,
+        'decimals' : IDL.Nat8,
+        'name' : IDL.Text,
+        'totalSupply' : IDL.Nat,
+        'symbol' : IDL.Text,
+      });
+      const PairInfoExt = IDL.Record({
+        'id' : IDL.Text,
+        'price0CumulativeLast' : IDL.Nat,
+        'creator' : IDL.Principal,
+        'reserve0' : IDL.Nat,
+        'reserve1' : IDL.Nat,
+        'lptoken' : IDL.Text,
+        'totalSupply' : IDL.Nat,
+        'token0' : IDL.Text,
+        'token1' : IDL.Text,
+        'price1CumulativeLast' : IDL.Nat,
+        'kLast' : IDL.Nat,
+        'blockTimestampLast' : IDL.Int,
+      });
+      const SwapInfo = IDL.Record({
+        'owner' : IDL.Principal,
+        'cycles' : IDL.Nat,
+        'tokens' : IDL.Vec(TokenInfoExt),
+        'pairs' : IDL.Vec(PairInfoExt),
+      });
+      return IDL.Service({
+        'getSwapInfo' : IDL.Func([], [SwapInfo], ['query'])
+      })
+    }
+
+  // requestConnect callback function
+  const onConnectionUpdate = async () => {
+
+    // rebuild actor and test by getting Sonic info
+    const sonicActor = await window.ic.plug.createActor({
+      canisterId: sonicCanisterId,
+      interfaceFactory: sonicPartialInterfaceFactory,
+    });
+
+    // use our actors getSwapInfo method
+    const swapInfo = await sonicActor.getSwapInfo();
+    console.log('Sonic Swap Info: ', swapInfo);
+  }
+
+  // Request a connection
+  // Will fire onConnectionUpdate on account switch
+  await window?.ic?.plug?.requestConnect({
+    whitelist,
+    onConnectionUpdate,
+  });
+})()
+Plug Agent (.agent)¶
+On instantiation (requestConnect with whitelist) the Agent is assigned to the window Plug object as:
+
+window.ic.plug.agent
+The agent field is an instance of the HttpAgent class from the @dfinity/agent library, that allow us to interact with the Internet Computer.
+
+Here's an example, of getting the user principal ID using the Plug Agent:
+
+(async () => {
+  // Canister Ids
+  const nnsCanisterId = 'qoctq-giaaa-aaaaa-aaaea-cai'
+
+  // Whitelist
+  const whitelist = [
+    nnsCanisterId,
+  ];
+
+  // Make the request
+  const isConnected = await window.ic.plug.requestConnect({
+    whitelist,
+  });
+
+  // Get the user principal id
+  const principalId = await window.ic.plug.agent.getPrincipal();
+
+  console.log(`Plug's user principal Id is ${principalId}`);
+})();

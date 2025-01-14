@@ -5,8 +5,11 @@
     principalId,
     connectWallet,
     disconnectWallet,
+    pnpInstance,
+    selectedWalletId,
   } from "../stores/pnp";
   import { balance, fetchBalance } from "../stores/ledger";
+  import { get } from "svelte/store";
 
   let connecting = false;
   let error: string | null = null;
@@ -29,10 +32,17 @@
     connecting = true;
     error = null;
     try {
-      await connectWallet(walletId);
+      const pnp = get(pnpInstance);
+      if (!pnp) {
+        throw new Error('PNP not initialized');
+      }
+
+      const account = await connectWallet(walletId);
+      console.log("account", account);
       await fetchBalance();
     } catch (e) {
       error = e.message;
+      console.error('Failed to connect:', e);
     } finally {
       connecting = false;
     }
@@ -83,23 +93,22 @@
       <p class="subtitle">Choose your preferred wallet to sign in</p>
 
       <div class="wallet-list">
-        {#each availableWallets as wallet}
-          <button
-            class="wallet-button"
-            disabled={connecting}
-            on:click={() => handleConnect(wallet.id)}
-          >
-            <span class="wallet-name">{wallet.name}</span>
-            <span class="wallet-arrow">→</span>
-          </button>
-        {/each}
-      </div>
-
-      {#if error}
-        <div class="error">
-          {error}
+        <h2>Connect your wallet</h2>
+        <div class="wallets">
+          {#each availableWallets as wallet}
+            <button
+              class="wallet-button"
+              disabled={connecting}
+              on:click|preventDefault={() => handleConnect(wallet.id)}
+            >
+              <img src={wallet.logo} alt={wallet.name} />
+            </button>
+          {/each}
         </div>
-      {/if}
+        {#if error}
+          <div class="error">{error}</div>
+        {/if}
+      </div>
     </div>
   {/if}
 </div>

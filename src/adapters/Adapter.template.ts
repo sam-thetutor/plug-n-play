@@ -48,7 +48,11 @@ export class TemplateAdapter implements Adapter.Interface {
     throw new Error("Method not implemented.");
   }
 
-  async createActor<T>(canisterId: string, idl: any): Promise<ActorSubclass<T>> {
+  createActor<T>(canisterId: string, idl: any): ActorSubclass<T> {
+    throw new Error("Method not implemented.");
+  }
+
+  createAnonymousActor<T>(canisterId: string, idl: any, options?: { requiresSigning?: boolean }): ActorSubclass<T> {
     throw new Error("Method not implemented.");
   }
 }
