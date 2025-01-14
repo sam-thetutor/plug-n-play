@@ -3888,16 +3888,16 @@ _OisyAdapter.logo = oisyLogo;
 let OisyAdapter = _OisyAdapter;
 const walletList = [
   {
-    id: "nfid",
-    name: "NFID",
-    icon: NFIDAdapter.logo,
-    adapter: NFIDAdapter
-  },
-  {
     id: "oisy",
     name: "Oisy Wallet",
     icon: OisyAdapter.logo,
     adapter: OisyAdapter
+  },
+  {
+    id: "nfid",
+    name: "NFID",
+    icon: NFIDAdapter.logo,
+    adapter: NFIDAdapter
   },
   {
     id: "nns",

@@ -8,16 +8,16 @@ import { OisyAdapter } from "./OisyAdapter";
 
 export const walletList: Adapter.Info[] = [
   {
-    id: "nfid",
-    name: "NFID",
-    icon: NFIDAdapter.logo,
-    adapter: NFIDAdapter,
-  },
-  {
     id: "oisy",
     name: "Oisy Wallet",
     icon: OisyAdapter.logo,
     adapter: OisyAdapter,
+  },
+  {
+    id: "nfid",
+    name: "NFID",
+    icon: NFIDAdapter.logo,
+    adapter: NFIDAdapter,
   },
   {
     id: "nns",
