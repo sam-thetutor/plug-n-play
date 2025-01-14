@@ -3,29 +3,20 @@ import {
   Actor,
   HttpAgent,
   type ActorSubclass,
-  Signature,
 } from "@dfinity/agent";
 import {
   DelegationChain,
   DelegationIdentity,
   Ed25519KeyIdentity,
-  Delegation,
 } from "@dfinity/identity";
 import type { Wallet, Adapter } from "../types/index.d";
-import { getAccountIdentifier } from "../utils/identifierUtils";
 import nfidLogo from "../../assets/nfid.webp";
 import { PostMessageTransport } from "@slide-computer/signer-web";
 import { SignerAgent } from "@slide-computer/signer-agent";
 import { Signer } from "@slide-computer/signer";
-import {
-  type DelegationResponse,
-  SignerError,
-  toBase64,
-  fromBase64,
-} from "@slide-computer/signer";
-import { hexStringToUint8Array } from "@dfinity/utils";
+import { SignerError } from "@slide-computer/signer";
 import { DelegationStorage, LocalDelegationStorage } from "../storage/DelegationStorage";
-import { JsonnableEd25519KeyIdentity } from "@dfinity/identity/lib/cjs/identity/ed25519";
+import { AccountIdentifier } from "@dfinity/ledger-icp";
 
 // Account types for different session types
 export enum AccountType {
@@ -134,8 +125,10 @@ export class NFIDAdapter implements Adapter.Interface {
     if (!this.identity) {
       throw new Error("Not connected");
     }
-    const principal = this.identity.getPrincipal();
-    return getAccountIdentifier(principal.toText()) || "";
+    return AccountIdentifier.fromPrincipal({
+      principal: this.identity.getPrincipal(),
+      subAccount: undefined  // This will use the default subaccount
+    }).toHex();
   }
 
   unwrapResponse = <T extends any>(response: any): T => {
@@ -201,7 +194,10 @@ export class NFIDAdapter implements Adapter.Interface {
         id: principal.toText(),
         displayName: "NFID Account",
         principal: principal.toText(),
-        subaccount: hexStringToUint8Array(getAccountIdentifier(principal.toText()) || ""),
+        subaccount: AccountIdentifier.fromPrincipal({
+          principal,
+          subAccount: undefined  // This will use the default subaccount
+        }).toUint8Array(),
         type: AccountType.SESSION,
       };
 
@@ -212,7 +208,10 @@ export class NFIDAdapter implements Adapter.Interface {
           this.setState(AdapterState.READY);
           return {
             owner: principal,
-            subaccount: hexStringToUint8Array(getAccountIdentifier(principal.toText()) || ""),
+            subaccount: AccountIdentifier.fromPrincipal({
+              principal,
+              subAccount: undefined  // This will use the default subaccount
+            }).toUint8Array(),
             hasDelegation: true,
           };
         }

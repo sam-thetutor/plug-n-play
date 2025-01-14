@@ -4,10 +4,9 @@ import { Actor, HttpAgent, type ActorSubclass, Identity } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
 import type { Wallet, Adapter } from "../types/index.d";
 import { Principal } from "@dfinity/principal";
-import { hexStringToUint8Array } from "@dfinity/utils";
 import dfinityLogo from "../../assets/dfinity.webp";
 import { AdapterState } from "../types/index.d";
-import { getAccountIdentifier } from "../utils/identifierUtils";
+import { AccountIdentifier } from "@dfinity/ledger-icp";
 
 export class NNSAdapter implements Adapter.Interface {
   static readonly logo: string = dfinityLogo;
@@ -31,16 +30,24 @@ export class NNSAdapter implements Adapter.Interface {
       derivationOrigin: config?.derivationOrigin || "https://localhost:5173",
       ...config
     };
-    // Initialize AuthClient immediately
-    AuthClient.create({
-      idleOptions: {
-        idleTimeout: Number(1000 * 60 * 60 * 24),
-        disableDefaultIdleCallback: true,
-      },
-    }).then(client => {
-      this.authClient = client;
+    
+    // Initialize AuthClient asynchronously but don't block constructor
+    this.initAuthClient();
+  }
+
+  // New private method to initialize AuthClient
+  private async initAuthClient(): Promise<void> {
+    try {
+      this.authClient = await AuthClient.create({
+        idleOptions: {
+          idleTimeout: Number(1000 * 60 * 60 * 24),
+          disableDefaultIdleCallback: true,
+        },
+      });
       this.authClient.idleManager?.registerCallback?.(() => this.refreshLogin());
-    });
+    } catch (error) {
+      console.error("Failed to initialize AuthClient:", error);
+    }
   }
 
   private setState(newState: AdapterState) {
@@ -133,7 +140,10 @@ export class NNSAdapter implements Adapter.Interface {
       await this.initAgent(identity, host);
       return {
         owner: principal,
-        subaccount: hexStringToUint8Array(getAccountIdentifier(principal.toText()) || ""),
+        subaccount: AccountIdentifier.fromPrincipal({
+          principal,
+          subAccount: undefined  // This will use the default subaccount
+        }).toUint8Array(),
       };
     } catch (error) {
       console.error("Error during _continueLogin:", error);
@@ -171,7 +181,10 @@ export class NNSAdapter implements Adapter.Interface {
       throw new Error("AuthClient is not initialized. Ensure the wallet is connected.");
     }
     const principal = this.authClient.getIdentity().getPrincipal()
-    const subAccount = getAccountIdentifier(principal.toText());
+    const subAccount = AccountIdentifier.fromPrincipal({
+      principal,
+      subAccount: undefined  // This will use the default subaccount
+    }).toHex();
     if (subAccount) {
       return subAccount.toString() || "";
     }

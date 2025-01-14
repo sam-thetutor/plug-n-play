@@ -11,15 +11,14 @@ import {
   Ed25519KeyIdentity,
 } from "@dfinity/identity";
 import type { Wallet, Adapter } from "../types/index.d";
-import { getAccountIdentifier } from "../utils/identifierUtils";
 import plugLogo from "../../assets/plug.webp";
-import { hexStringToUint8Array } from "@dfinity/utils";
 import { PlugTransport } from "@slide-computer/signer-transport-plug";
 import { SignerAgent } from "@slide-computer/signer-agent";
 import { Signer } from "@slide-computer/signer";
 import {
   SignerError,
 } from "@slide-computer/signer";
+import { AccountIdentifier } from "@dfinity/ledger-icp";
 
 // Account types for different session types
 export enum AccountType {
@@ -141,8 +140,10 @@ export class PlugAdapter implements Adapter.Interface {
     if (!this.identity) {
       throw new Error("Not connected");
     }
-    const principal = this.identity.getPrincipal();
-    return getAccountIdentifier(principal.toText()) || "";
+    return AccountIdentifier.fromPrincipal({
+      principal: await this.getPrincipal(),
+      subAccount: undefined  // This will use the default subaccount
+    }).toHex();
   }
 
   unwrapResponse = <T extends any>(response: any): T => {
@@ -210,9 +211,10 @@ export class PlugAdapter implements Adapter.Interface {
         id: principal.toText(),
         displayName: "Plug Account",
         principal: principal.toText(),
-        subaccount: hexStringToUint8Array(
-          getAccountIdentifier(principal.toText()) || ""
-        ),
+        subaccount: AccountIdentifier.fromPrincipal({
+          principal,
+          subAccount: undefined  // This will use the default subaccount
+        }).toUint8Array(),
         type: AccountType.SESSION,
       };
 
@@ -223,9 +225,10 @@ export class PlugAdapter implements Adapter.Interface {
           this.setState(AdapterState.READY);
           return {
             owner: principal,
-            subaccount: hexStringToUint8Array(
-              getAccountIdentifier(principal.toText()) || ""
-            ),
+            subaccount: AccountIdentifier.fromPrincipal({
+              principal,
+              subAccount: undefined  // This will use the default subaccount
+            }).toUint8Array(),
             hasDelegation: true,
           };
         }

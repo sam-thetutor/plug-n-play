@@ -5,12 +5,11 @@ import {
   type ActorSubclass,
 } from "@dfinity/agent";
 import type { Wallet, Adapter } from "../types/index";
-import { getAccountIdentifier } from "../utils/identifierUtils";
 import oisyLogo from "../../assets/oisy_logo.webp";
-import { hexStringToUint8Array } from "@dfinity/utils";
 import { PostMessageTransport } from "@slide-computer/signer-web";
 import { SignerAgent } from "@slide-computer/signer-agent";
 import { Signer } from "@slide-computer/signer";
+import { AccountIdentifier } from "@dfinity/ledger-icp";
 
 export enum AccountType {
   GLOBAL = "GLOBAL",
@@ -72,8 +71,10 @@ export class OisyAdapter implements Adapter.Interface {
   }
 
   async getAccountId(): Promise<string> {
-    const principal = await this.getPrincipal();
-    return getAccountIdentifier(principal.toText()) || "";
+    return AccountIdentifier.fromPrincipal({
+      principal: await this.getPrincipal(),
+      subAccount: undefined  // This will use the default subaccount
+    }).toHex();
   }
 
   async connect(config: Wallet.PNPConfig): Promise<Wallet.Account> {
@@ -99,13 +100,19 @@ export class OisyAdapter implements Adapter.Interface {
         id: acc.owner.toText(),
         displayName: `Oisy Account ${acc.owner.toText().slice(0, 8)}...`,
         principal: acc.owner.toText(),
-        subaccount: hexStringToUint8Array(getAccountIdentifier(acc.owner.toText()) || ""),
+        subaccount: AccountIdentifier.fromPrincipal({
+          principal: acc.owner,
+          subAccount: undefined  // This will use the default subaccount
+        }).toUint8Array(),
         type: AccountType.SESSION,
       }));
 
       return {
         owner: principal,
-        subaccount: hexStringToUint8Array(getAccountIdentifier(principal.toText()) || ""),
+        subaccount: AccountIdentifier.fromPrincipal({
+          principal,
+          subAccount: undefined  // This will use the default subaccount
+        }).toUint8Array(),
         hasDelegation: false,
       };
 
