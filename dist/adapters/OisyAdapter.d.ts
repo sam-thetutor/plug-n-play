@@ -19,7 +19,6 @@ export declare class OisyAdapter implements Adapter.Interface {
     private signerAgent;
     private accounts;
     private transport;
-    private isProcessing;
     static readonly logo: string;
     name: string;
     logo: string;
@@ -35,7 +34,6 @@ export declare class OisyAdapter implements Adapter.Interface {
         requiresSigning?: boolean;
         anon: boolean;
     }): ActorSubclass<T>;
-    createAnonymousActor<T>(canisterId: string, idl: any): ActorSubclass<T>;
     disconnect(): Promise<void>;
     getAccounts(): OisyAccount[];
 }

@@ -38,7 +38,6 @@ export declare class NFIDAdapter implements Adapter.Interface {
     url: string;
     config: Wallet.PNPConfig;
     constructor();
-    private tryRestoreSession;
     private setState;
     private setDelegationChain;
     isAvailable(): Promise<boolean>;
@@ -47,7 +46,6 @@ export declare class NFIDAdapter implements Adapter.Interface {
     getAccountId(): Promise<string>;
     unwrapResponse: <T extends unknown>(response: any) => T;
     connect(config: Wallet.PNPConfig): Promise<Wallet.Account>;
-    createAnonymousActor<T>(canisterId: string, idl: any): ActorSubclass<T>;
     createActor<T>(canisterId: string, idlFactory: any, options?: {
         requiresSigning?: boolean;
         anon: boolean;

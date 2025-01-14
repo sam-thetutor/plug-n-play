@@ -4,26 +4,21 @@ import {
   Actor,
   HttpAgent,
   type ActorSubclass,
-  Signature,
 } from "@dfinity/agent";
 import {
   DelegationChain,
   DelegationIdentity,
   Ed25519KeyIdentity,
-  Delegation,
 } from "@dfinity/identity";
 import type { Wallet, Adapter } from "../types/index.d";
 import { getAccountIdentifier } from "../utils/identifierUtils";
 import plugLogo from "../../assets/plug.webp";
-import { principalToSubAccount, hexStringToUint8Array } from "@dfinity/utils";
+import { hexStringToUint8Array } from "@dfinity/utils";
 import { PlugTransport } from "@slide-computer/signer-transport-plug";
 import { SignerAgent } from "@slide-computer/signer-agent";
 import { Signer } from "@slide-computer/signer";
 import {
-  type DelegationResponse,
   SignerError,
-  toBase64,
-  fromBase64,
 } from "@slide-computer/signer";
 
 // Account types for different session types
@@ -110,38 +105,6 @@ export class PlugAdapter implements Adapter.Interface {
       account: Principal.anonymous(),
       agent: this.agent,
     });
-
-    // Attempt to restore existing session if available
-    this.delegationStorage
-      .get(PlugAdapter.STORAGE_KEY)
-      .then((stored) => {
-        if (stored) {
-          try {
-            const { sessionKey, delegationChain } = JSON.parse(stored);
-            this.sessionKey = Ed25519KeyIdentity.fromParsedJson(sessionKey);
-            const delegationIdentity = DelegationIdentity.fromDelegation(
-              this.sessionKey,
-              delegationChain,
-            );
-            this.signerAgent.replaceAccount(delegationIdentity.getPrincipal());
-            this.identity = delegationIdentity;
-            const principal = delegationIdentity.getPrincipal();
-            const account: PlugAccount = {
-              id: principal.toText(),
-              displayName: "Plug Account",
-              principal: principal.toText(),
-              subaccount: hexStringToUint8Array(getAccountIdentifier(principal.toText()) || ""),
-              type: AccountType.SESSION,
-            };
-            this.accounts = [account];
-            this.setState(AdapterState.READY);
-          } catch (e) {
-            console.error("Failed to restore session:", e);
-            this.delegationStorage.remove(PlugAdapter.STORAGE_KEY);
-          }
-        }
-      })
-      .catch(console.error);
   }
 
   private setState(newState: AdapterState) {
@@ -150,7 +113,7 @@ export class PlugAdapter implements Adapter.Interface {
 
   private async setDelegationChain(
     key: string,
-    chain: DelegationChain,
+    chain: DelegationChain
   ): Promise<void> {
     const sessionData = {
       sessionKey: this.sessionKey,
@@ -203,66 +166,37 @@ export class PlugAdapter implements Adapter.Interface {
 
       // Request permissions like in exampleWTN.ts
       await this.signer.requestPermissions([
+        { method: "icrc27_accounts" },
         {
-          method: "icrc27_accounts"
-        },
-        { method: "icrc34_delegation",
+          method: "icrc34_delegation",
           targets: config.delegationTargets?.map((p) => p.toText()),
-         },
-        { method: "icrc49_call_canister" }
+        },
+        { method: "icrc49_call_canister" },
       ]);
 
       // Get accounts
       const accounts = await this.signer.accounts();
-      if (accounts.length === 0) {
-        throw new Error("No accounts available from Plug");
-      }
-
       const principal = accounts[0].owner;
-      if (principal.isAnonymous()) {
-        throw new Error("Failed to authenticate with Plug - got anonymous principal");
-      }
-
       this.setState(AdapterState.PROCESSING);
 
       if (!this.sessionKey) {
         this.sessionKey = Ed25519KeyIdentity.generate();
       }
 
-      const response = await this.signer.sendRequest<any, DelegationResponse>({
-        id: window.crypto.randomUUID(),
-        jsonrpc: "2.0",
-        method: "icrc34_delegation",
-        params: {
-          publicKey: toBase64(this.sessionKey.getPublicKey().toDer()),
-          targets: config.delegationTargets?.map((p) => p.toText()),
-          maxTimeToLive:
-            this.config.delegationTimeout === undefined
-              ? BigInt(24 * 60 * 60 * 1000 * 1000 * 1000 * 1000)
-              : String(BigInt(Date.now()) + this.config.delegationTimeout),
-        },
+      const delegationChain = await this.signer.delegation({
+        publicKey: this.sessionKey.getPublicKey().toDer(),
+        targets: config.delegationTargets,
+        maxTimeToLive:
+          this.config.delegationTimeout === undefined
+            ? BigInt(24 * 60 * 60 * 1000 * 1000 * 1000 * 1000)
+            : BigInt(Date.now()) + this.config.delegationTimeout,
       });
-
-      const result: any = this.unwrapResponse(response);
-      const delegationChain = DelegationChain.fromDelegations(
-        result.signerDelegation.map((delegation) => ({
-          delegation: new Delegation(
-            fromBase64(delegation.delegation.pubkey),
-            BigInt(delegation.delegation.expiration),
-            delegation.delegation.targets?.map((principal) =>
-              Principal.fromText(principal),
-            ),
-          ),
-          signature: fromBase64(delegation.signature) as Signature,
-        })),
-        fromBase64(result.publicKey),
-      );
 
       await this.setDelegationChain(PlugAdapter.STORAGE_KEY, delegationChain);
 
       const delegationIdentity = DelegationIdentity.fromDelegation(
         this.sessionKey,
-        delegationChain,
+        delegationChain
       );
 
       this.signerAgent = SignerAgent.createSync({
@@ -271,12 +205,14 @@ export class PlugAdapter implements Adapter.Interface {
       });
 
       this.identity = delegationIdentity;
-        
+
       const account: PlugAccount = {
         id: principal.toText(),
         displayName: "Plug Account",
         principal: principal.toText(),
-        subaccount: hexStringToUint8Array(getAccountIdentifier(principal.toText()) || ""),
+        subaccount: hexStringToUint8Array(
+          getAccountIdentifier(principal.toText()) || ""
+        ),
         type: AccountType.SESSION,
       };
 
@@ -287,7 +223,9 @@ export class PlugAdapter implements Adapter.Interface {
           this.setState(AdapterState.READY);
           return {
             owner: principal,
-            subaccount: hexStringToUint8Array(getAccountIdentifier(principal.toText()) || ""),
+            subaccount: hexStringToUint8Array(
+              getAccountIdentifier(principal.toText()) || ""
+            ),
             hasDelegation: true,
           };
         }
@@ -311,16 +249,6 @@ export class PlugAdapter implements Adapter.Interface {
     }
   }
 
-  createAnonymousActor<T>(canisterId: string, idl: any): ActorSubclass<T> {
-    return Actor.createActor<T>(idl, {
-      agent: HttpAgent.createSync({
-        host: this.config?.hostUrl || "https://icp0.io",
-        verifyQuerySignatures: this.config?.verifyQuerySignatures,
-      }),
-      canisterId,
-    });
-  }
-
   createActor<T>(
     canisterId: string,
     idlFactory: any,
@@ -330,7 +258,7 @@ export class PlugAdapter implements Adapter.Interface {
     } = {
       requiresSigning: true,
       anon: false,
-    },
+    }
   ): ActorSubclass<T> {
     const { requiresSigning = true, anon = false } = options;
     try {
@@ -338,7 +266,7 @@ export class PlugAdapter implements Adapter.Interface {
       const inTargets = this.identity
         .getDelegation()
         .delegations.some((d) =>
-          d.delegation.targets?.some((p) => p.toText() === canisterId),
+          d.delegation.targets?.some((p) => p.toText() === canisterId)
         );
 
       const isUndelegated =
@@ -352,12 +280,6 @@ export class PlugAdapter implements Adapter.Interface {
 
       if (cachedActor) {
         return cachedActor;
-      }
-
-      if (!inTargets && !requiresSigning && anon) {
-        const anonActor = this.createAnonymousActor<T>(canisterId, idlFactory);
-        this.actorCache.set(cacheKey, anonActor);
-        return anonActor;
       }
 
       if ((inTargets && !requiresSigning) || (!inTargets && !requiresSigning)) {
@@ -374,6 +296,7 @@ export class PlugAdapter implements Adapter.Interface {
 
       if (requiresSigning) {
         if (!this.signerAgent) {
+          this.disconnect();
           throw new Error("No signer agent available. Please connect first.");
         }
 
@@ -392,7 +315,7 @@ export class PlugAdapter implements Adapter.Interface {
       throw new Error(
         `Failed to create actor: ${
           error instanceof Error ? error.message : String(error)
-        }`,
+        }`
       );
     }
   }

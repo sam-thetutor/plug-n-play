@@ -7,7 +7,7 @@ import {
 import type { Wallet, Adapter } from "../types/index";
 import { getAccountIdentifier } from "../utils/identifierUtils";
 import oisyLogo from "../../assets/oisy_logo.webp";
-import { principalToSubAccount, hexStringToUint8Array } from "@dfinity/utils";
+import { hexStringToUint8Array } from "@dfinity/utils";
 import { PostMessageTransport } from "@slide-computer/signer-web";
 import { SignerAgent } from "@slide-computer/signer-agent";
 import { Signer } from "@slide-computer/signer";
@@ -29,7 +29,7 @@ export class OisyAdapter implements Adapter.Interface {
   private static readonly TRANSPORT_CONFIG = {
     windowOpenerFeatures: "width=525,height=705",
     establishTimeout: 45000,
-    disconnectTimeout: 35000,
+    disconnectTimeout: 45000,
   };
 
   private signer: Signer | null = null;
@@ -37,16 +37,15 @@ export class OisyAdapter implements Adapter.Interface {
   private signerAgent: SignerAgent<Signer>;
   private accounts: OisyAccount[] = [];
   private transport: PostMessageTransport | null = null;
-  private isProcessing: boolean = false;
 
   static readonly logo: string = oisyLogo;
   name: string = "Oisy";
   logo: string = OisyAdapter.logo;
-  url: string = "https://oisy.com/sign";
+  url: string = "https://beta.oisy.com/sign";
   config: Wallet.PNPConfig;
 
   constructor() {
-    this.url = "https://oisy.com/sign";
+    this.url = "https://beta.oisy.com/sign";
     this.name = "Oisy";
     this.logo = OisyAdapter.logo;
     this.agent = HttpAgent.createSync({ host: this.url }) 
@@ -81,6 +80,7 @@ export class OisyAdapter implements Adapter.Interface {
     try {
       const accounts = await this.signerAgent.signer.accounts();
       if (!accounts || accounts.length === 0) {
+        this.disconnect();
         throw new Error("No accounts returned from Oisy");
       }
 
@@ -127,12 +127,6 @@ export class OisyAdapter implements Adapter.Interface {
       anon: false,
     }
   ): ActorSubclass<T> {
-    const { requiresSigning = true, anon = false } = options;
-
-    if (anon === true) {
-      return this.createAnonymousActor<T>(canisterId, idlFactory);
-    }
-
     if (!this.signerAgent) {
       throw new Error("No signer agent available. Please connect first.");
     }
@@ -146,13 +140,6 @@ export class OisyAdapter implements Adapter.Interface {
       console.error("[Oisy] Actor creation error:", error);
       throw error;
     }
-  }
-
-  createAnonymousActor<T>(canisterId: string, idl: any): ActorSubclass<T> {
-    return Actor.createActor<T>(idl, {
-      agent: this.agent,
-      canisterId,
-    });
   }
 
   async disconnect(): Promise<void> {
@@ -171,6 +158,7 @@ export class OisyAdapter implements Adapter.Interface {
 
     this.agent = null;
     this.signerAgent = null;
+    this.transport = null;
     this.accounts = [];
   }
 

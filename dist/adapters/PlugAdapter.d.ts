@@ -44,7 +44,6 @@ export declare class PlugAdapter implements Adapter.Interface {
     getAccountId(): Promise<string>;
     unwrapResponse: <T extends unknown>(response: any) => T;
     connect(config: Wallet.PNPConfig): Promise<Wallet.Account>;
-    createAnonymousActor<T>(canisterId: string, idl: any): ActorSubclass<T>;
     createActor<T>(canisterId: string, idlFactory: any, options?: {
         requiresSigning?: boolean;
         anon: boolean;

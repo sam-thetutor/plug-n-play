@@ -8,6 +8,7 @@ import { hexStringToUint8Array } from "@dfinity/utils";
 import dfinityLogo from "../../assets/dfinity.webp";
 import { AdapterState } from "../types/index.d";
 import { getAccountIdentifier } from "../utils/identifierUtils";
+
 export class NNSAdapter implements Adapter.Interface {
   static readonly logo: string = dfinityLogo;
   // Required property from Adapter.Interface
@@ -152,16 +153,6 @@ export class NNSAdapter implements Adapter.Interface {
     }
     return Actor.createActor(idl, {
       agent: this.agent,
-      canisterId,
-    });
-  }
-
-  createAnonymousActor<T>(canisterId: string, idl: any): ActorSubclass<T> {
-    return Actor.createActor<T>(idl, {
-      agent: HttpAgent.createSync({
-        host: this.config?.hostUrl || "https://icp0.io",
-        verifyQuerySignatures: this.config?.verifyQuerySignatures,
-      }),
       canisterId,
     });
   }

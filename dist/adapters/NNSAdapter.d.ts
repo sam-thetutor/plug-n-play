@@ -20,7 +20,6 @@ export declare class NNSAdapter implements Adapter.Interface {
     private _continueLogin;
     isConnected(): Promise<boolean>;
     createActor<T>(canisterId: string, idl: any): ActorSubclass<T>;
-    createAnonymousActor<T>(canisterId: string, idl: any): ActorSubclass<T>;
     getPrincipal(): Promise<Principal>;
     getAccountId(): Promise<string>;
     private refreshLogin;

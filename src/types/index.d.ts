@@ -99,7 +99,6 @@ export namespace Adapter {
     
     // Actor creation
     createActor<T>(canisterId: string, idl: any, options?: { requiresSigning?: boolean }): ActorSubclass<T>;
-    createAnonymousActor<T>(canisterId: string, idl: any, options?: { requiresSigning?: boolean }): ActorSubclass<T>;
     undelegatedActor?<T>(canisterId: string, idlFactory: any, options?: { requiresSigning?: boolean }): ActorSubclass<T>;
   }
 }

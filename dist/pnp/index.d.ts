@@ -18,9 +18,7 @@ declare class PNP {
         anon?: boolean;
         requiresSigning?: boolean;
     }): ActorSubclass<T>;
-    createAnonymousActor<T>(canisterId: string, idl: any, options?: {
-        requiresSigning?: boolean;
-    }): ActorSubclass<T>;
+    createAnonymousActor<T>(canisterId: string, idl: any): ActorSubclass<T>;
     isWalletConnected(): boolean;
 }
 export declare const walletsList: Adapter.Info[];

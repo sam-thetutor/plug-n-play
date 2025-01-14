@@ -1,5 +1,5 @@
 import type { Adapter, Wallet } from "../types/index.d";
-import { type ActorSubclass } from "@dfinity/agent";
+import { Actor, HttpAgent, type ActorSubclass } from "@dfinity/agent";
 import { walletList } from "../adapters";
 
 class PNP {
@@ -61,8 +61,8 @@ class PNP {
 
     try {
       // If no walletId provided, try to get it from storage
-      const targetWalletId =
-        walletId || localStorage.getItem(this.config.localStorageKey);
+      const targetWalletId = walletId || localStorage.getItem(this.config.localStorageKey);
+      localStorage.setItem(this.config.localStorageKey, targetWalletId);
       if (!targetWalletId) return null;
 
       const adapter = walletList.find((w) => w.id === targetWalletId);
@@ -76,8 +76,6 @@ class PNP {
       this.account = account;
       this.activeWallet = adapter;
       this.provider = instance;
-      localStorage.setItem(this.config.localStorageKey, targetWalletId);
-
       return account;
     } catch (error) {
       console.warn("[PNP] Connection failed:", error);
@@ -128,14 +126,22 @@ class PNP {
     return actor;
   }
 
-  public createAnonymousActor<T>(
-    canisterId: string,
-    idl: any,
-    options?: { requiresSigning?: boolean }
-  ): ActorSubclass<T> {
-    return this.provider.createAnonymousActor<T>(canisterId, idl, options);
+  createAnonymousActor<T>(canisterId: string, idl: any): ActorSubclass<T> {
+    const cacheKey = `anon-${canisterId}`;
+    const cachedActor = this.actorCache.get(cacheKey);
+    if (cachedActor) {
+      return cachedActor;
+    }
+    const actor = Actor.createActor<T>(idl, {
+      agent: HttpAgent.createSync({
+        host: this.config?.hostUrl || "https://icp0.io",
+        verifyQuerySignatures: this.config?.verifyQuerySignatures,
+      }),
+      canisterId,
+    });
+    this.actorCache.set(cacheKey, actor);
+    return actor;
   }
-
   isWalletConnected(): boolean {
     return !!this.activeWallet;
   }

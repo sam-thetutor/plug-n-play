@@ -8824,16 +8824,6 @@ const _NNSAdapter = class _NNSAdapter {
       canisterId
     });
   }
-  createAnonymousActor(canisterId, idl) {
-    var _a2, _b;
-    return Actor.createActor(idl, {
-      agent: HttpAgent.createSync({
-        host: ((_a2 = this.config) == null ? void 0 : _a2.hostUrl) || "https://icp0.io",
-        verifyQuerySignatures: (_b = this.config) == null ? void 0 : _b.verifyQuerySignatures
-      }),
-      canisterId
-    });
-  }
   // Get the principal associated with the wallet
   async getPrincipal() {
     if (!this.authClient) {
@@ -10732,37 +10722,6 @@ const _PlugAdapter = class _PlugAdapter {
       account: Principal.anonymous(),
       agent: this.agent
     });
-    this.delegationStorage.get(_PlugAdapter.STORAGE_KEY).then((stored) => {
-      if (stored) {
-        try {
-          const { sessionKey, delegationChain } = JSON.parse(stored);
-          this.sessionKey = Ed25519KeyIdentity.fromParsedJson(sessionKey);
-          const delegationIdentity = DelegationIdentity.fromDelegation(
-            this.sessionKey,
-            delegationChain
-          );
-          this.signerAgent.replaceAccount(delegationIdentity.getPrincipal());
-          this.identity = delegationIdentity;
-          const principal = delegationIdentity.getPrincipal();
-          const account = {
-            id: principal.toText(),
-            displayName: "Plug Account",
-            principal: principal.toText(),
-            subaccount: hexStringToUint8Array(getAccountIdentifier(principal.toText()) || ""),
-            type: "SESSION"
-            /* SESSION */
-          };
-          this.accounts = [account];
-          this.setState(
-            "READY"
-            /* READY */
-          );
-        } catch (e) {
-          console.error("Failed to restore session:", e);
-          this.delegationStorage.remove(_PlugAdapter.STORAGE_KEY);
-        }
-      }
-    }).catch(console.error);
   }
   setState(newState) {
     this.state = newState;
@@ -10794,7 +10753,7 @@ const _PlugAdapter = class _PlugAdapter {
     return getAccountIdentifier(principal.toText()) || "";
   }
   async connect(config) {
-    var _a2, _b;
+    var _a2;
     this.config = config;
     try {
       this.setState(
@@ -10802,9 +10761,7 @@ const _PlugAdapter = class _PlugAdapter {
         /* LOADING */
       );
       await this.signer.requestPermissions([
-        {
-          method: "icrc27_accounts"
-        },
+        { method: "icrc27_accounts" },
         {
           method: "icrc34_delegation",
           targets: (_a2 = config.delegationTargets) == null ? void 0 : _a2.map((p) => p.toText())
@@ -10812,13 +10769,7 @@ const _PlugAdapter = class _PlugAdapter {
         { method: "icrc49_call_canister" }
       ]);
       const accounts = await this.signer.accounts();
-      if (accounts.length === 0) {
-        throw new Error("No accounts available from Plug");
-      }
       const principal = accounts[0].owner;
-      if (principal.isAnonymous()) {
-        throw new Error("Failed to authenticate with Plug - got anonymous principal");
-      }
       this.setState(
         "PROCESSING"
         /* PROCESSING */
@@ -10826,33 +10777,11 @@ const _PlugAdapter = class _PlugAdapter {
       if (!this.sessionKey) {
         this.sessionKey = Ed25519KeyIdentity.generate();
       }
-      const response = await this.signer.sendRequest({
-        id: window.crypto.randomUUID(),
-        jsonrpc: "2.0",
-        method: "icrc34_delegation",
-        params: {
-          publicKey: toBase64(this.sessionKey.getPublicKey().toDer()),
-          targets: (_b = config.delegationTargets) == null ? void 0 : _b.map((p) => p.toText()),
-          maxTimeToLive: this.config.delegationTimeout === void 0 ? BigInt(24 * 60 * 60 * 1e3 * 1e3 * 1e3 * 1e3) : String(BigInt(Date.now()) + this.config.delegationTimeout)
-        }
+      const delegationChain = await this.signer.delegation({
+        publicKey: this.sessionKey.getPublicKey().toDer(),
+        targets: config.delegationTargets,
+        maxTimeToLive: this.config.delegationTimeout === void 0 ? BigInt(24 * 60 * 60 * 1e3 * 1e3 * 1e3 * 1e3) : BigInt(Date.now()) + this.config.delegationTimeout
       });
-      const result = this.unwrapResponse(response);
-      const delegationChain = DelegationChain.fromDelegations(
-        result.signerDelegation.map((delegation) => {
-          var _a3;
-          return {
-            delegation: new Delegation(
-              fromBase64(delegation.delegation.pubkey),
-              BigInt(delegation.delegation.expiration),
-              (_a3 = delegation.delegation.targets) == null ? void 0 : _a3.map(
-                (principal2) => Principal.fromText(principal2)
-              )
-            ),
-            signature: fromBase64(delegation.signature)
-          };
-        }),
-        fromBase64(result.publicKey)
-      );
       await this.setDelegationChain(_PlugAdapter.STORAGE_KEY, delegationChain);
       const delegationIdentity = DelegationIdentity.fromDelegation(
         this.sessionKey,
@@ -10867,7 +10796,9 @@ const _PlugAdapter = class _PlugAdapter {
         id: principal.toText(),
         displayName: "Plug Account",
         principal: principal.toText(),
-        subaccount: hexStringToUint8Array(getAccountIdentifier(principal.toText()) || ""),
+        subaccount: hexStringToUint8Array(
+          getAccountIdentifier(principal.toText()) || ""
+        ),
         type: "SESSION"
         /* SESSION */
       };
@@ -10880,7 +10811,9 @@ const _PlugAdapter = class _PlugAdapter {
           );
           return {
             owner: principal,
-            subaccount: hexStringToUint8Array(getAccountIdentifier(principal.toText()) || ""),
+            subaccount: hexStringToUint8Array(
+              getAccountIdentifier(principal.toText()) || ""
+            ),
             hasDelegation: true
           };
         }
@@ -10907,16 +10840,6 @@ const _PlugAdapter = class _PlugAdapter {
       throw error;
     }
   }
-  createAnonymousActor(canisterId, idl) {
-    var _a2, _b;
-    return Actor.createActor(idl, {
-      agent: HttpAgent.createSync({
-        host: ((_a2 = this.config) == null ? void 0 : _a2.hostUrl) || "https://icp0.io",
-        verifyQuerySignatures: (_b = this.config) == null ? void 0 : _b.verifyQuerySignatures
-      }),
-      canisterId
-    });
-  }
   createActor(canisterId, idlFactory, options = {
     requiresSigning: true,
     anon: false
@@ -10935,11 +10858,6 @@ const _PlugAdapter = class _PlugAdapter {
       if (cachedActor) {
         return cachedActor;
       }
-      if (!inTargets && !requiresSigning && anon) {
-        const anonActor = this.createAnonymousActor(canisterId, idlFactory);
-        this.actorCache.set(cacheKey, anonActor);
-        return anonActor;
-      }
       if (inTargets && !requiresSigning || !inTargets && !requiresSigning) {
         const actor2 = this.undelegatedActor(canisterId, idlFactory);
         this.actorCache.set(cacheKey, actor2);
@@ -10951,6 +10869,7 @@ const _PlugAdapter = class _PlugAdapter {
       });
       if (requiresSigning) {
         if (!this.signerAgent) {
+          this.disconnect();
           throw new Error("No signer agent available. Please connect first.");
         }
         const finalActor = Actor.createActor(idlFactory, {
@@ -11211,73 +11130,6 @@ const _NFIDAdapter = class _NFIDAdapter {
     });
     this.signer = this.signerAgent.signer;
     this.agent = HttpAgent.createSync({ host: this.url });
-    this.tryRestoreSession();
-  }
-  async tryRestoreSession() {
-    var _a2;
-    try {
-      const storedData = await this.delegationStorage.get(_NFIDAdapter.STORAGE_KEY);
-      if (!storedData) return;
-      this.sessionKey = Ed25519KeyIdentity.fromParsedJson(storedData.sessionKey);
-      const chain = DelegationChain.fromJSON(storedData.delegationChain);
-      const now = BigInt(Date.now()) * BigInt(1e6);
-      const isValid = chain.delegations.every(
-        (d) => d.delegation.expiration > now
-      );
-      if (!isValid) {
-        await this.delegationStorage.remove(_NFIDAdapter.STORAGE_KEY);
-        return;
-      }
-      const delegationIdentity = DelegationIdentity.fromDelegation(
-        this.sessionKey,
-        chain
-      );
-      const principal = delegationIdentity.getPrincipal();
-      if (principal.isAnonymous()) {
-        throw new Error("Got anonymous principal from stored delegation");
-      }
-      this.identity = delegationIdentity;
-      this.agent = HttpAgent.createSync({
-        identity: this.identity,
-        host: ((_a2 = this.config) == null ? void 0 : _a2.hostUrl) || "https://icp0.io"
-      });
-      this.signerAgent = SignerAgent.createSync({
-        signer: this.signer,
-        account: principal,
-        agent: this.agent
-      });
-      const account = {
-        id: principal.toText(),
-        displayName: "NFID Account",
-        principal: principal.toText(),
-        subaccount: hexStringToUint8Array(getAccountIdentifier(principal.toText()) || ""),
-        type: "SESSION"
-        /* SESSION */
-      };
-      this.accounts = [account];
-      this.setState(
-        "READY"
-        /* READY */
-      );
-      if (!await this.isConnected()) {
-        throw new Error("Failed to verify restored connection");
-      }
-      return {
-        owner: principal,
-        subaccount: hexStringToUint8Array(getAccountIdentifier(principal.toText()) || ""),
-        hasDelegation: true
-      };
-    } catch (error) {
-      console.warn("[NFID] Failed to restore session:", error);
-      this.identity = null;
-      this.signerAgent = null;
-      this.accounts = [];
-      await this.delegationStorage.remove(_NFIDAdapter.STORAGE_KEY);
-      this.setState(
-        "READY"
-        /* READY */
-      );
-    }
   }
   setState(newState) {
     this.state = newState;
@@ -11309,20 +11161,8 @@ const _NFIDAdapter = class _NFIDAdapter {
     return getAccountIdentifier(principal.toText()) || "";
   }
   async connect(config) {
-    var _a2;
     this.config = config;
     try {
-      this.setState(
-        "LOADING"
-        /* LOADING */
-      );
-      const restored = await this.tryRestoreSession();
-      if (restored) {
-        return restored;
-      }
-      if (!this.signer) {
-        throw new Error("Failed to initialize NFID signer");
-      }
       this.setState(
         "PROCESSING"
         /* PROCESSING */
@@ -11330,34 +11170,11 @@ const _NFIDAdapter = class _NFIDAdapter {
       if (!this.sessionKey) {
         this.sessionKey = Ed25519KeyIdentity.generate();
       }
-      const response = await this.signer.sendRequest({
-        id: window.crypto.randomUUID(),
-        jsonrpc: "2.0",
-        method: "icrc34_delegation",
-        params: {
-          publicKey: toBase64(this.sessionKey.getPublicKey().toDer()),
-          targets: (_a2 = config.delegationTargets) == null ? void 0 : _a2.map((p) => p.toText()),
-          maxTimeToLive: this.config.delegationTimeout === void 0 ? BigInt(24 * 60 * 60 * 1e3 * 1e3 * 1e3 * 1e3) : String(BigInt(Date.now()) + this.config.delegationTimeout)
-        }
+      const delegationChain = await this.signer.delegation({
+        publicKey: this.sessionKey.getPublicKey().toDer(),
+        targets: config.delegationTargets,
+        maxTimeToLive: this.config.delegationTimeout === void 0 ? BigInt(24 * 60 * 60 * 1e3 * 1e3 * 1e3 * 1e3) : BigInt(Date.now()) + this.config.delegationTimeout
       });
-      const result = this.unwrapResponse(response);
-      const delegationChain = DelegationChain.fromDelegations(
-        result.signerDelegation.map((delegation) => {
-          var _a3;
-          return {
-            delegation: new Delegation(
-              fromBase64(delegation.delegation.pubkey),
-              BigInt(delegation.delegation.expiration),
-              (_a3 = delegation.delegation.targets) == null ? void 0 : _a3.map(
-                (principal2) => Principal.fromText(principal2)
-              )
-            ),
-            signature: fromBase64(delegation.signature)
-          };
-        }),
-        fromBase64(result.publicKey)
-      );
-      await this.setDelegationChain(_NFIDAdapter.STORAGE_KEY, delegationChain);
       const delegationIdentity = DelegationIdentity.fromDelegation(
         this.sessionKey,
         delegationChain
@@ -11421,16 +11238,6 @@ const _NFIDAdapter = class _NFIDAdapter {
       throw error;
     }
   }
-  createAnonymousActor(canisterId, idl) {
-    var _a2, _b;
-    return Actor.createActor(idl, {
-      agent: HttpAgent.createSync({
-        host: ((_a2 = this.config) == null ? void 0 : _a2.hostUrl) || "https://icp0.io",
-        verifyQuerySignatures: (_b = this.config) == null ? void 0 : _b.verifyQuerySignatures
-      }),
-      canisterId
-    });
-  }
   createActor(canisterId, idlFactory, options = {
     requiresSigning: true,
     anon: false
@@ -11448,14 +11255,6 @@ const _NFIDAdapter = class _NFIDAdapter {
       const cachedActor = this.actorCache.get(cacheKey);
       if (cachedActor) {
         return cachedActor;
-      }
-      if (!inTargets && !requiresSigning && anon) {
-        const anonActor = this.createAnonymousActor(
-          canisterId,
-          idlFactory
-        );
-        this.actorCache.set(cacheKey, anonActor);
-        return anonActor;
       }
       if (inTargets && !requiresSigning || !inTargets && !requiresSigning) {
         const actor2 = this.undelegatedActor(canisterId, idlFactory);
@@ -11535,11 +11334,10 @@ const _OisyAdapter = class _OisyAdapter {
     this.agent = null;
     this.accounts = [];
     this.transport = null;
-    this.isProcessing = false;
     this.name = "Oisy";
     this.logo = _OisyAdapter.logo;
-    this.url = "https://oisy.com/sign";
-    this.url = "https://oisy.com/sign";
+    this.url = "https://beta.oisy.com/sign";
+    this.url = "https://beta.oisy.com/sign";
     this.name = "Oisy";
     this.logo = _OisyAdapter.logo;
     this.agent = HttpAgent.createSync({ host: this.url });
@@ -11569,6 +11367,7 @@ const _OisyAdapter = class _OisyAdapter {
     try {
       const accounts = await this.signerAgent.signer.accounts();
       if (!accounts || accounts.length === 0) {
+        this.disconnect();
         throw new Error("No accounts returned from Oisy");
       }
       const principal = accounts[0].owner;
@@ -11602,10 +11401,6 @@ const _OisyAdapter = class _OisyAdapter {
     requiresSigning: true,
     anon: false
   }) {
-    const { requiresSigning = true, anon = false } = options;
-    if (anon === true) {
-      return this.createAnonymousActor(canisterId, idlFactory);
-    }
     if (!this.signerAgent) {
       throw new Error("No signer agent available. Please connect first.");
     }
@@ -11619,12 +11414,6 @@ const _OisyAdapter = class _OisyAdapter {
       console.error("[Oisy] Actor creation error:", error);
       throw error;
     }
-  }
-  createAnonymousActor(canisterId, idl) {
-    return Actor.createActor(idl, {
-      agent: this.agent,
-      canisterId
-    });
   }
   async disconnect() {
     if (this.signer) {
@@ -11640,6 +11429,7 @@ const _OisyAdapter = class _OisyAdapter {
     }
     this.agent = null;
     this.signerAgent = null;
+    this.transport = null;
     this.accounts = [];
   }
   getAccounts() {
@@ -11649,7 +11439,7 @@ const _OisyAdapter = class _OisyAdapter {
 _OisyAdapter.TRANSPORT_CONFIG = {
   windowOpenerFeatures: "width=525,height=705",
   establishTimeout: 45e3,
-  disconnectTimeout: 35e3
+  disconnectTimeout: 45e3
 };
 _OisyAdapter.logo = oisyLogo;
 let OisyAdapter = _OisyAdapter;
@@ -11726,6 +11516,7 @@ class PNP {
     this.isConnecting = true;
     try {
       const targetWalletId = walletId || localStorage.getItem(this.config.localStorageKey);
+      localStorage.setItem(this.config.localStorageKey, targetWalletId);
       if (!targetWalletId) return null;
       const adapter = walletList.find((w) => w.id === targetWalletId);
       if (!adapter) {
@@ -11736,7 +11527,6 @@ class PNP {
       this.account = account;
       this.activeWallet = adapter;
       this.provider = instance;
-      localStorage.setItem(this.config.localStorageKey, targetWalletId);
       return account;
     } catch (error) {
       console.warn("[PNP] Connection failed:", error);
@@ -11774,8 +11564,22 @@ class PNP {
     }
     return actor;
   }
-  createAnonymousActor(canisterId, idl, options) {
-    return this.provider.createAnonymousActor(canisterId, idl, options);
+  createAnonymousActor(canisterId, idl) {
+    var _a2, _b;
+    const cacheKey = `anon-${canisterId}`;
+    const cachedActor = this.actorCache.get(cacheKey);
+    if (cachedActor) {
+      return cachedActor;
+    }
+    const actor = Actor.createActor(idl, {
+      agent: HttpAgent.createSync({
+        host: ((_a2 = this.config) == null ? void 0 : _a2.hostUrl) || "https://icp0.io",
+        verifyQuerySignatures: (_b = this.config) == null ? void 0 : _b.verifyQuerySignatures
+      }),
+      canisterId
+    });
+    this.actorCache.set(cacheKey, actor);
+    return actor;
   }
   isWalletConnected() {
     return !!this.activeWallet;

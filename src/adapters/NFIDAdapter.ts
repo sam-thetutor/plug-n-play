@@ -98,90 +98,6 @@ export class NFIDAdapter implements Adapter.Interface {
     });
     this.signer = this.signerAgent.signer;
     this.agent = HttpAgent.createSync({ host: this.url });
-    
-    // Attempt to restore session on initialization
-    this.tryRestoreSession();
-  }
-
-  private async tryRestoreSession() {
-    try {
-      const storedData = await this.delegationStorage.get(NFIDAdapter.STORAGE_KEY);
-      if (!storedData) return;
-
-      // Recreate the session key
-      this.sessionKey = Ed25519KeyIdentity.fromParsedJson(storedData.sessionKey as JsonnableEd25519KeyIdentity);
-      
-      // Recreate the delegation chain
-      const chain = DelegationChain.fromJSON(storedData.delegationChain);
-      
-      // Check if the delegation is still valid
-      const now = BigInt(Date.now()) * BigInt(1000_000); // Convert to nanoseconds
-      const isValid = chain.delegations.every(
-        (d) => d.delegation.expiration > now
-      );
-      
-      if (!isValid) {
-        await this.delegationStorage.remove(NFIDAdapter.STORAGE_KEY);
-        return;
-      }
-
-      // Create delegation identity
-      const delegationIdentity = DelegationIdentity.fromDelegation(
-        this.sessionKey,
-        chain
-      );
-
-      const principal = delegationIdentity.getPrincipal();
-      if (principal.isAnonymous()) {
-        throw new Error("Got anonymous principal from stored delegation");
-      }
-
-      // Update the adapter state with proper agent initialization
-      this.identity = delegationIdentity;
-      
-      // Create a new agent with the restored identity
-      this.agent = HttpAgent.createSync({
-        identity: this.identity,
-        host: this.config?.hostUrl || "https://icp0.io",
-      });
-
-      // Initialize signer agent with restored identity
-      this.signerAgent = SignerAgent.createSync({
-        signer: this.signer,
-        account: principal,
-        agent: this.agent,
-      });
-
-      const account: NFIDAccount = {
-        id: principal.toText(),
-        displayName: "NFID Account",
-        principal: principal.toText(),
-        subaccount: hexStringToUint8Array(getAccountIdentifier(principal.toText()) || ""),
-        type: AccountType.SESSION,
-      };
-
-      this.accounts = [account];
-      this.setState(AdapterState.READY);
-      
-      
-      // Verify the connection immediately
-      if (!(await this.isConnected())) {
-        throw new Error("Failed to verify restored connection");
-      }
-      return {
-        owner: principal,
-        subaccount: hexStringToUint8Array(getAccountIdentifier(principal.toText()) || ""),
-        hasDelegation: true,
-      };
-    } catch (error) {
-      console.warn("[NFID] Failed to restore session:", error);
-      // Clean up any partial state
-      this.identity = null;
-      this.signerAgent = null;
-      this.accounts = [];
-      await this.delegationStorage.remove(NFIDAdapter.STORAGE_KEY);
-      this.setState(AdapterState.READY);
-    }
   }
 
   private setState(newState: AdapterState) {
@@ -239,55 +155,21 @@ export class NFIDAdapter implements Adapter.Interface {
     this.config = config;
 
     try {
-      this.setState(AdapterState.LOADING);
-
-      // Check for existing session first
-      const restored = await this.tryRestoreSession();
-      if (restored) {
-        return restored;
-      }
-
-      // Force a new transport when explicitly connecting
-      if (!this.signer) {
-        throw new Error("Failed to initialize NFID signer");
-      }
-
       this.setState(AdapterState.PROCESSING);
 
       if (!this.sessionKey) {
         this.sessionKey = Ed25519KeyIdentity.generate();
       }
 
-      const response = await this.signer.sendRequest<any, DelegationResponse>({
-        id: window.crypto.randomUUID(),
-        jsonrpc: "2.0",
-        method: "icrc34_delegation",
-        params: {
-          publicKey: toBase64(this.sessionKey.getPublicKey().toDer()),
-          targets: config.delegationTargets?.map((p) => p.toText()),
-          maxTimeToLive:
-            this.config.delegationTimeout === undefined
-              ? BigInt(24 * 60 * 60 * 1000 * 1000 * 1000 * 1000)
-              : String(BigInt(Date.now()) + this.config.delegationTimeout),
-        },
+      const delegationChain = await this.signer.delegation({
+        publicKey: this.sessionKey.getPublicKey().toDer(),
+        targets: config.delegationTargets,
+        maxTimeToLive:
+          this.config.delegationTimeout === undefined
+            ? BigInt(24 * 60 * 60 * 1000 * 1000 * 1000 * 1000)
+            : BigInt(Date.now()) + this.config.delegationTimeout,
       });
 
-      const result: any = this.unwrapResponse(response);
-      const delegationChain = DelegationChain.fromDelegations(
-        result.signerDelegation.map((delegation) => ({
-          delegation: new Delegation(
-            fromBase64(delegation.delegation.pubkey),
-            BigInt(delegation.delegation.expiration),
-            delegation.delegation.targets?.map((principal) =>
-              Principal.fromText(principal)
-            )
-          ),
-          signature: fromBase64(delegation.signature) as Signature,
-        })),
-        fromBase64(result.publicKey)
-      );
-
-      await this.setDelegationChain(NFIDAdapter.STORAGE_KEY, delegationChain);
 
       const delegationIdentity = DelegationIdentity.fromDelegation(
         this.sessionKey,
@@ -354,16 +236,6 @@ export class NFIDAdapter implements Adapter.Interface {
     }
   }
 
-  createAnonymousActor<T>(canisterId: string, idl: any): ActorSubclass<T> {
-    return Actor.createActor<T>(idl, {
-      agent: HttpAgent.createSync({
-        host: this.config?.hostUrl || "https://icp0.io",
-        verifyQuerySignatures: this.config?.verifyQuerySignatures,
-      }),
-      canisterId,
-    });
-  }
-
   createActor<T>(
     canisterId: string,
     idlFactory: any,
@@ -395,15 +267,6 @@ export class NFIDAdapter implements Adapter.Interface {
 
       if (cachedActor) {
         return cachedActor;
-      }
-
-      if (!inTargets && !requiresSigning && anon) {
-        const anonActor = this.createAnonymousActor<T>(
-          canisterId,
-          idlFactory
-        );
-        this.actorCache.set(cacheKey, anonActor);
-        return anonActor;
       }
 
       if ((inTargets && !requiresSigning) || (!inTargets && !requiresSigning)) {
