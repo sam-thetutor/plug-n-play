@@ -15,7 +15,7 @@ export const walletList: Adapter.Info[] = [
   },
   {
     id: "oisy",
-    name: "Oisy",
+    name: "Oisy Wallet",
     icon: OisyAdapter.logo,
     adapter: OisyAdapter,
   },

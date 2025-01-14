@@ -38,14 +38,14 @@ export class OisyAdapter implements Adapter.Interface {
   private transport: PostMessageTransport | null = null;
 
   static readonly logo: string = oisyLogo;
-  name: string = "Oisy";
+  name: string = "Oisy Wallet";
   logo: string = OisyAdapter.logo;
   url: string = "https://oisy.com/sign";
   config: Wallet.PNPConfig;
 
   constructor() {
     this.url = "https://oisy.com/sign";
-    this.name = "Oisy";
+    this.name = "Oisy Wallet";
     this.logo = OisyAdapter.logo;
     this.agent = HttpAgent.createSync({ host: this.url }) 
     this.signerAgent = SignerAgent.createSync({ 

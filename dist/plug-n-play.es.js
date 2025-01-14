@@ -1120,16 +1120,22 @@ const _NNSAdapter = class _NNSAdapter {
       derivationOrigin: (config == null ? void 0 : config.derivationOrigin) || "https://localhost:5173",
       ...config
     };
-    AuthClient.create({
-      idleOptions: {
-        idleTimeout: Number(1e3 * 60 * 60 * 24),
-        disableDefaultIdleCallback: true
-      }
-    }).then((client) => {
-      var _a2, _b;
-      this.authClient = client;
+    this.initAuthClient();
+  }
+  // New private method to initialize AuthClient
+  async initAuthClient() {
+    var _a2, _b;
+    try {
+      this.authClient = await AuthClient.create({
+        idleOptions: {
+          idleTimeout: Number(1e3 * 60 * 60 * 24),
+          disableDefaultIdleCallback: true
+        }
+      });
       (_b = (_a2 = this.authClient.idleManager) == null ? void 0 : _a2.registerCallback) == null ? void 0 : _b.call(_a2, () => this.refreshLogin());
-    });
+    } catch (error) {
+      console.error("Failed to initialize AuthClient:", error);
+    }
   }
   setState(newState) {
     this.state = newState;
@@ -3103,7 +3109,7 @@ const _PlugAdapter = class _PlugAdapter {
     this.accounts = [];
     this.actorCache = /* @__PURE__ */ new Map();
     this.sessionKey = null;
-    this.name = "Plug";
+    this.name = "Plug Wallet";
     this.logo = _PlugAdapter.logo;
     this.url = "https://plug.one/rpc";
     this.unwrapResponse = (response) => {
@@ -3119,7 +3125,7 @@ const _PlugAdapter = class _PlugAdapter {
       });
     };
     this.url = "https://plug.one/rpc";
-    this.name = "Plug";
+    this.name = _PlugAdapter.name;
     this.logo = _PlugAdapter.logo;
     this.delegationStorage = new LocalDelegationStorage$1();
     const transport = new PlugTransport();
@@ -3760,11 +3766,11 @@ const _OisyAdapter = class _OisyAdapter {
     this.agent = null;
     this.accounts = [];
     this.transport = null;
-    this.name = "Oisy";
+    this.name = "Oisy Wallet";
     this.logo = _OisyAdapter.logo;
     this.url = "https://oisy.com/sign";
     this.url = "https://oisy.com/sign";
-    this.name = "Oisy";
+    this.name = "Oisy Wallet";
     this.logo = _OisyAdapter.logo;
     this.agent = HttpAgent.createSync({ host: this.url });
     this.signerAgent = SignerAgent.createSync({
@@ -3889,7 +3895,7 @@ const walletList = [
   },
   {
     id: "oisy",
-    name: "Oisy",
+    name: "Oisy Wallet",
     icon: OisyAdapter.logo,
     adapter: OisyAdapter
   },

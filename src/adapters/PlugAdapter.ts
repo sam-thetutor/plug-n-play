@@ -84,14 +84,14 @@ export class PlugAdapter implements Adapter.Interface {
   private signer: Signer;
 
   static readonly logo: string = plugLogo;
-  name: string = "Plug";
+  name: string = "Plug Wallet";
   logo: string = PlugAdapter.logo;
   url: string = "https://plug.one/rpc";
   config: Wallet.PNPConfig;
 
   constructor() {
     this.url = "https://plug.one/rpc";
-    this.name = "Plug";
+    this.name = PlugAdapter.name;
     this.logo = PlugAdapter.logo;
     this.delegationStorage = new LocalDelegationStorage();
 
