@@ -83,6 +83,16 @@ export namespace Adapter {
     adapter: AdapterConstructor;
   }
 
+  export enum Status {
+    INIT = "INIT",
+    READY = "READY",
+    CONNECTING = "CONNECTING",
+    CONNECTED = "CONNECTED",
+    DISCONNECTING = "DISCONNECTING",
+    DISCONNECTED = "DISCONNECTED",
+    ERROR = "ERROR",
+  }
+
   export interface Interface {
     // Required properties
     name: string;
@@ -96,21 +106,20 @@ export namespace Adapter {
     disconnect(): Promise<void>;
     getPrincipal(): Promise<Principal>;
     getAccountId(): Promise<string>;
-    
+
     // Actor creation
-    createActor<T>(canisterId: string, idl: any, options?: { requiresSigning?: boolean }): ActorSubclass<T>;
-    undelegatedActor?<T>(canisterId: string, idlFactory: any, options?: { requiresSigning?: boolean }): ActorSubclass<T>;
+    createActor<T>(
+      canisterId: string,
+      idl: any,
+      options?: { requiresSigning?: boolean },
+    ): ActorSubclass<T>;
+    undelegatedActor?<T>(
+      canisterId: string,
+      idlFactory: any,
+      options?: { requiresSigning?: boolean },
+    ): ActorSubclass<T>;
   }
 }
-
-export enum AdapterState {
-  READY = "ready",
-  CONNECTING = "connecting",
-  CONNECTED = "connected",
-  DISCONNECTED = "disconnected",
-  LOADING = "loading",
-}
-
 
 export class PNP {
   account: Wallet.Account | null;
@@ -127,7 +136,11 @@ export class PNP {
   disconnect(): Promise<void>;
   isWalletConnected(): boolean;
   getActor<T>(canisterId: string, idl: any, isAnon?: boolean): ActorSubclass<T>;
-  createAnonymousActor<T>(canisterId: string, idl: any, options?: { requiresSigning?: boolean }): ActorSubclass<T>;
+  createAnonymousActor<T>(
+    canisterId: string,
+    idl: any,
+    options?: { requiresSigning?: boolean },
+  ): ActorSubclass<T>;
 }
 
 declare global {
@@ -146,6 +159,7 @@ declare global {
           interfaceFactory: any;
         }) => ActorSubclass<T>;
         disconnect: () => Promise<void>;
+        onExternalDisconnect: (callback: () => void) => void;
         principalId?: string;
         accountId?: string;
       };

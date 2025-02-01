@@ -12,16 +12,9 @@ export interface NFIDAccount {
     subaccount: Uint8Array;
     type: AccountType;
 }
-export declare enum AdapterState {
-    READY = "READY",
-    LOADING = "LOADING",
-    PROCESSING = "PROCESSING",
-    ERROR = "ERROR"
-}
 export declare class NFIDAdapter implements Adapter.Interface {
     private static readonly STORAGE_KEY;
     private static readonly TRANSPORT_CONFIG;
-    private static readonly HIDDEN_TRANSPORT_CONFIG;
     private agent;
     private identity;
     private delegationStorage;
@@ -39,7 +32,6 @@ export declare class NFIDAdapter implements Adapter.Interface {
     config: Wallet.PNPConfig;
     constructor();
     private setState;
-    private setDelegationChain;
     isAvailable(): Promise<boolean>;
     isConnected(): Promise<boolean>;
     getPrincipal(): Promise<Principal>;
@@ -52,6 +44,6 @@ export declare class NFIDAdapter implements Adapter.Interface {
     }): ActorSubclass<T>;
     undelegatedActor<T>(canisterId: string, idlFactory: any): ActorSubclass<T>;
     disconnect(): Promise<void>;
-    getState(): AdapterState;
+    getState(): Adapter.Status;
     getAccounts(): NFIDAccount[];
 }

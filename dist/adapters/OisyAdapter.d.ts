@@ -1,6 +1,6 @@
 import { Principal } from '@dfinity/principal';
 import { ActorSubclass } from '@dfinity/agent';
-import { Wallet, Adapter } from '../types/index';
+import { Wallet, Adapter } from '../types/index.d';
 export declare enum AccountType {
     GLOBAL = "GLOBAL",
     SESSION = "SESSION"
@@ -18,18 +18,20 @@ export declare class OisyAdapter implements Adapter.Interface {
     private agent;
     private signerAgent;
     private accounts;
-    private transport;
     static readonly logo: string;
     name: string;
     logo: string;
     url: string;
     config: Wallet.PNPConfig;
+    state: Adapter.Status;
     constructor();
     isAvailable(): Promise<boolean>;
     isConnected(): Promise<boolean>;
     getPrincipal(): Promise<Principal>;
     getAccountId(): Promise<string>;
     connect(config: Wallet.PNPConfig): Promise<Wallet.Account>;
+    private setState;
+    getState(): Adapter.Status;
     createActor<T>(canisterId: string, idlFactory: any, options?: {
         requiresSigning?: boolean;
         anon: boolean;

@@ -1,21 +1,19 @@
 import { Principal } from "@dfinity/principal";
+import { Actor, HttpAgent, type ActorSubclass } from "@dfinity/agent";
 import {
-  Actor,
-  HttpAgent,
-  type ActorSubclass,
-} from "@dfinity/agent";
-import {
-  DelegationChain,
   DelegationIdentity,
   Ed25519KeyIdentity,
 } from "@dfinity/identity";
-import type { Wallet, Adapter } from "../types/index.d";
+import { type Wallet, Adapter } from "../types/index.d";
 import nfidLogo from "../../assets/nfid.webp";
 import { PostMessageTransport } from "@slide-computer/signer-web";
 import { SignerAgent } from "@slide-computer/signer-agent";
 import { Signer } from "@slide-computer/signer";
 import { SignerError } from "@slide-computer/signer";
-import { DelegationStorage, LocalDelegationStorage } from "../storage/DelegationStorage";
+import {
+  DelegationStorage,
+  LocalDelegationStorage,
+} from "../storage/DelegationStorage";
 import { AccountIdentifier } from "@dfinity/ledger-icp";
 
 // Account types for different session types
@@ -32,32 +30,16 @@ export interface NFIDAccount {
   type: AccountType;
 }
 
-// State management for adapter
-export enum AdapterState {
-  READY = "READY",
-  LOADING = "LOADING",
-  PROCESSING = "PROCESSING",
-  ERROR = "ERROR",
-}
-
 export class NFIDAdapter implements Adapter.Interface {
   private static readonly STORAGE_KEY = "nfid_session";
   private static readonly TRANSPORT_CONFIG = {
     windowOpenerFeatures: "width=525,height=705",
-    establishTimeout: 45000,
-    disconnectTimeout: 35000,
-    manageFocus: false,
-  };
-
-  private static readonly HIDDEN_TRANSPORT_CONFIG = {
-    ...NFIDAdapter.TRANSPORT_CONFIG,
-    manageFocus: false,
   };
 
   private agent: HttpAgent;
   private identity: DelegationIdentity | null = null;
   private delegationStorage: DelegationStorage;
-  private state: AdapterState = AdapterState.READY;
+  private state: Adapter.Status = Adapter.Status.INIT;
   private accounts: NFIDAccount[] = [];
   private actorCache: Map<string, ActorSubclass<any>> = new Map();
   private sessionKey: Ed25519KeyIdentity | null = null;
@@ -89,21 +71,11 @@ export class NFIDAdapter implements Adapter.Interface {
     });
     this.signer = this.signerAgent.signer;
     this.agent = HttpAgent.createSync({ host: this.url });
+    this.setState(Adapter.Status.READY);
   }
 
-  private setState(newState: AdapterState) {
+  private setState(newState: Adapter.Status) {
     this.state = newState;
-  }
-
-  private async setDelegationChain(
-    key: string,
-    chain: DelegationChain
-  ): Promise<void> {
-    const sessionData = {
-      sessionKey: this.sessionKey.toJSON(),
-      delegationChain: chain.toJSON(),
-    };
-    await this.delegationStorage.set(key, sessionData);
   }
 
   async isAvailable(): Promise<boolean> {
@@ -127,7 +99,7 @@ export class NFIDAdapter implements Adapter.Interface {
     }
     return AccountIdentifier.fromPrincipal({
       principal: this.identity.getPrincipal(),
-      subAccount: undefined  // This will use the default subaccount
+      subAccount: undefined, // This will use the default subaccount
     }).toHex();
   }
 
@@ -145,11 +117,10 @@ export class NFIDAdapter implements Adapter.Interface {
   };
 
   async connect(config: Wallet.PNPConfig): Promise<Wallet.Account> {
+    this.setState(Adapter.Status.CONNECTING);
     this.config = config;
 
     try {
-      this.setState(AdapterState.PROCESSING);
-
       if (!this.sessionKey) {
         this.sessionKey = Ed25519KeyIdentity.generate();
       }
@@ -163,10 +134,9 @@ export class NFIDAdapter implements Adapter.Interface {
             : BigInt(Date.now()) + this.config.delegationTimeout,
       });
 
-
       const delegationIdentity = DelegationIdentity.fromDelegation(
         this.sessionKey,
-        delegationChain
+        delegationChain,
       );
 
       this.signerAgent.replaceAccount(delegationIdentity.getPrincipal());
@@ -178,8 +148,9 @@ export class NFIDAdapter implements Adapter.Interface {
       const principal = delegationIdentity.getPrincipal();
 
       if (principal.isAnonymous()) {
+        this.setState(Adapter.Status.READY);
         throw new Error(
-          "Failed to authenticate with NFID - got anonymous principal"
+          "Failed to authenticate with NFID - got anonymous principal",
         );
       }
 
@@ -196,7 +167,7 @@ export class NFIDAdapter implements Adapter.Interface {
         principal: principal.toText(),
         subaccount: AccountIdentifier.fromPrincipal({
           principal,
-          subAccount: undefined  // This will use the default subaccount
+          subAccount: undefined, // This will use the default subaccount
         }).toUint8Array(),
         type: AccountType.SESSION,
       };
@@ -205,32 +176,33 @@ export class NFIDAdapter implements Adapter.Interface {
 
       try {
         if (this.identity && this.agent && this.signerAgent && this.signer) {
-          this.setState(AdapterState.READY);
+          this.setState(Adapter.Status.CONNECTED);
           return {
             owner: principal,
             subaccount: AccountIdentifier.fromPrincipal({
               principal,
-              subAccount: undefined  // This will use the default subaccount
+              subAccount: undefined, // This will use the default subaccount
             }).toUint8Array(),
             hasDelegation: true,
           };
         }
       } catch (error) {
+        this.disconnect();
+        this.setState(Adapter.Status.READY);
         console.error("[NFID] New session verification failed:", error);
       }
 
       // If we get here, something went wrong during verification
-      console.error("[NFID] Session establishment failed, cleaning up");
       this.identity = null;
       this.agent = null;
       this.signerAgent = null;
       this.accounts = [];
       await this.delegationStorage.remove(NFIDAdapter.STORAGE_KEY);
-      this.setState(AdapterState.ERROR);
+      this.disconnect();
       throw new Error("Failed to establish session");
     } catch (error) {
       console.error("Error connecting to NFID:", error);
-      this.setState(AdapterState.ERROR);
+      this.setState(Adapter.Status.READY);
       throw error;
     }
   }
@@ -244,7 +216,7 @@ export class NFIDAdapter implements Adapter.Interface {
     } = {
       requiresSigning: true,
       anon: false,
-    }
+    },
   ): ActorSubclass<T> {
     const { requiresSigning = true, anon = false } = options;
     try {
@@ -252,7 +224,7 @@ export class NFIDAdapter implements Adapter.Interface {
       const inTargets = this.identity
         .getDelegation()
         .delegations.some((d) =>
-          d.delegation.targets?.some((p) => p.toText() === canisterId)
+          d.delegation.targets?.some((p) => p.toText() === canisterId),
         );
 
       const isUndelegated =
@@ -300,15 +272,12 @@ export class NFIDAdapter implements Adapter.Interface {
       throw new Error(
         `Failed to create actor: ${
           error instanceof Error ? error.message : String(error)
-        }`
+        }`,
       );
     }
   }
 
- undelegatedActor<T>(
-    canisterId: string,
-    idlFactory: any
-  ): ActorSubclass<T> {
+  undelegatedActor<T>(canisterId: string, idlFactory: any): ActorSubclass<T> {
     const agent = HttpAgent.createSync({
       identity: this.identity,
       host: this.config.hostUrl,
@@ -322,15 +291,16 @@ export class NFIDAdapter implements Adapter.Interface {
   }
 
   async disconnect(): Promise<void> {
+    this.setState(Adapter.Status.DISCONNECTING);
     this.identity = null;
     this.agent = null;
     this.signerAgent = null;
     this.accounts = [];
     await this.delegationStorage.remove(NFIDAdapter.STORAGE_KEY);
-    this.setState(AdapterState.READY);
+    this.setState(Adapter.Status.DISCONNECTED);
   }
 
-  getState(): AdapterState {
+  getState(): Adapter.Status {
     return this.state;
   }
 

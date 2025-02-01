@@ -1,23 +1,17 @@
 // src/adapters/PlugAdapter.ts
 import { Principal } from "@dfinity/principal";
-import {
-  Actor,
-  HttpAgent,
-  type ActorSubclass,
-} from "@dfinity/agent";
+import { Actor, HttpAgent, type ActorSubclass } from "@dfinity/agent";
 import {
   DelegationChain,
   DelegationIdentity,
   Ed25519KeyIdentity,
 } from "@dfinity/identity";
-import type { Wallet, Adapter } from "../types/index.d";
+import { type Wallet, Adapter } from "../types/index.d";
 import plugLogo from "../../assets/plug.webp";
 import { PlugTransport } from "@slide-computer/signer-transport-plug";
 import { SignerAgent } from "@slide-computer/signer-agent";
 import { Signer } from "@slide-computer/signer";
-import {
-  SignerError,
-} from "@slide-computer/signer";
+import { SignerError } from "@slide-computer/signer";
 import { AccountIdentifier } from "@dfinity/ledger-icp";
 
 // Account types for different session types
@@ -56,14 +50,6 @@ class LocalDelegationStorage implements DelegationStorage {
   }
 }
 
-// State management for adapter
-export enum AdapterState {
-  READY = "READY",
-  LOADING = "LOADING",
-  PROCESSING = "PROCESSING",
-  ERROR = "ERROR",
-}
-
 export class PlugAdapter implements Adapter.Interface {
   private static readonly STORAGE_KEY = "plug_session";
   private static readonly TRANSPORT_CONFIG = {
@@ -76,7 +62,7 @@ export class PlugAdapter implements Adapter.Interface {
   private agent: HttpAgent;
   private identity: DelegationIdentity | null = null;
   private delegationStorage: DelegationStorage;
-  private state: AdapterState = AdapterState.READY;
+  private state: Adapter.Status = Adapter.Status.READY;
   private accounts: PlugAccount[] = [];
   private actorCache: Map<string, ActorSubclass<any>> = new Map();
   private sessionKey: Ed25519KeyIdentity | null = null;
@@ -106,13 +92,13 @@ export class PlugAdapter implements Adapter.Interface {
     });
   }
 
-  private setState(newState: AdapterState) {
+  private setState(newState: Adapter.Status) {
     this.state = newState;
   }
 
   private async setDelegationChain(
     key: string,
-    chain: DelegationChain
+    chain: DelegationChain,
   ): Promise<void> {
     const sessionData = {
       sessionKey: this.sessionKey,
@@ -142,7 +128,7 @@ export class PlugAdapter implements Adapter.Interface {
     }
     return AccountIdentifier.fromPrincipal({
       principal: await this.getPrincipal(),
-      subAccount: undefined  // This will use the default subaccount
+      subAccount: undefined, // This will use the default subaccount
     }).toHex();
   }
 
@@ -163,7 +149,7 @@ export class PlugAdapter implements Adapter.Interface {
     this.config = config;
 
     try {
-      this.setState(AdapterState.LOADING);
+      this.setState(Adapter.Status.CONNECTING);
 
       // Request permissions like in exampleWTN.ts
       await this.signer.requestPermissions([
@@ -178,7 +164,6 @@ export class PlugAdapter implements Adapter.Interface {
       // Get accounts
       const accounts = await this.signer.accounts();
       const principal = accounts[0].owner;
-      this.setState(AdapterState.PROCESSING);
 
       if (!this.sessionKey) {
         this.sessionKey = Ed25519KeyIdentity.generate();
@@ -197,7 +182,7 @@ export class PlugAdapter implements Adapter.Interface {
 
       const delegationIdentity = DelegationIdentity.fromDelegation(
         this.sessionKey,
-        delegationChain
+        delegationChain,
       );
 
       this.signerAgent = SignerAgent.createSync({
@@ -213,7 +198,7 @@ export class PlugAdapter implements Adapter.Interface {
         principal: principal.toText(),
         subaccount: AccountIdentifier.fromPrincipal({
           principal,
-          subAccount: undefined  // This will use the default subaccount
+          subAccount: undefined, // This will use the default subaccount
         }).toUint8Array(),
         type: AccountType.SESSION,
       };
@@ -222,12 +207,12 @@ export class PlugAdapter implements Adapter.Interface {
 
       try {
         if (this.identity && this.agent && this.signerAgent && this.signer) {
-          this.setState(AdapterState.READY);
+          this.setState(Adapter.Status.READY);
           return {
             owner: principal,
             subaccount: AccountIdentifier.fromPrincipal({
               principal,
-              subAccount: undefined  // This will use the default subaccount
+              subAccount: undefined, // This will use the default subaccount
             }).toUint8Array(),
             hasDelegation: true,
           };
@@ -243,11 +228,11 @@ export class PlugAdapter implements Adapter.Interface {
       this.signerAgent = null;
       this.accounts = [];
       await this.delegationStorage.remove(PlugAdapter.STORAGE_KEY);
-      this.setState(AdapterState.ERROR);
+      this.setState(Adapter.Status.ERROR);
       throw new Error("Failed to establish session");
     } catch (error) {
       console.error("Error connecting to Plug:", error);
-      this.setState(AdapterState.ERROR);
+      this.setState(Adapter.Status.ERROR);
       throw error;
     }
   }
@@ -261,7 +246,7 @@ export class PlugAdapter implements Adapter.Interface {
     } = {
       requiresSigning: true,
       anon: false,
-    }
+    },
   ): ActorSubclass<T> {
     const { requiresSigning = true, anon = false } = options;
     try {
@@ -269,7 +254,7 @@ export class PlugAdapter implements Adapter.Interface {
       const inTargets = this.identity
         .getDelegation()
         .delegations.some((d) =>
-          d.delegation.targets?.some((p) => p.toText() === canisterId)
+          d.delegation.targets?.some((p) => p.toText() === canisterId),
         );
 
       const isUndelegated =
@@ -318,7 +303,7 @@ export class PlugAdapter implements Adapter.Interface {
       throw new Error(
         `Failed to create actor: ${
           error instanceof Error ? error.message : String(error)
-        }`
+        }`,
       );
     }
   }
@@ -337,15 +322,17 @@ export class PlugAdapter implements Adapter.Interface {
   }
 
   async disconnect(): Promise<void> {
+    this.setState(Adapter.Status.DISCONNECTING);
     this.identity = null;
     this.agent = null;
     this.signerAgent = null;
     this.accounts = [];
     await this.delegationStorage.remove(PlugAdapter.STORAGE_KEY);
-    this.setState(AdapterState.READY);
+    localStorage.removeItem(this.config.localStorageKey);
+    this.setState(Adapter.Status.DISCONNECTED);
   }
 
-  getState(): AdapterState {
+  getState(): Adapter.Status {
     return this.state;
   }
 

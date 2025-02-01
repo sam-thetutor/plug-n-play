@@ -12,12 +12,6 @@ export interface PlugAccount {
     subaccount: Uint8Array;
     type: AccountType;
 }
-export declare enum AdapterState {
-    READY = "READY",
-    LOADING = "LOADING",
-    PROCESSING = "PROCESSING",
-    ERROR = "ERROR"
-}
 export declare class PlugAdapter implements Adapter.Interface {
     private static readonly STORAGE_KEY;
     private static readonly TRANSPORT_CONFIG;
@@ -50,6 +44,6 @@ export declare class PlugAdapter implements Adapter.Interface {
     }): ActorSubclass<T>;
     undelegatedActor<T>(canisterId: string, idlFactory: any): ActorSubclass<T>;
     disconnect(): Promise<void>;
-    getState(): AdapterState;
+    getState(): Adapter.Status;
     getAccounts(): PlugAccount[];
 }
