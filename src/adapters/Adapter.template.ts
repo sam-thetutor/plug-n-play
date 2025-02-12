@@ -13,7 +13,7 @@ export class TemplateAdapter implements Adapter.Interface {
   logo: string = "";
   url: string = "";
   readyState: string;
-
+  info: Adapter.Info = { id: "template", icon: TemplateAdapter.logo, name: "Template", adapter: TemplateAdapter };
   constructor() {
     this.url = '';
     this.name = 'Template';

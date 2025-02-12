@@ -39,6 +39,7 @@ export class OisyAdapter implements Adapter.Interface {
   logo: string = OisyAdapter.logo;
   url: string = "https://oisy.com/sign";
   config: Wallet.PNPConfig;
+  public info: Adapter.Info = { id: "oisy", icon: OisyAdapter.logo, name: "Oisy Wallet", adapter: OisyAdapter };
   state: Adapter.Status = Adapter.Status.INIT;
 
   constructor() {

@@ -23,6 +23,7 @@ export declare class OisyAdapter implements Adapter.Interface {
     logo: string;
     url: string;
     config: Wallet.PNPConfig;
+    info: Adapter.Info;
     state: Adapter.Status;
     constructor();
     isAvailable(): Promise<boolean>;

@@ -7,6 +7,7 @@ export declare class NNSAdapter implements Adapter.Interface {
     logo: string;
     url: string;
     config: Wallet.PNPConfig;
+    info: Adapter.Info;
     private authClient;
     private agent;
     private state;

@@ -30,6 +30,7 @@ export declare class NFIDAdapter implements Adapter.Interface {
     identityProviderUrl: string;
     url: string;
     config: Wallet.PNPConfig;
+    info: Adapter.Info;
     constructor();
     private setState;
     isAvailable(): Promise<boolean>;

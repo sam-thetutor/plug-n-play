@@ -1,342 +1,192 @@
 // src/adapters/PlugAdapter.ts
+
+import { ActorSubclass } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
-import { Actor, HttpAgent, type ActorSubclass } from "@dfinity/agent";
-import {
-  DelegationChain,
-  DelegationIdentity,
-  Ed25519KeyIdentity,
-} from "@dfinity/identity";
-import { type Wallet, Adapter } from "../types/index.d";
+import { Adapter, Wallet } from "../types";
 import plugLogo from "../../assets/plug.webp";
-import { PlugTransport } from "@slide-computer/signer-transport-plug";
-import { SignerAgent } from "@slide-computer/signer-agent";
-import { Signer } from "@slide-computer/signer";
-import { SignerError } from "@slide-computer/signer";
-import { AccountIdentifier } from "@dfinity/ledger-icp";
-
-// Account types for different session types
-export enum AccountType {
-  GLOBAL = "GLOBAL",
-  SESSION = "SESSION",
-}
-
-export interface PlugAccount {
-  id: string;
-  displayName: string;
-  principal: string;
-  subaccount: Uint8Array;
-  type: AccountType;
-}
-
-// Storage interface for delegation
-interface DelegationStorage {
-  get(key: string): Promise<string | null>;
-  set(key: string, value: string): Promise<void>;
-  remove(key: string): Promise<void>;
-}
-
-// Local storage implementation
-class LocalDelegationStorage implements DelegationStorage {
-  async get(key: string): Promise<string | null> {
-    return localStorage.getItem(key);
-  }
-
-  async set(key: string, value: string): Promise<void> {
-    localStorage.setItem(key, value);
-  }
-
-  async remove(key: string): Promise<void> {
-    localStorage.removeItem(key);
-  }
-}
 
 export class PlugAdapter implements Adapter.Interface {
-  private static readonly STORAGE_KEY = "plug_session";
-  private static readonly TRANSPORT_CONFIG = {
-    windowOpenerFeatures: "width=525,height=705",
-    establishTimeout: 45000,
-    disconnectTimeout: 35000,
-    manageFocus: false,
-  };
-
-  private agent: HttpAgent;
-  private identity: DelegationIdentity | null = null;
-  private delegationStorage: DelegationStorage;
-  private state: Adapter.Status = Adapter.Status.READY;
-  private accounts: PlugAccount[] = [];
-  private actorCache: Map<string, ActorSubclass<any>> = new Map();
-  private sessionKey: Ed25519KeyIdentity | null = null;
-  private signerAgent: SignerAgent<Signer>;
-  private signer: Signer;
-
-  static readonly logo: string = plugLogo;
-  name: string = "Plug Wallet";
+  static logo: string = plugLogo;
   logo: string = PlugAdapter.logo;
-  url: string = "https://plug.one/rpc";
-  config: Wallet.PNPConfig;
+  name: string = "Plug";
+  url: string = "https://plugwallet.ooo/";
+  info: Adapter.Info = { id: "plug", icon: PlugAdapter.logo, name: "Plug", adapter: PlugAdapter };
+
+  private readyState:
+    | "NotDetected"
+    | "Installed"
+    | "Connected"
+    | "Disconnected" = "NotDetected";
 
   constructor() {
-    this.url = "https://plug.one/rpc";
-    this.name = PlugAdapter.name;
-    this.logo = PlugAdapter.logo;
-    this.delegationStorage = new LocalDelegationStorage();
-
-    // Initialize transport and signer like in exampleWTN.ts
-    const transport = new PlugTransport();
-    this.signer = new Signer({ transport });
-    this.agent = HttpAgent.createSync({ host: this.url });
-    this.signerAgent = SignerAgent.createSync({
-      signer: this.signer,
-      account: Principal.anonymous(),
-      agent: this.agent,
-    });
+    this.initPlug();
   }
 
-  private setState(newState: Adapter.Status) {
-    this.state = newState;
+  // Initialize Plug and set readyState accordingly
+  private initPlug(): void {
+    if (typeof window !== "undefined" && window.ic && window.ic.plug) {
+      this.readyState = "Installed";
+      window.ic.plug.isConnected().then((connected) => {
+        this.readyState = connected ? "Connected" : "Installed";
+      });
+    } else {
+      this.readyState = "NotDetected";
+    }
   }
 
-  private async setDelegationChain(
-    key: string,
-    chain: DelegationChain,
-  ): Promise<void> {
-    const sessionData = {
-      sessionKey: this.sessionKey,
-      delegationChain: chain,
-    };
-    await this.delegationStorage.set(key, JSON.stringify(sessionData));
-  }
-
+  // Check if the wallet is available
   async isAvailable(): Promise<boolean> {
-    return true; // Plug is web-based, so it's always available
+    return this.readyState !== "NotDetected";
+  }
+
+  // Connect to Plug wallet
+  async connect(config: Wallet.AdapterConfig): Promise<Wallet.Account> {
+    const isConnected = await window.ic!.plug!.isConnected();
+
+    if (!isConnected) {
+      try {
+        console.log("Connecting to Plug wallet...", config);
+        const connected = await window.ic!.plug!.requestConnect({
+          whitelist: config.whitelist || [],
+          host: config.hostUrl || "https://mainnet.dfinity.network",
+          timeout: config.timeout || 1000 * 60 * 60 * 24 * 7,
+          onConnectionUpdate: () => console.log("Plug connection updated"),
+        });
+        if (!connected) {
+          throw new Error("User declined the connection request");
+        }
+        this.readyState = "Connected";
+      } catch (e) {
+        console.error("Failed to connect to Plug wallet:", e);
+        throw e;
+      }
+    } else {
+      this.readyState = "Connected";
+    }
+
+    const principal = await this.getPrincipal();
+    const accountId = await this.getAccountId();
+
+    return {
+      owner: principal,
+      subaccount: null,
+    };
+  }
+
+  // Disconnect from Plug wallet
+  async disconnect(): Promise<void> {
+    if (window.ic && window.ic.plug && window.ic.plug.disconnect) {
+      await window.ic.plug.disconnect();
+      this.readyState = "Disconnected";
+    } else {
+      throw new Error("Plug wallet is not available");
+    }
+  }
+
+  // Get the user's principal ID
+  async getPrincipal(): Promise<Principal> {
+    if (window.ic && window.ic.plug && window.ic.plug.principalId) {
+      return Principal.fromText(window.ic.plug.principalId);
+    } else {
+      throw new Error("Plug wallet is not available or principal ID is unavailable");
+    }
+  }
+
+  // Get the user's account ID
+  async getAccountId(): Promise<string> {
+    if (window.ic && window.ic.plug && window.ic.plug.accountId) {
+      return window.ic.plug.accountId;
+    } else {
+      throw new Error("Plug wallet is not available or account ID is unavailable");
+    }
+  }
+
+  // Create an actor to interact with a canister
+  createActor<T>(
+    canisterId: string,
+    idl: any,
+    options?: { requiresSigning?: boolean }
+  ): ActorSubclass<T> {
+    if (!canisterId || !idl) {
+      throw new Error("Canister ID and IDL factory are required");
+    }
+
+    if (window.ic && window.ic.plug && window.ic.plug.createActor) {
+      try {
+        const actorPromise = window.ic.plug.createActor<T>({
+          canisterId,
+          interfaceFactory: idl,
+        });
+
+        const proxy = new Proxy({}, {
+          get: (_, prop) => {
+            if (prop === 'then') {
+              // Avoid Promise interoperability
+              return undefined;
+            }
+            return (...args: any[]) => {
+              return actorPromise.then(actor => {
+                const value = actor[prop];
+                if (typeof value === 'function') {
+                  return value.apply(actor, args);
+                }
+                return value;
+              });
+            };
+          }
+        }) as ActorSubclass<T>;
+
+        return proxy;
+      } catch (e) {
+        console.error("Failed to create actor through Plug:", e);
+        throw e;
+      }
+    } else {
+      throw new Error("Plug wallet is not available or not connected");
+    }
   }
 
   async isConnected(): Promise<boolean> {
-    return this.identity !== null && this.agent !== null;
+    if (window.ic && window.ic.plug && window.ic.plug.isConnected) {
+      return await window.ic.plug.isConnected();
+    } else {
+      return false;
+    }
   }
 
-  async getPrincipal(): Promise<Principal> {
-    if (!this.identity) {
-      throw new Error("Not connected");
-    }
-    return this.identity.getPrincipal();
-  }
-
-  async getAccountId(): Promise<string> {
-    if (!this.identity) {
-      throw new Error("Not connected");
-    }
-    return AccountIdentifier.fromPrincipal({
-      principal: await this.getPrincipal(),
-      subAccount: undefined, // This will use the default subaccount
-    }).toHex();
-  }
-
-  unwrapResponse = <T extends any>(response: any): T => {
-    if ("error" in response) {
-      throw new SignerError(response.error);
-    }
-    if ("result" in response) {
-      return response.result;
-    }
-    throw new SignerError({
-      code: 500,
-      message: "Invalid response",
-    });
-  };
-
-  async connect(config: Wallet.PNPConfig): Promise<Wallet.Account> {
-    this.config = config;
-
-    try {
-      this.setState(Adapter.Status.CONNECTING);
-
-      // Request permissions like in exampleWTN.ts
-      await this.signer.requestPermissions([
-        { method: "icrc27_accounts" },
-        {
-          method: "icrc34_delegation",
-          targets: config.delegationTargets?.map((p) => p.toText()),
-        },
-        { method: "icrc49_call_canister" },
-      ]);
-
-      // Get accounts
-      const accounts = await this.signer.accounts();
-      const principal = accounts[0].owner;
-
-      if (!this.sessionKey) {
-        this.sessionKey = Ed25519KeyIdentity.generate();
-      }
-
-      const delegationChain = await this.signer.delegation({
-        publicKey: this.sessionKey.getPublicKey().toDer(),
-        targets: config.delegationTargets,
-        maxTimeToLive:
-          this.config.delegationTimeout === undefined
-            ? BigInt(24 * 60 * 60 * 1000 * 1000 * 1000 * 1000)
-            : BigInt(Date.now()) + this.config.delegationTimeout,
-      });
-
-      await this.setDelegationChain(PlugAdapter.STORAGE_KEY, delegationChain);
-
-      const delegationIdentity = DelegationIdentity.fromDelegation(
-        this.sessionKey,
-        delegationChain,
-      );
-
-      this.signerAgent = SignerAgent.createSync({
-        signer: this.signer,
-        account: principal,
-      });
-
-      this.identity = delegationIdentity;
-
-      const account: PlugAccount = {
-        id: principal.toText(),
-        displayName: "Plug Account",
-        principal: principal.toText(),
-        subaccount: AccountIdentifier.fromPrincipal({
-          principal,
-          subAccount: undefined, // This will use the default subaccount
-        }).toUint8Array(),
-        type: AccountType.SESSION,
-      };
-
-      this.accounts = [account];
-
-      try {
-        if (this.identity && this.agent && this.signerAgent && this.signer) {
-          this.setState(Adapter.Status.READY);
-          return {
-            owner: principal,
-            subaccount: AccountIdentifier.fromPrincipal({
-              principal,
-              subAccount: undefined, // This will use the default subaccount
-            }).toUint8Array(),
-            hasDelegation: true,
-          };
+  // Handle connection updates (e.g., account switching)
+  private handleConnectionUpdate(): void {
+    if (window.ic?.plug?.principalId && window.ic?.plug?.accountId) {
+      const { principalId, accountId } = window.ic.plug;
+      this.readyState = "Connected";
+      
+      // Emit an event that can be listened to by the application
+      const event = new CustomEvent("plug-connection-update", {
+        detail: {
+          principalId,
+          accountId,
+          readyState: this.readyState
         }
-      } catch (error) {
-        console.error("[Plug] New session verification failed:", error);
-      }
-
-      // If we get here, something went wrong during verification
-      console.error("[Plug] Session establishment failed, cleaning up");
-      this.identity = null;
-      this.agent = null;
-      this.signerAgent = null;
-      this.accounts = [];
-      await this.delegationStorage.remove(PlugAdapter.STORAGE_KEY);
-      this.setState(Adapter.Status.ERROR);
-      throw new Error("Failed to establish session");
-    } catch (error) {
-      console.error("Error connecting to Plug:", error);
-      this.setState(Adapter.Status.ERROR);
-      throw error;
-    }
-  }
-
-  createActor<T>(
-    canisterId: string,
-    idlFactory: any,
-    options: {
-      requiresSigning?: boolean;
-      anon: boolean;
-    } = {
-      requiresSigning: true,
-      anon: false,
-    },
-  ): ActorSubclass<T> {
-    const { requiresSigning = true, anon = false } = options;
-    try {
-      // check if canister id is in the delegation targets
-      const inTargets = this.identity
-        .getDelegation()
-        .delegations.some((d) =>
-          d.delegation.targets?.some((p) => p.toText() === canisterId),
-        );
-
-      const isUndelegated =
-        (inTargets && !requiresSigning) ||
-        (!inTargets && requiresSigning) ||
-        (!inTargets && !requiresSigning);
-      const cacheKey = `${canisterId}-${inTargets}-${requiresSigning}-${isUndelegated}-${this.identity
-        .getPrincipal()
-        .toText()}`;
-      const cachedActor = this.actorCache.get(cacheKey);
-
-      if (cachedActor) {
-        return cachedActor;
-      }
-
-      if ((inTargets && !requiresSigning) || (!inTargets && !requiresSigning)) {
-        const actor = this.undelegatedActor<T>(canisterId, idlFactory);
-        this.actorCache.set(cacheKey, actor);
-        return actor;
-      }
-
-      // Create base actor with delegation identity for authenticated calls
-      const actor = Actor.createActor<T>(idlFactory, {
-        agent: this.signerAgent,
-        canisterId,
       });
-
-      if (requiresSigning) {
-        if (!this.signerAgent) {
-          this.disconnect();
-          throw new Error("No signer agent available. Please connect first.");
+      window.dispatchEvent(event);
+    } else {
+      this.readyState = "Disconnected";
+      
+      // Emit disconnection event
+      const event = new CustomEvent("plug-connection-update", {
+        detail: {
+          principalId: null,
+          accountId: null,
+          readyState: this.readyState
         }
-
-        const finalActor = Actor.createActor<T>(idlFactory, {
-          agent: this.signerAgent,
-          canisterId,
-        });
-
-        this.actorCache.set(cacheKey, finalActor);
-        return finalActor;
-      }
-
-      return actor;
-    } catch (error) {
-      console.error("Error creating actor:", error);
-      throw new Error(
-        `Failed to create actor: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
-      );
+      });
+      window.dispatchEvent(event);
     }
-  }
-
-  undelegatedActor<T>(canisterId: string, idlFactory: any): ActorSubclass<T> {
-    const agent = HttpAgent.createSync({
-      identity: this.identity,
-      host: this.config.hostUrl,
-      verifyQuerySignatures: this.config.verifyQuerySignatures,
+    
+    console.log("Plug connection updated:", {
+      readyState: this.readyState,
+      principalId: window.ic?.plug?.principalId,
+      accountId: window.ic?.plug?.accountId
     });
-    const actor = Actor.createActor<T>(idlFactory, {
-      agent: agent,
-      canisterId,
-    });
-    return actor;
-  }
-
-  async disconnect(): Promise<void> {
-    this.setState(Adapter.Status.DISCONNECTING);
-    this.identity = null;
-    this.agent = null;
-    this.signerAgent = null;
-    this.accounts = [];
-    await this.delegationStorage.remove(PlugAdapter.STORAGE_KEY);
-    localStorage.removeItem(this.config.localStorageKey);
-    this.setState(Adapter.Status.DISCONNECTED);
-  }
-
-  getState(): Adapter.Status {
-    return this.state;
-  }
-
-  getAccounts(): PlugAccount[] {
-    return this.accounts;
   }
 }

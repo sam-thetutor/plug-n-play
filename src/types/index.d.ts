@@ -76,12 +76,22 @@ export namespace Wallet {
 }
 
 export namespace Adapter {
+  // deprecated
   export interface Info {
     id: string;
     icon: string;
     name: string;
     adapter: AdapterConstructor;
   }
+
+  // replaces Info
+  export interface Wallet {
+    id: string;
+    icon: string;
+    name: string;
+    adapter: AdapterConstructor;
+  }
+
 
   export enum Status {
     INIT = "INIT",
@@ -95,9 +105,7 @@ export namespace Adapter {
 
   export interface Interface {
     // Required properties
-    name: string;
-    logo: string;
-    url: string;
+    info: Adapter.Info;
 
     // Core wallet functionality
     isAvailable(): Promise<boolean>;
@@ -157,7 +165,7 @@ declare global {
         createActor: <T>(options: {
           canisterId: string;
           interfaceFactory: any;
-        }) => ActorSubclass<T>;
+        }) => Promise<ActorSubclass<T>>;
         disconnect: () => Promise<void>;
         onExternalDisconnect: (callback: () => void) => void;
         principalId?: string;

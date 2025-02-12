@@ -14,6 +14,7 @@ export class NNSAdapter implements Adapter.Interface {
   logo: string = NNSAdapter.logo;
   url: string;
   config: Wallet.PNPConfig;
+  public info: Adapter.Info = { id: "nns", icon: NNSAdapter.logo, name: "Internet Identity", adapter: NNSAdapter };
 
   // Internal properties
   private authClient: AuthClient | null = null;

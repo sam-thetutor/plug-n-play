@@ -53,6 +53,7 @@ export class NFIDAdapter implements Adapter.Interface {
     "https://nfid.one/authenticate/?applicationName=kong";
   url: string = "https://nfid.one/rpc";
   config: Wallet.PNPConfig;
+  public info: Adapter.Info = { id: "nfid", icon: NFIDAdapter.logo, name: "NFID", adapter: NFIDAdapter };
 
   constructor() {
     this.url = "https://nfid.one/rpc";
