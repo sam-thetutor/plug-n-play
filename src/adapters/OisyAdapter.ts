@@ -24,9 +24,8 @@ export class OisyAdapter implements Adapter.Interface {
   private static readonly TRANSPORT_CONFIG = {
     windowOpenerFeatures: "width=525,height=705",
     establishTimeout: 35000,
-    disconnectTimeout: 3000,
+    disconnectTimeout: 5000,
     statusPollingRate: 500,
-    detectNonClickEstablishment: false,
   };
 
   private signer: Signer | null = null;

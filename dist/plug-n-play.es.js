@@ -258,24 +258,24 @@ var J = z((S2) => {
 });
 var K = z(($2) => {
   $2.read = function(i, r, t, e3, n) {
-    var o, u, h2 = n * 8 - e3 - 1, f = (1 << h2) - 1, l = f >> 1, s = -7, p = t ? n - 1 : 0, A2 = t ? -1 : 1, w2 = i[r + p];
+    var o, u, h2 = n * 8 - e3 - 1, f = (1 << h2) - 1, a = f >> 1, s = -7, p = t ? n - 1 : 0, A2 = t ? -1 : 1, w2 = i[r + p];
     for (p += A2, o = w2 & (1 << -s) - 1, w2 >>= -s, s += h2; s > 0; o = o * 256 + i[r + p], p += A2, s -= 8) ;
     for (u = o & (1 << -s) - 1, o >>= -s, s += e3; s > 0; u = u * 256 + i[r + p], p += A2, s -= 8) ;
-    if (o === 0) o = 1 - l;
+    if (o === 0) o = 1 - a;
     else {
       if (o === f) return u ? NaN : (w2 ? -1 : 1) * (1 / 0);
-      u = u + Math.pow(2, e3), o = o - l;
+      u = u + Math.pow(2, e3), o = o - a;
     }
     return (w2 ? -1 : 1) * u * Math.pow(2, o - e3);
   };
   $2.write = function(i, r, t, e3, n, o) {
-    var u, h2, f, l = o * 8 - n - 1, s = (1 << l) - 1, p = s >> 1, A2 = n === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0, w2 = e3 ? 0 : o - 1, L2 = e3 ? 1 : -1, yr = r < 0 || r === 0 && 1 / r < 0 ? 1 : 0;
+    var u, h2, f, a = o * 8 - n - 1, s = (1 << a) - 1, p = s >> 1, A2 = n === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0, w2 = e3 ? 0 : o - 1, L2 = e3 ? 1 : -1, yr = r < 0 || r === 0 && 1 / r < 0 ? 1 : 0;
     for (r = Math.abs(r), isNaN(r) || r === 1 / 0 ? (h2 = isNaN(r) ? 1 : 0, u = s) : (u = Math.floor(Math.log(r) / Math.LN2), r * (f = Math.pow(2, -u)) < 1 && (u--, f *= 2), u + p >= 1 ? r += A2 / f : r += A2 * Math.pow(2, 1 - p), r * f >= 2 && (u++, f /= 2), u + p >= s ? (h2 = 0, u = s) : u + p >= 1 ? (h2 = (r * f - 1) * Math.pow(2, n), u = u + p) : (h2 = r * Math.pow(2, p - 1) * Math.pow(2, n), u = 0)); n >= 8; i[t + w2] = h2 & 255, w2 += L2, h2 /= 256, n -= 8) ;
-    for (u = u << n | h2, l += n; l > 0; i[t + w2] = u & 255, w2 += L2, u /= 256, l -= 8) ;
+    for (u = u << n | h2, a += n; a > 0; i[t + w2] = u & 255, w2 += L2, u /= 256, a -= 8) ;
     i[t + w2 - L2] |= yr * 128;
   };
 });
-var ar = z((R) => {
+var lr = z((R) => {
   var D2 = J(), U2 = K(), Z = typeof Symbol == "function" && typeof Symbol.for == "function" ? Symbol.for("nodejs.util.inspect.custom") : null;
   R.Buffer = c;
   R.SlowBuffer = Lr;
@@ -300,7 +300,7 @@ var ar = z((R) => {
   Object.defineProperty(c.prototype, "offset", { enumerable: true, get: function() {
     if (c.isBuffer(this)) return this.byteOffset;
   } });
-  function m(i) {
+  function d2(i) {
     if (i > _2) throw new RangeError('The value "' + i + '" is invalid for option "size"');
     let r = new Uint8Array(i);
     return Object.setPrototypeOf(r, c.prototype), r;
@@ -317,7 +317,7 @@ var ar = z((R) => {
     if (typeof i == "string") return Sr(i, r);
     if (ArrayBuffer.isView(i)) return _r(i);
     if (i == null) throw new TypeError("The first argument must be one of type string, Buffer, ArrayBuffer, Array, or Array-like Object. Received type " + typeof i);
-    if (d2(i, ArrayBuffer) || i && d2(i.buffer, ArrayBuffer) || typeof SharedArrayBuffer < "u" && (d2(i, SharedArrayBuffer) || i && d2(i.buffer, SharedArrayBuffer))) return O2(i, r, t);
+    if (m(i, ArrayBuffer) || i && m(i.buffer, ArrayBuffer) || typeof SharedArrayBuffer < "u" && (m(i, SharedArrayBuffer) || i && m(i.buffer, SharedArrayBuffer))) return O2(i, r, t);
     if (typeof i == "number") throw new TypeError('The "value" argument must not be of type number. Received type number');
     let e3 = i.valueOf && i.valueOf();
     if (e3 != null && e3 !== i) return c.from(e3, r, t);
@@ -336,13 +336,13 @@ var ar = z((R) => {
     if (i < 0) throw new RangeError('The value "' + i + '" is invalid for option "size"');
   }
   function Cr(i, r, t) {
-    return ir(i), i <= 0 ? m(i) : r !== void 0 ? typeof t == "string" ? m(i).fill(r, t) : m(i).fill(r) : m(i);
+    return ir(i), i <= 0 ? d2(i) : r !== void 0 ? typeof t == "string" ? d2(i).fill(r, t) : d2(i).fill(r) : d2(i);
   }
   c.alloc = function(i, r, t) {
     return Cr(i, r, t);
   };
   function G2(i) {
-    return ir(i), m(i < 0 ? 0 : H2(i) | 0);
+    return ir(i), d2(i < 0 ? 0 : H2(i) | 0);
   }
   c.allocUnsafe = function(i) {
     return G2(i);
@@ -352,16 +352,16 @@ var ar = z((R) => {
   };
   function Sr(i, r) {
     if ((typeof r != "string" || r === "") && (r = "utf8"), !c.isEncoding(r)) throw new TypeError("Unknown encoding: " + r);
-    let t = er(i, r) | 0, e3 = m(t), n = e3.write(i, r);
+    let t = er(i, r) | 0, e3 = d2(t), n = e3.write(i, r);
     return n !== t && (e3 = e3.slice(0, n)), e3;
   }
   function P2(i) {
-    let r = i.length < 0 ? 0 : H2(i.length) | 0, t = m(r);
+    let r = i.length < 0 ? 0 : H2(i.length) | 0, t = d2(r);
     for (let e3 = 0; e3 < r; e3 += 1) t[e3] = i[e3] & 255;
     return t;
   }
   function _r(i) {
-    if (d2(i, Uint8Array)) {
+    if (m(i, Uint8Array)) {
       let r = new Uint8Array(i);
       return O2(r.buffer, r.byteOffset, r.byteLength);
     }
@@ -375,10 +375,10 @@ var ar = z((R) => {
   }
   function kr(i) {
     if (c.isBuffer(i)) {
-      let r = H2(i.length) | 0, t = m(r);
+      let r = H2(i.length) | 0, t = d2(r);
       return t.length === 0 || i.copy(t, 0, 0, r), t;
     }
-    if (i.length !== void 0) return typeof i.length != "number" || W2(i.length) ? m(0) : P2(i);
+    if (i.length !== void 0) return typeof i.length != "number" || W2(i.length) ? d2(0) : P2(i);
     if (i.type === "Buffer" && Array.isArray(i.data)) return P2(i.data);
   }
   function H2(i) {
@@ -392,7 +392,7 @@ var ar = z((R) => {
     return r != null && r._isBuffer === true && r !== c.prototype;
   };
   c.compare = function(r, t) {
-    if (d2(r, Uint8Array) && (r = c.from(r, r.offset, r.byteLength)), d2(t, Uint8Array) && (t = c.from(t, t.offset, t.byteLength)), !c.isBuffer(r) || !c.isBuffer(t)) throw new TypeError('The "buf1", "buf2" arguments must be one of type Buffer or Uint8Array');
+    if (m(r, Uint8Array) && (r = c.from(r, r.offset, r.byteLength)), m(t, Uint8Array) && (t = c.from(t, t.offset, t.byteLength)), !c.isBuffer(r) || !c.isBuffer(t)) throw new TypeError('The "buf1", "buf2" arguments must be one of type Buffer or Uint8Array');
     if (r === t) return 0;
     let e3 = r.length, n = t.length;
     for (let o = 0, u = Math.min(e3, n); o < u; ++o) if (r[o] !== t[o]) {
@@ -427,7 +427,7 @@ var ar = z((R) => {
     let n = c.allocUnsafe(t), o = 0;
     for (e3 = 0; e3 < r.length; ++e3) {
       let u = r[e3];
-      if (d2(u, Uint8Array)) o + u.length > n.length ? (c.isBuffer(u) || (u = c.from(u)), u.copy(n, o)) : Uint8Array.prototype.set.call(n, u, o);
+      if (m(u, Uint8Array)) o + u.length > n.length ? (c.isBuffer(u) || (u = c.from(u)), u.copy(n, o)) : Uint8Array.prototype.set.call(n, u, o);
       else if (c.isBuffer(u)) u.copy(n, o);
       else throw new TypeError('"list" argument must be an Array of Buffers');
       o += u.length;
@@ -436,7 +436,7 @@ var ar = z((R) => {
   };
   function er(i, r) {
     if (c.isBuffer(i)) return i.length;
-    if (ArrayBuffer.isView(i) || d2(i, ArrayBuffer)) return i.byteLength;
+    if (ArrayBuffer.isView(i) || m(i, ArrayBuffer)) return i.byteLength;
     if (typeof i != "string") throw new TypeError('The "string" argument must be one of type string, Buffer, or ArrayBuffer. Received type ' + typeof i);
     let t = i.length, e3 = arguments.length > 2 && arguments[2] === true;
     if (!e3 && t === 0) return 0;
@@ -457,7 +457,7 @@ var ar = z((R) => {
       case "hex":
         return t >>> 1;
       case "base64":
-        return lr(i).length;
+        return ar(i).length;
       default:
         if (n) return e3 ? -1 : q(i).length;
         r = ("" + r).toLowerCase(), n = true;
@@ -528,15 +528,15 @@ var ar = z((R) => {
   };
   Z && (c.prototype[Z] = c.prototype.inspect);
   c.prototype.compare = function(r, t, e3, n, o) {
-    if (d2(r, Uint8Array) && (r = c.from(r, r.offset, r.byteLength)), !c.isBuffer(r)) throw new TypeError('The "target" argument must be one of type Buffer or Uint8Array. Received type ' + typeof r);
+    if (m(r, Uint8Array) && (r = c.from(r, r.offset, r.byteLength)), !c.isBuffer(r)) throw new TypeError('The "target" argument must be one of type Buffer or Uint8Array. Received type ' + typeof r);
     if (t === void 0 && (t = 0), e3 === void 0 && (e3 = r ? r.length : 0), n === void 0 && (n = 0), o === void 0 && (o = this.length), t < 0 || e3 > r.length || n < 0 || o > this.length) throw new RangeError("out of range index");
     if (n >= o && t >= e3) return 0;
     if (n >= o) return -1;
     if (t >= e3) return 1;
     if (t >>>= 0, e3 >>>= 0, n >>>= 0, o >>>= 0, this === r) return 0;
-    let u = o - n, h2 = e3 - t, f = Math.min(u, h2), l = this.slice(n, o), s = r.slice(t, e3);
-    for (let p = 0; p < f; ++p) if (l[p] !== s[p]) {
-      u = l[p], h2 = s[p];
+    let u = o - n, h2 = e3 - t, f = Math.min(u, h2), a = this.slice(n, o), s = r.slice(t, e3);
+    for (let p = 0; p < f; ++p) if (a[p] !== s[p]) {
+      u = a[p], h2 = s[p];
       break;
     }
     return u < h2 ? -1 : h2 < u ? 1 : 0;
@@ -561,19 +561,19 @@ var ar = z((R) => {
     function f(s, p) {
       return o === 1 ? s[p] : s.readUInt16BE(p * o);
     }
-    let l;
+    let a;
     if (n) {
       let s = -1;
-      for (l = t; l < u; l++) if (f(i, l) === f(r, s === -1 ? 0 : l - s)) {
-        if (s === -1 && (s = l), l - s + 1 === h2) return s * o;
-      } else s !== -1 && (l -= l - s), s = -1;
-    } else for (t + h2 > u && (t = u - h2), l = t; l >= 0; l--) {
+      for (a = t; a < u; a++) if (f(i, a) === f(r, s === -1 ? 0 : a - s)) {
+        if (s === -1 && (s = a), a - s + 1 === h2) return s * o;
+      } else s !== -1 && (a -= a - s), s = -1;
+    } else for (t + h2 > u && (t = u - h2), a = t; a >= 0; a--) {
       let s = true;
-      for (let p = 0; p < h2; p++) if (f(i, l + p) !== f(r, p)) {
+      for (let p = 0; p < h2; p++) if (f(i, a + p) !== f(r, p)) {
         s = false;
         break;
       }
-      if (s) return l;
+      if (s) return a;
     }
     return -1;
   }
@@ -607,7 +607,7 @@ var ar = z((R) => {
     return k2(zr(r), i, t, e3);
   }
   function Dr(i, r, t, e3) {
-    return k2(lr(r), i, t, e3);
+    return k2(ar(r), i, t, e3);
   }
   function Pr(i, r, t, e3) {
     return k2(Jr(r, i.length - t), i, t, e3);
@@ -655,7 +655,7 @@ var ar = z((R) => {
     for (; n < t; ) {
       let o = i[n], u = null, h2 = o > 239 ? 4 : o > 223 ? 3 : o > 191 ? 2 : 1;
       if (n + h2 <= t) {
-        let f, l, s, p;
+        let f, a, s, p;
         switch (h2) {
           case 1:
             o < 128 && (u = o);
@@ -664,10 +664,10 @@ var ar = z((R) => {
             f = i[n + 1], (f & 192) === 128 && (p = (o & 31) << 6 | f & 63, p > 127 && (u = p));
             break;
           case 3:
-            f = i[n + 1], l = i[n + 2], (f & 192) === 128 && (l & 192) === 128 && (p = (o & 15) << 12 | (f & 63) << 6 | l & 63, p > 2047 && (p < 55296 || p > 57343) && (u = p));
+            f = i[n + 1], a = i[n + 2], (f & 192) === 128 && (a & 192) === 128 && (p = (o & 15) << 12 | (f & 63) << 6 | a & 63, p > 2047 && (p < 55296 || p > 57343) && (u = p));
             break;
           case 4:
-            f = i[n + 1], l = i[n + 2], s = i[n + 3], (f & 192) === 128 && (l & 192) === 128 && (s & 192) === 128 && (p = (o & 15) << 18 | (f & 63) << 12 | (l & 63) << 6 | s & 63, p > 65535 && p < 1114112 && (u = p));
+            f = i[n + 1], a = i[n + 2], s = i[n + 3], (f & 192) === 128 && (a & 192) === 128 && (s & 192) === 128 && (p = (o & 15) << 18 | (f & 63) << 12 | (a & 63) << 6 | s & 63, p > 65535 && p < 1114112 && (u = p));
         }
       }
       u === null ? (u = 65533, h2 = 1) : u > 65535 && (u -= 65536, e3.push(u >>> 10 & 1023 | 55296), u = 56320 | u & 1023), e3.push(u), n += h2;
@@ -712,36 +712,36 @@ var ar = z((R) => {
     let n = this.subarray(r, t);
     return Object.setPrototypeOf(n, c.prototype), n;
   };
-  function a(i, r, t) {
+  function l(i, r, t) {
     if (i % 1 !== 0 || i < 0) throw new RangeError("offset is not uint");
     if (i + r > t) throw new RangeError("Trying to access beyond buffer length");
   }
   c.prototype.readUintLE = c.prototype.readUIntLE = function(r, t, e3) {
-    r = r >>> 0, t = t >>> 0, e3 || a(r, t, this.length);
+    r = r >>> 0, t = t >>> 0, e3 || l(r, t, this.length);
     let n = this[r], o = 1, u = 0;
     for (; ++u < t && (o *= 256); ) n += this[r + u] * o;
     return n;
   };
   c.prototype.readUintBE = c.prototype.readUIntBE = function(r, t, e3) {
-    r = r >>> 0, t = t >>> 0, e3 || a(r, t, this.length);
+    r = r >>> 0, t = t >>> 0, e3 || l(r, t, this.length);
     let n = this[r + --t], o = 1;
     for (; t > 0 && (o *= 256); ) n += this[r + --t] * o;
     return n;
   };
   c.prototype.readUint8 = c.prototype.readUInt8 = function(r, t) {
-    return r = r >>> 0, t || a(r, 1, this.length), this[r];
+    return r = r >>> 0, t || l(r, 1, this.length), this[r];
   };
   c.prototype.readUint16LE = c.prototype.readUInt16LE = function(r, t) {
-    return r = r >>> 0, t || a(r, 2, this.length), this[r] | this[r + 1] << 8;
+    return r = r >>> 0, t || l(r, 2, this.length), this[r] | this[r + 1] << 8;
   };
   c.prototype.readUint16BE = c.prototype.readUInt16BE = function(r, t) {
-    return r = r >>> 0, t || a(r, 2, this.length), this[r] << 8 | this[r + 1];
+    return r = r >>> 0, t || l(r, 2, this.length), this[r] << 8 | this[r + 1];
   };
   c.prototype.readUint32LE = c.prototype.readUInt32LE = function(r, t) {
-    return r = r >>> 0, t || a(r, 4, this.length), (this[r] | this[r + 1] << 8 | this[r + 2] << 16) + this[r + 3] * 16777216;
+    return r = r >>> 0, t || l(r, 4, this.length), (this[r] | this[r + 1] << 8 | this[r + 2] << 16) + this[r + 3] * 16777216;
   };
   c.prototype.readUint32BE = c.prototype.readUInt32BE = function(r, t) {
-    return r = r >>> 0, t || a(r, 4, this.length), this[r] * 16777216 + (this[r + 1] << 16 | this[r + 2] << 8 | this[r + 3]);
+    return r = r >>> 0, t || l(r, 4, this.length), this[r] * 16777216 + (this[r + 1] << 16 | this[r + 2] << 8 | this[r + 3]);
   };
   c.prototype.readBigUInt64LE = E2(function(r) {
     r = r >>> 0, T2(r, "offset");
@@ -758,35 +758,35 @@ var ar = z((R) => {
     return (BigInt(n) << BigInt(32)) + BigInt(o);
   });
   c.prototype.readIntLE = function(r, t, e3) {
-    r = r >>> 0, t = t >>> 0, e3 || a(r, t, this.length);
+    r = r >>> 0, t = t >>> 0, e3 || l(r, t, this.length);
     let n = this[r], o = 1, u = 0;
     for (; ++u < t && (o *= 256); ) n += this[r + u] * o;
     return o *= 128, n >= o && (n -= Math.pow(2, 8 * t)), n;
   };
   c.prototype.readIntBE = function(r, t, e3) {
-    r = r >>> 0, t = t >>> 0, e3 || a(r, t, this.length);
+    r = r >>> 0, t = t >>> 0, e3 || l(r, t, this.length);
     let n = t, o = 1, u = this[r + --n];
     for (; n > 0 && (o *= 256); ) u += this[r + --n] * o;
     return o *= 128, u >= o && (u -= Math.pow(2, 8 * t)), u;
   };
   c.prototype.readInt8 = function(r, t) {
-    return r = r >>> 0, t || a(r, 1, this.length), this[r] & 128 ? (255 - this[r] + 1) * -1 : this[r];
+    return r = r >>> 0, t || l(r, 1, this.length), this[r] & 128 ? (255 - this[r] + 1) * -1 : this[r];
   };
   c.prototype.readInt16LE = function(r, t) {
-    r = r >>> 0, t || a(r, 2, this.length);
+    r = r >>> 0, t || l(r, 2, this.length);
     let e3 = this[r] | this[r + 1] << 8;
     return e3 & 32768 ? e3 | 4294901760 : e3;
   };
   c.prototype.readInt16BE = function(r, t) {
-    r = r >>> 0, t || a(r, 2, this.length);
+    r = r >>> 0, t || l(r, 2, this.length);
     let e3 = this[r + 1] | this[r] << 8;
     return e3 & 32768 ? e3 | 4294901760 : e3;
   };
   c.prototype.readInt32LE = function(r, t) {
-    return r = r >>> 0, t || a(r, 4, this.length), this[r] | this[r + 1] << 8 | this[r + 2] << 16 | this[r + 3] << 24;
+    return r = r >>> 0, t || l(r, 4, this.length), this[r] | this[r + 1] << 8 | this[r + 2] << 16 | this[r + 3] << 24;
   };
   c.prototype.readInt32BE = function(r, t) {
-    return r = r >>> 0, t || a(r, 4, this.length), this[r] << 24 | this[r + 1] << 16 | this[r + 2] << 8 | this[r + 3];
+    return r = r >>> 0, t || l(r, 4, this.length), this[r] << 24 | this[r + 1] << 16 | this[r + 2] << 8 | this[r + 3];
   };
   c.prototype.readBigInt64LE = E2(function(r) {
     r = r >>> 0, T2(r, "offset");
@@ -803,16 +803,16 @@ var ar = z((R) => {
     return (BigInt(n) << BigInt(32)) + BigInt(this[++r] * 2 ** 24 + this[++r] * 2 ** 16 + this[++r] * 2 ** 8 + e3);
   });
   c.prototype.readFloatLE = function(r, t) {
-    return r = r >>> 0, t || a(r, 4, this.length), U2.read(this, r, true, 23, 4);
+    return r = r >>> 0, t || l(r, 4, this.length), U2.read(this, r, true, 23, 4);
   };
   c.prototype.readFloatBE = function(r, t) {
-    return r = r >>> 0, t || a(r, 4, this.length), U2.read(this, r, false, 23, 4);
+    return r = r >>> 0, t || l(r, 4, this.length), U2.read(this, r, false, 23, 4);
   };
   c.prototype.readDoubleLE = function(r, t) {
-    return r = r >>> 0, t || a(r, 8, this.length), U2.read(this, r, true, 52, 8);
+    return r = r >>> 0, t || l(r, 8, this.length), U2.read(this, r, true, 52, 8);
   };
   c.prototype.readDoubleBE = function(r, t) {
-    return r = r >>> 0, t || a(r, 8, this.length), U2.read(this, r, false, 52, 8);
+    return r = r >>> 0, t || l(r, 8, this.length), U2.read(this, r, false, 52, 8);
   };
   function y(i, r, t, e3, n, o) {
     if (!c.isBuffer(i)) throw new TypeError('"buffer" argument must be a Buffer instance');
@@ -1066,7 +1066,7 @@ var ar = z((R) => {
     for (let u = 0; u < i.length && !((r -= 2) < 0); ++u) t = i.charCodeAt(u), e3 = t >> 8, n = t % 256, o.push(n), o.push(e3);
     return o;
   }
-  function lr(i) {
+  function ar(i) {
     return D2.toByteArray(Xr(i));
   }
   function k2(i, r, t, e3) {
@@ -1074,7 +1074,7 @@ var ar = z((R) => {
     for (n = 0; n < e3 && !(n + t >= r.length || n >= i.length); ++n) r[n + t] = i[n];
     return n;
   }
-  function d2(i, r) {
+  function m(i, r) {
     return i instanceof r || i != null && i.constructor != null && i.constructor.name != null && i.constructor.name === r.name;
   }
   function W2(i) {
@@ -1095,7 +1095,7 @@ var ar = z((R) => {
     throw new Error("BigInt not supported");
   }
 });
-J$1(ar());
+J$1(lr());
 /*! Bundled license information:
 
 ieee754/index.js:
@@ -1468,6 +1468,7 @@ _PlugAdapter.logo = plugLogo;
 let PlugAdapter = _PlugAdapter;
 const nfidLogo = "data:image/webp;base64,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";
 const NETWORK_ERROR = 4e3;
+const ENCODE_CHUNK_SIZE = 1e5;
 const fromBase64 = (base64) => {
   if (typeof globalThis.Buffer !== "undefined") {
     return globalThis.Buffer.from(base64, "base64").buffer;
@@ -1482,17 +1483,16 @@ const toBase64 = (bytes) => {
     return globalThis.Buffer.from(bytes).toString("base64");
   }
   if (typeof globalThis.btoa !== "undefined") {
-    return btoa(String.fromCharCode(...new Uint8Array(bytes)));
+    return btoa(Array.from({ length: Math.ceil(bytes.byteLength / ENCODE_CHUNK_SIZE) }).map((_2, index2) => String.fromCharCode(...new Uint8Array(bytes.slice(index2 * ENCODE_CHUNK_SIZE, (index2 + 1) * ENCODE_CHUNK_SIZE)))).join(""));
   }
   throw Error("Could not encode base64 string");
 };
 var __classPrivateFieldSet$5 = function(receiver, state, value, kind, f) {
-  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+  if (typeof state === "function" ? receiver !== state || true : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
   return state.set(receiver, value), value;
 };
 var __classPrivateFieldGet$5 = function(receiver, state, kind, f) {
-  if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
-  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+  if (typeof state === "function" ? receiver !== state || true : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
   return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
 var _Signer_options, _Signer_channel, _Signer_establishingChannel, _Signer_scheduledChannelClosure;
@@ -1678,12 +1678,11 @@ _Signer_options = /* @__PURE__ */ new WeakMap(), _Signer_channel = /* @__PURE__ 
 const isJsonRpcMessage = (message) => typeof message === "object" && !!message && "jsonrpc" in message && message.jsonrpc === "2.0";
 const isJsonRpcResponse = (message) => isJsonRpcMessage(message) && "id" in message && (typeof message.id === "string" || typeof message.id === "number");
 var __classPrivateFieldSet$4 = function(receiver, state, value, kind, f) {
-  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+  if (typeof state === "function" ? receiver !== state || true : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
   return state.set(receiver, value), value;
 };
 var __classPrivateFieldGet$4 = function(receiver, state, kind, f) {
-  if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
-  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+  if (typeof state === "function" ? receiver !== state || true : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
   return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
 var _PostMessageChannel_closeListeners, _PostMessageChannel_options, _PostMessageChannel_closed;
@@ -1748,7 +1747,7 @@ const urlIsSecureContext = (value) => {
   }
 };
 var __classPrivateFieldSet$3 = function(receiver, state, value, kind, f) {
-  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+  if (typeof state === "function" ? receiver !== state || true : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
   return state.set(receiver, value), value;
 };
 var __classPrivateFieldGet$3 = function(receiver, state, kind, f) {
@@ -1809,12 +1808,11 @@ _Heartbeat_options = /* @__PURE__ */ new WeakMap(), _Heartbeat_instances = /* @_
   __classPrivateFieldGet$3(this, _Heartbeat_options, "f").signerWindow.postMessage({ jsonrpc: "2.0", id, method: "icrc29_status" }, "*");
 };
 var __classPrivateFieldSet$2 = function(receiver, state, value, kind, f) {
-  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+  if (typeof state === "function" ? receiver !== state || true : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
   return state.set(receiver, value), value;
 };
 var __classPrivateFieldGet$2 = function(receiver, state, kind, f) {
-  if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
-  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+  if (typeof state === "function" ? receiver !== state || true : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
   return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
 var _PostMessageTransport_options;
@@ -2016,24 +2014,24 @@ function clone(configObject) {
         if (obj.hasOwnProperty(p = "EXPONENTIAL_AT")) {
           v2 = obj[p];
           if (v2 && v2.pop) {
-            intCheck(v2[0], -MAX, 0, p);
+            intCheck(v2[0], -1e9, 0, p);
             intCheck(v2[1], 0, MAX, p);
             TO_EXP_NEG = v2[0];
             TO_EXP_POS = v2[1];
           } else {
-            intCheck(v2, -MAX, MAX, p);
+            intCheck(v2, -1e9, MAX, p);
             TO_EXP_NEG = -(TO_EXP_POS = v2 < 0 ? -v2 : v2);
           }
         }
         if (obj.hasOwnProperty(p = "RANGE")) {
           v2 = obj[p];
           if (v2 && v2.pop) {
-            intCheck(v2[0], -MAX, -1, p);
+            intCheck(v2[0], -1e9, -1, p);
             intCheck(v2[1], 1, MAX, p);
             MIN_EXP = v2[0];
             MAX_EXP = v2[1];
           } else {
-            intCheck(v2, -MAX, MAX, p);
+            intCheck(v2, -1e9, MAX, p);
             if (v2) {
               MIN_EXP = -(MAX_EXP = v2 < 0 ? -v2 : v2);
             } else {
@@ -2103,7 +2101,7 @@ function clone(configObject) {
     if (!BigNumber.DEBUG) return true;
     var i, n, c = v2.c, e3 = v2.e, s = v2.s;
     out: if ({}.toString.call(c) == "[object Array]") {
-      if ((s === 1 || s === -1) && e3 >= -MAX && e3 <= MAX && e3 === mathfloor(e3)) {
+      if ((s === 1 || s === -1) && e3 >= -1e9 && e3 <= MAX && e3 === mathfloor(e3)) {
         if (c[0] === 0) {
           if (e3 === 0 && c.length === 1) return true;
           break out;
@@ -2943,7 +2941,7 @@ function clone(configObject) {
     return n;
   };
   P2.shiftedBy = function(k2) {
-    intCheck(k2, -MAX_SAFE_INTEGER, MAX_SAFE_INTEGER);
+    intCheck(k2, -9007199254740991, MAX_SAFE_INTEGER);
     return this.times("1e" + k2);
   };
   P2.squareRoot = P2.sqrt = function() {
@@ -3778,9 +3776,8 @@ const _OisyAdapter = class _OisyAdapter {
 _OisyAdapter.TRANSPORT_CONFIG = {
   windowOpenerFeatures: "width=525,height=705",
   establishTimeout: 35e3,
-  disconnectTimeout: 3e3,
-  statusPollingRate: 500,
-  detectNonClickEstablishment: false
+  disconnectTimeout: 5e3,
+  statusPollingRate: 500
 };
 _OisyAdapter.logo = oisyLogo;
 let OisyAdapter = _OisyAdapter;
@@ -8748,8 +8745,8 @@ function requireRipemd160() {
             var sl = _sl.words;
             var sr = _sr.words;
             var al, bl, cl, dl, el;
-            var ar2, br, cr, dr, er;
-            ar2 = al = H2[0];
+            var ar, br, cr, dr, er;
+            ar = al = H2[0];
             br = bl = H2[1];
             cr = cl = H2[2];
             dr = dl = H2[3];
@@ -8776,7 +8773,7 @@ function requireRipemd160() {
               dl = rotl(cl, 10);
               cl = bl;
               bl = t;
-              t = ar2 + M2[offset + zr[i]] | 0;
+              t = ar + M2[offset + zr[i]] | 0;
               if (i < 16) {
                 t += f5(br, cr, dr) + hr[0];
               } else if (i < 32) {
@@ -8791,7 +8788,7 @@ function requireRipemd160() {
               t = t | 0;
               t = rotl(t, sr[i]);
               t = t + er | 0;
-              ar2 = er;
+              ar = er;
               er = dr;
               dr = rotl(cr, 10);
               cr = br;
@@ -8799,7 +8796,7 @@ function requireRipemd160() {
             }
             t = H2[1] + cl + dr | 0;
             H2[1] = H2[2] + dl + er | 0;
-            H2[2] = H2[3] + el + ar2 | 0;
+            H2[2] = H2[3] + el + ar | 0;
             H2[3] = H2[4] + al + br | 0;
             H2[4] = H2[0] + bl + cr | 0;
             H2[0] = t;
