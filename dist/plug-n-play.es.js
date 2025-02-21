@@ -3775,8 +3775,8 @@ const _OisyAdapter = class _OisyAdapter {
 };
 _OisyAdapter.TRANSPORT_CONFIG = {
   windowOpenerFeatures: "width=525,height=705",
-  establishTimeout: 35e3,
-  disconnectTimeout: 5e3,
+  establishTimeout: 45e3,
+  disconnectTimeout: 45e3,
   statusPollingRate: 500
 };
 _OisyAdapter.logo = oisyLogo;

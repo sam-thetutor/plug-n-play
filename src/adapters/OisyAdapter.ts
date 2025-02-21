@@ -23,8 +23,8 @@ export interface OisyAccount {
 export class OisyAdapter implements Adapter.Interface {
   private static readonly TRANSPORT_CONFIG = {
     windowOpenerFeatures: "width=525,height=705",
-    establishTimeout: 35000,
-    disconnectTimeout: 5000,
+    establishTimeout: 45000,
+    disconnectTimeout: 45000,
     statusPollingRate: 500,
   };
 
