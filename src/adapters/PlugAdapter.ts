@@ -17,9 +17,15 @@ export class PlugAdapter implements Adapter.Interface {
     | "Installed"
     | "Connected"
     | "Disconnected" = "NotDetected";
+  
+  private _connectionState: boolean = false;
+  private _connectionStateTimestamp: number = 0;
+  private _connectionStateUpdateInterval: number = 2000; // Update every 2 seconds
 
   constructor() {
     this.initPlug();
+    // Initialize connection state
+    this.updateConnectionState();
   }
 
   // Initialize Plug and set readyState accordingly
@@ -146,7 +152,25 @@ export class PlugAdapter implements Adapter.Interface {
     }
   }
 
+  private async updateConnectionState(): Promise<void> {
+    if (window.ic && window.ic.plug && window.ic.plug.isConnected) {
+      this._connectionState = await window.ic.plug.isConnected();
+      this._connectionStateTimestamp = Date.now();
+    } else {
+      this._connectionState = false;
+    }
+  }
+
   async isConnected(): Promise<boolean> {
+    // If the connection state is old, trigger an async update but don't wait for it
+    if (Date.now() - this._connectionStateTimestamp > this._connectionStateUpdateInterval) {
+      this.updateConnectionState().catch(err => console.error("Failed to update connection state:", err));
+    }
+    return this._connectionState;
+  }
+
+  // Keep the async version for backward compatibility
+  async isConnectedAsync(): Promise<boolean> {
     if (window.ic && window.ic.plug && window.ic.plug.isConnected) {
       return await window.ic.plug.isConnected();
     } else {

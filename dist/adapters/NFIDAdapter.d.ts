@@ -19,15 +19,14 @@ export declare class NFIDAdapter implements Adapter.Interface {
     private identity;
     private delegationStorage;
     private state;
-    private accounts;
     private actorCache;
     private sessionKey;
     private signerAgent;
     private signer;
+    private transport;
     static readonly logo: string;
     name: string;
     logo: string;
-    identityProviderUrl: string;
     url: string;
     config: Wallet.PNPConfig;
     info: Adapter.Info;
@@ -39,6 +38,8 @@ export declare class NFIDAdapter implements Adapter.Interface {
     getAccountId(): Promise<string>;
     unwrapResponse: <T extends unknown>(response: any) => T;
     connect(config: Wallet.PNPConfig): Promise<Wallet.Account>;
+    private wrapDelegation;
+    private unwrapDelegation;
     createActor<T>(canisterId: string, idlFactory: any, options?: {
         requiresSigning?: boolean;
         anon: boolean;
@@ -46,5 +47,4 @@ export declare class NFIDAdapter implements Adapter.Interface {
     undelegatedActor<T>(canisterId: string, idlFactory: any): ActorSubclass<T>;
     disconnect(): Promise<void>;
     getState(): Adapter.Status;
-    getAccounts(): NFIDAccount[];
 }

@@ -19,7 +19,7 @@ export namespace Wallet {
     delegationTargets?: Principal[];
     delegationTimeout?: bigint;
     timeout?: number;
-    isDev?: boolean;
+    dfxNetwork?: string;
     [key: string]: any;
   }
 
@@ -131,7 +131,6 @@ export namespace Adapter {
 
 export class PNP {
   account: Wallet.Account | null;
-  activeWallet: Adapter.Info | null;
   provider: Adapter.Interface | null;
   config: Wallet.PNPConfig;
   actorCache: Map<string, ActorSubclass<any>>;

@@ -8,6 +8,9 @@ export declare class PlugAdapter implements Adapter.Interface {
     url: string;
     info: Adapter.Info;
     private readyState;
+    private _connectionState;
+    private _connectionStateTimestamp;
+    private _connectionStateUpdateInterval;
     constructor();
     private initPlug;
     isAvailable(): Promise<boolean>;
@@ -18,6 +21,8 @@ export declare class PlugAdapter implements Adapter.Interface {
     createActor<T>(canisterId: string, idl: any, options?: {
         requiresSigning?: boolean;
     }): ActorSubclass<T>;
+    private updateConnectionState;
     isConnected(): Promise<boolean>;
+    isConnectedAsync(): Promise<boolean>;
     private handleConnectionUpdate;
 }

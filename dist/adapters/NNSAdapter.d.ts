@@ -25,6 +25,5 @@ export declare class NNSAdapter implements Adapter.Interface {
     getPrincipal(): Promise<Principal>;
     getAccountId(): Promise<string>;
     private refreshLogin;
-    undelegatedActor<T>(canisterId: string, idlFactory: any): ActorSubclass<T>;
     disconnect(): Promise<void>;
 }

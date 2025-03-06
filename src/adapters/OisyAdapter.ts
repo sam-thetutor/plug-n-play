@@ -26,12 +26,13 @@ export class OisyAdapter implements Adapter.Interface {
     establishTimeout: 45000,
     disconnectTimeout: 45000,
     statusPollingRate: 500,
+    detectNonClickEstablishment: false,
   };
 
   private signer: Signer | null = null;
   private agent: HttpAgent | SignerAgent<any> | null = null;
   private signerAgent: SignerAgent<Signer>;
-  private accounts: OisyAccount[] = [];
+  private transport: PostMessageTransport;
 
   static readonly logo: string = oisyLogo;
   name: string = "Oisy Wallet";
@@ -46,16 +47,22 @@ export class OisyAdapter implements Adapter.Interface {
     this.name = "Oisy Wallet";
     this.logo = OisyAdapter.logo;
     this.agent = HttpAgent.createSync({ host: this.url });
+    
+    this.transport = new PostMessageTransport({
+      url: this.url,
+      ...OisyAdapter.TRANSPORT_CONFIG,
+    });
+    
+    this.signer = new Signer({
+      transport: this.transport
+    });
+    
     this.signerAgent = SignerAgent.createSync({
-      signer: new Signer({
-        transport: new PostMessageTransport({
-          url: this.url,
-          ...OisyAdapter.TRANSPORT_CONFIG,
-        }),
-      }),
+      signer: this.signer,
       account: Principal.anonymous(),
       agent: this.agent,
     });
+    
     this.state = Adapter.Status.READY;
   }
 
@@ -84,6 +91,8 @@ export class OisyAdapter implements Adapter.Interface {
   async connect(config: Wallet.PNPConfig): Promise<Wallet.Account> {
     try {
       this.setState(Adapter.Status.CONNECTING);
+      this.config = config;
+            
       const accounts = await this.signerAgent.signer.accounts();
       if (!accounts || accounts.length === 0) {
         this.disconnect();
@@ -104,17 +113,8 @@ export class OisyAdapter implements Adapter.Interface {
         await this.signerAgent.fetchRootKey();
       }
 
-      this.accounts = accounts.map((acc) => ({
-        id: acc.owner.toText(),
-        displayName: `Oisy Account ${acc.owner.toText().slice(0, 8)}...`,
-        principal: acc.owner.toText(),
-        subaccount: AccountIdentifier.fromPrincipal({
-          principal: acc.owner,
-          subAccount: undefined, // This will use the default subaccount
-        }).toUint8Array(),
-        type: AccountType.SESSION,
-      }));
-
+      localStorage.setItem('oisy_principal', principal.toText());
+      
       this.setState(Adapter.Status.CONNECTED);
       return {
         owner: principal,
@@ -180,11 +180,6 @@ export class OisyAdapter implements Adapter.Interface {
 
     this.agent = null;
     this.signerAgent = null;
-    this.accounts = [];
     this.setState(Adapter.Status.DISCONNECTED);
-  }
-
-  getAccounts(): OisyAccount[] {
-    return this.accounts;
   }
 }

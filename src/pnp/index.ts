@@ -8,8 +8,8 @@ class PNP {
   provider: Adapter.Interface | null = null;
   config: Wallet.PNPConfig;
   actorCache: Map<string, ActorSubclass<any>> = new Map();
+  dfxNetwork: string = "local";
   isDev: boolean = true;
-  fetchRootKeys: boolean = false;
   isConnecting: boolean = false;
 
   constructor(config: Wallet.PNPConfig = {}) {
@@ -18,42 +18,14 @@ class PNP {
       identityProvider: config.identityProvider || "https://identity.ic0.app",
       localStorageKey: config.localStorageKey || "pnpConnectedWallet",
       timeout: config.timeout || 1000 * 60 * 60 * 24, // 1 day in milliseconds
-      verifyQuerySignatures: config.verifyQuerySignatures ?? false,
       delegationTimeout:
         config.delegationTimeout || BigInt(24 * 60 * 60 * 1000 * 1000 * 1000),
       delegationTargets: config.delegationTargets || [],
-      isDev: config.isDev ?? true,
+      dfxNetwork: config.dfxNetwork || "local",
+      isDev: config.dfxNetwork === "local",
       derivationOrigin: config.derivationOrigin || "https://identity.ic0.app",
       ...config,
     };
-  }
-
-  async canReconnect(walletId: string): Promise<boolean> {
-    try {
-      const adapter = walletList.find((w) => w.id === walletId);
-      if (!adapter) return false;
-      if(adapter.id === "oisy") return false;
-
-      // Check if the adapter has a stored session
-      const storedData = localStorage.getItem(this.config.localStorageKey);
-      if (!storedData || storedData !== walletId) return false;
-
-      // Special handling for NNS Login
-      if (walletId === "nns") {
-        const instance = new adapter.adapter(this.config);
-        return await instance.isConnected();
-      }
-
-      // For other wallets, check their delegation storage
-      const delegationKey = `${walletId}_session`;
-      const delegationData = localStorage.getItem(delegationKey);
-      if (!delegationData) return false;
-
-      return true;
-    } catch (error) {
-      console.warn("[PNP] Error checking reconnect status:", error);
-      return false;
-    }
   }
 
   async connect(walletId?: string): Promise<Wallet.Account | null> {
@@ -61,19 +33,20 @@ class PNP {
     this.isConnecting = true;
 
     try {
-      // If no walletId provided, try to get it from storage
+      // Get wallet ID from parameter or storage and save it
       const targetWalletId = walletId || localStorage.getItem(this.config.localStorageKey);
-      localStorage.setItem(this.config.localStorageKey, targetWalletId);
       if (!targetWalletId) return null;
+      
+      localStorage.setItem(this.config.localStorageKey, targetWalletId);
 
+      // Find and create adapter
       const adapter = walletList.find((w) => w.id === targetWalletId);
-      if (!adapter) {
-        throw new Error(`Wallet ${targetWalletId} not found`);
-      }
-
-      const instance = new adapter.adapter();
+      if (!adapter) throw new Error(`Wallet ${targetWalletId} not found`);
+      
+      // Connect and update state
+      const instance = new adapter.adapter(this.config);
       const account = await instance.connect(this.config);
-
+      
       this.account = account;
       this.activeWallet = adapter;
       this.provider = instance;
@@ -88,21 +61,23 @@ class PNP {
 
   getAdapter(walletId: string): Adapter.Interface {
     const wallet = walletList.find((w) => w.id === walletId);
-    if (!wallet) {
-      throw new Error(`Wallet ${walletId} not found`);
-    }
+    if (!wallet) throw new Error(`Wallet ${walletId} not found`);
     return new wallet.adapter();
   }
 
   async disconnect(): Promise<void> {
-    if (this.provider) {
-      await this.provider.disconnect();
+    try {
+      if (this.provider) await this.provider.disconnect();
+      
+      // Reset state
+      this.account = null;
+      this.provider = null;
+      this.activeWallet = null;
+      this.actorCache.clear();
+      localStorage.removeItem(this.config.localStorageKey);
+    } catch (error) {
+      console.warn("[PNP] Disconnect error:", error);
     }
-    this.account = null;
-    this.provider = null;
-    this.activeWallet = null;
-    this.actorCache.clear();
-    localStorage.removeItem(this.config.localStorageKey);
   }
 
   getActor<T>(
@@ -114,37 +89,34 @@ class PNP {
     }
   ): ActorSubclass<T> {
     const { anon = false, requiresSigning = true } = options || {};
-    // Create the actor
-    let actor: ActorSubclass<T>;
-
-    if (anon) {
-      actor = this.createAnonymousActor<T>(canisterId, idl);
-    } else {
-      actor = this.provider.createActor<T>(canisterId, idl, {
-        requiresSigning,
-      });
-    }
-    return actor;
+    
+    // Return anonymous actor or provider actor based on options
+    return anon 
+      ? this.createAnonymousActor<T>(canisterId, idl)
+      : this.provider.createActor<T>(canisterId, idl, { requiresSigning });
   }
 
   createAnonymousActor<T>(canisterId: string, idl: any): ActorSubclass<T> {
     const cacheKey = `anon-${canisterId}`;
+    
+    // Return cached actor if available
     const cachedActor = this.actorCache.get(cacheKey);
-    if (cachedActor) {
-      return cachedActor;
-    }
+    if (cachedActor) return cachedActor;
+    
+    // Create and cache a new actor
     const actor = Actor.createActor<T>(idl, {
       agent: HttpAgent.createSync({
         host: this.config?.hostUrl || "https://icp0.io",
-        verifyQuerySignatures: this.config?.verifyQuerySignatures,
+        verifyQuerySignatures: this.config?.dfxNetwork != "local",
       }),
       canisterId,
     });
+    
     this.actorCache.set(cacheKey, actor);
     return actor;
   }
   isWalletConnected(): boolean {
-    return !!this.activeWallet;
+    return this.activeWallet !== null;
   }
 }
 

@@ -24,7 +24,6 @@ export class NNSAdapter implements Adapter.Interface {
   constructor(config?: Partial<Wallet.PNPConfig>) {
     this.url = "https://identity.ic0.app";
     this.config = {
-      verifyQuerySignatures: config?.verifyQuerySignatures,
       fetchRootKeys: config?.fetchRootKeys,
       identityProviderUrl: config?.isDev
         ? "https://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943/#authorize"
@@ -68,17 +67,10 @@ export class NNSAdapter implements Adapter.Interface {
     this.agent = HttpAgent.createSync({
       identity,
       host,
-      verifyQuerySignatures: this.config.verifyQuerySignatures,
+        verifyQuerySignatures: this.config?.dfxNetwork != "local",
     });
-    if (this.config.fetchRootKeys) {
-      try {
+    if (this.config.dfxNetwork === "local") {
         await this.agent.fetchRootKey();
-      } catch (e) {
-        console.warn(
-          "Unable to fetch root key. Check to ensure that your local replica is running",
-        );
-        console.error(e);
-      }
     }
   }
 
@@ -97,12 +89,17 @@ export class NNSAdapter implements Adapter.Interface {
     try {
       this.setState(Adapter.Status.CONNECTING);
       this.config = config;
-
-      // Wait for AuthClient to be ready
-      while (!this.authClient) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
+      
+      // Make sure authClient is initialized
+      if (!this.authClient) {
+        await this.initAuthClient();
       }
-
+      
+      // Check if we have a valid authClient after initialization
+      if (!this.authClient) {
+        throw new Error("Failed to initialize AuthClient");
+      }
+      
       const isAuthenticated = await this.authClient.isAuthenticated();
 
       if (!isAuthenticated) {
@@ -110,13 +107,15 @@ export class NNSAdapter implements Adapter.Interface {
           // Call login directly within the click handler context
           this.authClient!.login({
             derivationOrigin: this.config.derivationOrigin,
-            identityProvider: this.getIdentityProvider(config.isDev || true),
+            identityProvider: this.getIdentityProvider(config.dfxNetwork === "local" || true),
             maxTimeToLive: BigInt(
               Number(
                 config.delegationTimeout || 24 * 60 * 60 * 1000 * 1000 * 1000,
               ),
             ),
             onSuccess: () => {
+              // Store authentication state in localStorage
+              localStorage.setItem('nns_auth_status', 'authenticated');
               // Properly handle void return type for onSuccess
               this._continueLogin(config.hostUrl || this.url)
                 .then((account) => {
@@ -135,6 +134,8 @@ export class NNSAdapter implements Adapter.Interface {
 
       // User is already authenticated, proceed with login
       const account = await this._continueLogin(config.hostUrl || this.url);
+      // Also set localStorage status here for users who are already authenticated
+      localStorage.setItem('nns_auth_status', 'authenticated');
       this.setState(Adapter.Status.READY);
       return account;
     } catch (error) {
@@ -164,7 +165,16 @@ export class NNSAdapter implements Adapter.Interface {
 
   // Check if the wallet is connected
   async isConnected(): Promise<boolean> {
-    return this.authClient ? this.authClient.isAuthenticated() : false;
+    // First check localStorage for a quick response
+    const nnsAuthStatus = localStorage.getItem('nns_auth_status');
+    if (nnsAuthStatus === 'authenticated') {
+      // Double-check with authClient if it's initialized
+      if (this.authClient) {
+        return this.authClient.isAuthenticated();
+      }
+      return true;
+    }
+    return false;
   }
 
   // Create an actor for interacting with a canister
@@ -217,14 +227,12 @@ export class NNSAdapter implements Adapter.Interface {
     }
   }
 
-  undelegatedActor<T>(canisterId: string, idlFactory: any): ActorSubclass<T> {
-    return this.createActor(canisterId, idlFactory);
-  }
-
   // Disconnects from the wallet
   async disconnect(): Promise<void> {
     try {
       this.setState(Adapter.Status.DISCONNECTING);
+      // Clear authentication status in localStorage
+      localStorage.removeItem('nns_auth_status');
       if (this.authClient) {
         await this.authClient.logout();
         this.authClient = null;

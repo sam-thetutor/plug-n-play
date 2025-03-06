@@ -3,6 +3,7 @@ import { Actor, HttpAgent, type ActorSubclass } from "@dfinity/agent";
 import {
   DelegationIdentity,
   Ed25519KeyIdentity,
+  JsonnableDelegationChain
 } from "@dfinity/identity";
 import { type Wallet, Adapter } from "../types/index.d";
 import nfidLogo from "../../assets/nfid.webp";
@@ -34,23 +35,25 @@ export class NFIDAdapter implements Adapter.Interface {
   private static readonly STORAGE_KEY = "nfid_session";
   private static readonly TRANSPORT_CONFIG = {
     windowOpenerFeatures: "width=525,height=705",
+    establishTimeout: 45000,
+    disconnectTimeout: 45000,
+    statusPollingRate: 500,
+    detectNonClickEstablishment: false, // Allow connection outside of click handler for auto-connect
   };
 
   private agent: HttpAgent;
   private identity: DelegationIdentity | null = null;
   private delegationStorage: DelegationStorage;
   private state: Adapter.Status = Adapter.Status.INIT;
-  private accounts: NFIDAccount[] = [];
   private actorCache: Map<string, ActorSubclass<any>> = new Map();
   private sessionKey: Ed25519KeyIdentity | null = null;
   private signerAgent: SignerAgent<Signer>;
   private signer: Signer;
+  private transport: PostMessageTransport;
 
   static readonly logo: string = nfidLogo;
   name: string = "NFID";
   logo: string = NFIDAdapter.logo;
-  identityProviderUrl: string =
-    "https://nfid.one/authenticate/?applicationName=kong";
   url: string = "https://nfid.one/rpc";
   config: Wallet.PNPConfig;
   public info: Adapter.Info = { id: "nfid", icon: NFIDAdapter.logo, name: "NFID", adapter: NFIDAdapter };
@@ -60,17 +63,24 @@ export class NFIDAdapter implements Adapter.Interface {
     this.name = "NFID";
     this.logo = NFIDAdapter.logo;
     this.delegationStorage = new LocalDelegationStorage();
+    
+    // Create transport with non-click detection disabled for auto-connect support
+    this.transport = new PostMessageTransport({
+      url: this.url,
+      ...NFIDAdapter.TRANSPORT_CONFIG,
+    });
+    
+    // Create signer with the transport
+    this.signer = new Signer({
+      transport: this.transport
+    });
+    
     this.signerAgent = SignerAgent.createSync({
-      signer: new Signer({
-        transport: new PostMessageTransport({
-          url: this.url,
-          ...NFIDAdapter.TRANSPORT_CONFIG,
-        }),
-      }),
+      signer: this.signer,
       account: Principal.anonymous(),
       agent: HttpAgent.createSync({ host: this.url }),
     });
-    this.signer = this.signerAgent.signer;
+    
     this.agent = HttpAgent.createSync({ host: this.url });
     this.setState(Adapter.Status.READY);
   }
@@ -122,6 +132,64 @@ export class NFIDAdapter implements Adapter.Interface {
     this.config = config;
 
     try {
+      // Explicitly open the channel first - this ensures we're in a click handler context
+      await this.signer.openChannel();
+      
+      // Check if we have a stored delegation first
+      const stored = await this.delegationStorage.get(NFIDAdapter.STORAGE_KEY);
+      
+      if (stored) {
+        try {
+          // Attempt to restore from storage
+          this.sessionKey = typeof stored.sessionKey === 'string' 
+            ? Ed25519KeyIdentity.fromJSON(stored.sessionKey)
+            : stored.sessionKey as Ed25519KeyIdentity;
+            
+          // Convert from JsonnableDelegationChain to DelegationChain
+          const delegationIdentity = DelegationIdentity.fromDelegation(
+            this.sessionKey,
+            this.unwrapDelegation(stored.delegationChain)
+          );
+          
+          // Verify the delegation hasn't expired
+          const isValid = delegationIdentity.getDelegation().delegations.every(
+            d => d.delegation.expiration > BigInt(Date.now()) * BigInt(1000000)
+          );
+          
+          if (isValid) {
+            this.identity = delegationIdentity;
+            const principal = this.identity.getPrincipal();
+            
+            // If delegation is valid, initialize using stored delegation
+            this.signerAgent = SignerAgent.createSync({
+              signer: this.signer,
+              account: principal,
+            });
+            
+            if (config.dfxNetwork === "local") {
+              await this.agent.fetchRootKey();
+            }
+            
+            this.setState(Adapter.Status.CONNECTED);
+            
+            return {
+              owner: principal,
+              subaccount: AccountIdentifier.fromPrincipal({
+                principal,
+                subAccount: undefined,
+              }).toUint8Array(),
+              hasDelegation: true,
+            };
+          }
+        } catch (error) {
+          console.warn("Failed to restore session, creating new one:", error);
+          // Clear the invalid stored session
+          await this.delegationStorage.remove(NFIDAdapter.STORAGE_KEY);
+        }
+      }
+      
+      // If we get here, either there was no stored session or it was invalid
+      // Generate a new session key if needed
       if (!this.sessionKey) {
         this.sessionKey = Ed25519KeyIdentity.generate();
       }
@@ -142,7 +210,7 @@ export class NFIDAdapter implements Adapter.Interface {
 
       this.signerAgent.replaceAccount(delegationIdentity.getPrincipal());
 
-      if (config.fetchRootKeys) {
+      if (config.dfxNetwork === "local") {
         await this.agent.fetchRootKey();
       }
 
@@ -162,21 +230,15 @@ export class NFIDAdapter implements Adapter.Interface {
 
       this.identity = delegationIdentity;
 
-      const account: NFIDAccount = {
-        id: principal.toText(),
-        displayName: "NFID Account",
-        principal: principal.toText(),
-        subaccount: AccountIdentifier.fromPrincipal({
-          principal,
-          subAccount: undefined, // This will use the default subaccount
-        }).toUint8Array(),
-        type: AccountType.SESSION,
-      };
-
-      this.accounts = [account];
-
       try {
         if (this.identity && this.agent && this.signerAgent && this.signer) {
+          // Save the delegation for future reconnection
+          // Save delegation to storage for future sessions
+          await this.delegationStorage.set(NFIDAdapter.STORAGE_KEY, {
+            sessionKey: this.sessionKey.toJSON(),
+            delegationChain: this.wrapDelegation(delegationChain)
+          });
+          
           this.setState(Adapter.Status.CONNECTED);
           return {
             owner: principal,
@@ -197,7 +259,6 @@ export class NFIDAdapter implements Adapter.Interface {
       this.identity = null;
       this.agent = null;
       this.signerAgent = null;
-      this.accounts = [];
       await this.delegationStorage.remove(NFIDAdapter.STORAGE_KEY);
       this.disconnect();
       throw new Error("Failed to establish session");
@@ -206,6 +267,36 @@ export class NFIDAdapter implements Adapter.Interface {
       this.setState(Adapter.Status.READY);
       throw error;
     }
+  }
+
+  // Helper method to convert DelegationChain to JsonnableDelegationChain
+  private wrapDelegation(chain: any): JsonnableDelegationChain {
+    return {
+      delegations: chain.delegations.map((d: any) => ({
+        signature: JSON.stringify(Array.from(new Uint8Array(d.signature))),
+        delegation: {
+          pubkey: JSON.stringify(Array.from(new Uint8Array(d.delegation.pubkey))),
+          expiration: d.delegation.expiration.toString(),
+          targets: d.delegation.targets?.map((t: any) => t.toText())
+        }
+      })),
+      publicKey: JSON.stringify(Array.from(new Uint8Array(this.sessionKey.getPublicKey().toDer())))
+    };
+  }
+  
+  // Helper method to convert JsonnableDelegationChain to DelegationChain
+  private unwrapDelegation(jsonChain: JsonnableDelegationChain): any {
+    return {
+      delegations: jsonChain.delegations.map((d: any) => ({
+        signature: new Uint8Array(typeof d.signature === 'string' ? JSON.parse(d.signature) : d.signature),
+        delegation: {
+          pubkey: new Uint8Array(typeof d.delegation.pubkey === 'string' ? JSON.parse(d.delegation.pubkey) : d.delegation.pubkey),
+          expiration: BigInt(d.delegation.expiration),
+          targets: d.delegation.targets?.map((t: string) => Principal.fromText(t))
+        }
+      })),
+      publicKey: new Uint8Array(typeof jsonChain.publicKey === 'string' ? JSON.parse(jsonChain.publicKey) : jsonChain.publicKey)
+    };
   }
 
   createActor<T>(
@@ -282,7 +373,7 @@ export class NFIDAdapter implements Adapter.Interface {
     const agent = HttpAgent.createSync({
       identity: this.identity,
       host: this.config.hostUrl,
-      verifyQuerySignatures: this.config.verifyQuerySignatures,
+      verifyQuerySignatures: this.config?.dfxNetwork != "local",
     });
     const actor = Actor.createActor<T>(idlFactory, {
       agent: agent,
@@ -296,16 +387,11 @@ export class NFIDAdapter implements Adapter.Interface {
     this.identity = null;
     this.agent = null;
     this.signerAgent = null;
-    this.accounts = [];
     await this.delegationStorage.remove(NFIDAdapter.STORAGE_KEY);
     this.setState(Adapter.Status.DISCONNECTED);
   }
 
   getState(): Adapter.Status {
     return this.state;
-  }
-
-  getAccounts(): NFIDAccount[] {
-    return this.accounts;
   }
 }
