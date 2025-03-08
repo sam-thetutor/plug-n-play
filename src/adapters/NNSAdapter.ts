@@ -32,13 +32,21 @@ export class NNSAdapter implements Adapter.Interface {
       ...config,
     };
 
-    // Initialize AuthClient asynchronously but don't block constructor
-    this.initAuthClient();
+    // Initialize AuthClient synchronously
+    this.initAuthClientSync();
     this.setState(Adapter.Status.READY);
   }
 
-  // New private method to initialize AuthClient
-  private async initAuthClient(): Promise<void> {
+  // Synchronous proxy method for initializing AuthClient
+  private initAuthClientSync(): void {
+    // Call the async method but don't await it
+    this.initAuthClientAsync().catch(error => {
+      console.error("Error in async AuthClient initialization:", error);
+    });
+  }
+
+  // Renamed to make the async nature clear
+  private async initAuthClientAsync(): Promise<void> {
     try {
       this.authClient = await AuthClient.create({
         idleOptions: {
@@ -92,7 +100,7 @@ export class NNSAdapter implements Adapter.Interface {
       
       // Make sure authClient is initialized
       if (!this.authClient) {
-        await this.initAuthClient();
+        await this.initAuthClientAsync();
       }
       
       // Check if we have a valid authClient after initialization

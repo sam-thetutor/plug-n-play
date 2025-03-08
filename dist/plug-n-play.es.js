@@ -1124,11 +1124,17 @@ const _NNSAdapter = class _NNSAdapter {
       derivationOrigin: (config == null ? void 0 : config.derivationOrigin) || "https://localhost:5173",
       ...config
     };
-    this.initAuthClient();
+    this.initAuthClientSync();
     this.setState(Adapter.Status.READY);
   }
-  // New private method to initialize AuthClient
-  async initAuthClient() {
+  // Synchronous proxy method for initializing AuthClient
+  initAuthClientSync() {
+    this.initAuthClientAsync().catch((error) => {
+      console.error("Error in async AuthClient initialization:", error);
+    });
+  }
+  // Renamed to make the async nature clear
+  async initAuthClientAsync() {
     var _a2, _b;
     try {
       this.authClient = await AuthClient.create({
@@ -1176,7 +1182,7 @@ const _NNSAdapter = class _NNSAdapter {
       this.setState(Adapter.Status.CONNECTING);
       this.config = config;
       if (!this.authClient) {
-        await this.initAuthClient();
+        await this.initAuthClientAsync();
       }
       if (!this.authClient) {
         throw new Error("Failed to initialize AuthClient");
