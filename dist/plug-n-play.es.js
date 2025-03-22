@@ -1920,7 +1920,7 @@ class PostMessageTransport {
     if (!urlIsSecureContext(options.url)) {
       throw new PostMessageTransportError("Invalid signer RPC url");
     }
-    __classPrivateFieldSet$2(this, _PostMessageTransport_options, Object.assign({ windowOpenerFeatures: "", window: globalThis.window, establishTimeout: 1e4, disconnectTimeout: 2e3, statusPollingRate: 300, crypto: globalThis.crypto, manageFocus: true, closeOnEstablishTimeout: true, detectNonClickEstablishment: true }, options));
+    __classPrivateFieldSet$2(this, _PostMessageTransport_options, Object.assign({ windowOpenerFeatures: "", window: globalThis.window, establishTimeout: 12e4, disconnectTimeout: 2e3, statusPollingRate: 300, crypto: globalThis.crypto, manageFocus: true, closeOnEstablishTimeout: true, detectNonClickEstablishment: true }, options));
   }
   async establishChannel() {
     if (__classPrivateFieldGet$2(this, _PostMessageTransport_options, "f").detectNonClickEstablishment && !withinClick) {
@@ -3677,7 +3677,7 @@ const _NFIDAdapter = class _NFIDAdapter {
               signer: this.signer,
               account: principal2
             });
-            if (config.dfxNetwork === "local") {
+            if (config.fetchRootKeys) {
               await this.agent.fetchRootKey();
             }
             this.setState(Adapter.Status.CONNECTED);
@@ -3708,7 +3708,7 @@ const _NFIDAdapter = class _NFIDAdapter {
         delegationChain
       );
       this.signerAgent.replaceAccount(delegationIdentity.getPrincipal());
-      if (config.dfxNetwork === "local") {
+      if (config.fetchRootKeys) {
         await this.agent.fetchRootKey();
       }
       const principal = delegationIdentity.getPrincipal();

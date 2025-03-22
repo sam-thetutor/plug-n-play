@@ -166,7 +166,7 @@ export class NFIDAdapter implements Adapter.Interface {
               account: principal,
             });
             
-            if (config.dfxNetwork === "local") {
+            if (config.fetchRootKeys) {
               await this.agent.fetchRootKey();
             }
             
@@ -210,7 +210,7 @@ export class NFIDAdapter implements Adapter.Interface {
 
       this.signerAgent.replaceAccount(delegationIdentity.getPrincipal());
 
-      if (config.dfxNetwork === "local") {
+      if (config.fetchRootKeys) {
         await this.agent.fetchRootKey();
       }
 
