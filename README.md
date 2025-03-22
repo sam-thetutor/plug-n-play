@@ -150,6 +150,47 @@ await pnp.connect('nfid', true); // Second parameter enables delegation
 8. Use library-level delegation configuration for consistent settings
 9. For local development, make sure to use the correct `hostUrl`
 
+## React Integration with @dfinity/use-auth-client
+
+If you're building a React application, you can integrate the NNSAdapter with the `@dfinity/use-auth-client` package for a more React-friendly approach:
+
+```typescript
+import { useEffect, useState } from 'react';
+import { useAuthClient } from '@dfinity/use-auth-client';
+import { NNSAdapter } from '@windoge98/plug-n-play';
+
+function MyComponent() {
+  // Create an adapter instance
+  const [adapter] = useState(() => new NNSAdapter({
+    isDev: process.env.NODE_ENV === 'development',
+    derivationOrigin: window.location.origin,
+  }));
+  
+  // Get config for useAuthClient
+  const authClientConfig = adapter.getUseAuthClientConfig();
+  
+  // Use the hook with the adapter's configuration
+  const { isAuthenticated, login, logout, identity } = useAuthClient(authClientConfig);
+
+  // Create a wallet account from the identity
+  useEffect(() => {
+    if (isAuthenticated && identity) {
+      const principal = identity.getPrincipal();
+      const account = NNSAdapter.createAccountFromPrincipal(principal);
+      console.log("Connected account:", account);
+    }
+  }, [isAuthenticated, identity]);
+
+  return (
+    <button onClick={isAuthenticated ? logout : login}>
+      {isAuthenticated ? 'Logout' : 'Login with Internet Identity'}
+    </button>
+  );
+}
+```
+
+For more detailed examples and advanced usage, see the [use-auth-client integration guide](./docs/use-auth-client-integration.md).
+
 ## License
 
 This project is licensed under the [MIT License](https://github.com/microdao-corporation/plug-n-play/blob/main/LICENSE.txt).

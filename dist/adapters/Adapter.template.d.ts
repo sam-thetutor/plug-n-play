@@ -10,6 +10,7 @@ export declare class TemplateAdapter implements Adapter.Interface {
     logo: string;
     url: string;
     readyState: string;
+    info: Adapter.Info;
     constructor();
     isAvailable(): Promise<boolean>;
     connect(config: Wallet.AdapterConfig): Promise<Wallet.Account>;

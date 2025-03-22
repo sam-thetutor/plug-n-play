@@ -6,11 +6,10 @@ declare class PNP {
     provider: Adapter.Interface | null;
     config: Wallet.PNPConfig;
     actorCache: Map<string, ActorSubclass<any>>;
+    dfxNetwork: string;
     isDev: boolean;
-    fetchRootKeys: boolean;
     isConnecting: boolean;
     constructor(config?: Wallet.PNPConfig);
-    canReconnect(walletId: string): Promise<boolean>;
     connect(walletId?: string): Promise<Wallet.Account | null>;
     getAdapter(walletId: string): Adapter.Interface;
     disconnect(): Promise<void>;

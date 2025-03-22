@@ -1,55 +1,28 @@
-import { Principal } from '@dfinity/principal';
 import { ActorSubclass } from '@dfinity/agent';
-import { Wallet, Adapter } from '../types/index.d';
-export declare enum AccountType {
-    GLOBAL = "GLOBAL",
-    SESSION = "SESSION"
-}
-export interface PlugAccount {
-    id: string;
-    displayName: string;
-    principal: string;
-    subaccount: Uint8Array;
-    type: AccountType;
-}
-export declare enum AdapterState {
-    READY = "READY",
-    LOADING = "LOADING",
-    PROCESSING = "PROCESSING",
-    ERROR = "ERROR"
-}
+import { Principal } from '@dfinity/principal';
+import { Adapter, Wallet } from '../types';
 export declare class PlugAdapter implements Adapter.Interface {
-    private static readonly STORAGE_KEY;
-    private static readonly TRANSPORT_CONFIG;
-    private agent;
-    private identity;
-    private delegationStorage;
-    private state;
-    private accounts;
-    private actorCache;
-    private sessionKey;
-    private signerAgent;
-    private signer;
-    static readonly logo: string;
-    name: string;
+    static logo: string;
     logo: string;
+    name: string;
     url: string;
-    config: Wallet.PNPConfig;
+    info: Adapter.Info;
+    private readyState;
+    private _connectionState;
+    private _connectionStateTimestamp;
+    private _connectionStateUpdateInterval;
     constructor();
-    private setState;
-    private setDelegationChain;
+    private initPlug;
     isAvailable(): Promise<boolean>;
-    isConnected(): Promise<boolean>;
+    connect(config: Wallet.AdapterConfig): Promise<Wallet.Account>;
+    disconnect(): Promise<void>;
     getPrincipal(): Promise<Principal>;
     getAccountId(): Promise<string>;
-    unwrapResponse: <T extends unknown>(response: any) => T;
-    connect(config: Wallet.PNPConfig): Promise<Wallet.Account>;
-    createActor<T>(canisterId: string, idlFactory: any, options?: {
+    createActor<T>(canisterId: string, idl: any, options?: {
         requiresSigning?: boolean;
-        anon: boolean;
     }): ActorSubclass<T>;
-    undelegatedActor<T>(canisterId: string, idlFactory: any): ActorSubclass<T>;
-    disconnect(): Promise<void>;
-    getState(): AdapterState;
-    getAccounts(): PlugAccount[];
+    private updateConnectionState;
+    isConnected(): Promise<boolean>;
+    isConnectedAsync(): Promise<boolean>;
+    private handleConnectionUpdate;
 }

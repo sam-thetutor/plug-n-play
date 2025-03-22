@@ -2,10 +2,9 @@
 
 import { Actor, HttpAgent, type ActorSubclass, Identity } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
-import type { Wallet, Adapter } from "../types/index.d";
+import { type Wallet, Adapter } from "../types/index.d";
 import { Principal } from "@dfinity/principal";
 import dfinityLogo from "../../assets/dfinity.webp";
-import { AdapterState } from "../types/index.d";
 import { AccountIdentifier } from "@dfinity/ledger-icp";
 
 export class NNSAdapter implements Adapter.Interface {
@@ -15,28 +14,39 @@ export class NNSAdapter implements Adapter.Interface {
   logo: string = NNSAdapter.logo;
   url: string;
   config: Wallet.PNPConfig;
+  public info: Adapter.Info = { id: "nns", icon: NNSAdapter.logo, name: "Internet Identity", adapter: NNSAdapter };
 
   // Internal properties
   private authClient: AuthClient | null = null;
   private agent: HttpAgent | null = null;
-  private state: AdapterState = AdapterState.READY;
+  private state: Adapter.Status = Adapter.Status.INIT;
 
   constructor(config?: Partial<Wallet.PNPConfig>) {
     this.url = "https://identity.ic0.app";
     this.config = {
-      verifyQuerySignatures: config?.verifyQuerySignatures,
       fetchRootKeys: config?.fetchRootKeys,
-      identityProviderUrl: config?.isDev ? "https://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943/#authorize" : "https://identity.ic0.app/authenticate",
+      identityProviderUrl: config?.isDev
+        ? "https://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943/#authorize"
+        : "https://identity.ic0.app/authenticate",
       derivationOrigin: config?.derivationOrigin || "https://localhost:5173",
-      ...config
+      ...config,
     };
-    
-    // Initialize AuthClient asynchronously but don't block constructor
-    this.initAuthClient();
+
+    // Initialize AuthClient synchronously
+    this.initAuthClientSync();
+    this.setState(Adapter.Status.READY);
   }
 
-  // New private method to initialize AuthClient
-  private async initAuthClient(): Promise<void> {
+  // Synchronous proxy method for initializing AuthClient
+  private initAuthClientSync(): void {
+    // Call the async method but don't await it
+    this.initAuthClientAsync().catch(error => {
+      console.error("Error in async AuthClient initialization:", error);
+    });
+  }
+
+  // Renamed to make the async nature clear
+  private async initAuthClientAsync(): Promise<void> {
     try {
       this.authClient = await AuthClient.create({
         idleOptions: {
@@ -44,34 +54,31 @@ export class NNSAdapter implements Adapter.Interface {
           disableDefaultIdleCallback: true,
         },
       });
-      this.authClient.idleManager?.registerCallback?.(() => this.refreshLogin());
+      this.authClient.idleManager?.registerCallback?.(() =>
+        this.refreshLogin(),
+      );
     } catch (error) {
       console.error("Failed to initialize AuthClient:", error);
     }
   }
 
-  private setState(newState: AdapterState) {
+  private setState(newState: Adapter.Status) {
     this.state = newState;
   }
 
-  getState(): AdapterState {
+  getState(): Adapter.Status {
     return this.state;
   }
 
   // Helper method to initialize the HttpAgent
   private async initAgent(identity: Identity, host: string): Promise<void> {
-    this.agent = new HttpAgent({
+    this.agent = HttpAgent.createSync({
       identity,
       host,
-      verifyQuerySignatures: this.config.verifyQuerySignatures
+        verifyQuerySignatures: this.config?.dfxNetwork != "local",
     });
-    if (this.config.fetchRootKeys) {
-      try {
+    if (this.config.dfxNetwork === "local") {
         await this.agent.fetchRootKey();
-      } catch (e) {
-        console.warn("Unable to fetch root key. Check to ensure that your local replica is running");
-        console.error(e);
-      }
     }
   }
 
@@ -88,14 +95,19 @@ export class NNSAdapter implements Adapter.Interface {
   // Connects to the wallet using the provided configuration
   async connect(config: Wallet.PNPConfig): Promise<Wallet.Account> {
     try {
-      this.setState(AdapterState.LOADING);
+      this.setState(Adapter.Status.CONNECTING);
       this.config = config;
-
-      // Wait for AuthClient to be ready
-      while (!this.authClient) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Make sure authClient is initialized
+      if (!this.authClient) {
+        await this.initAuthClientAsync();
       }
-
+      
+      // Check if we have a valid authClient after initialization
+      if (!this.authClient) {
+        throw new Error("Failed to initialize AuthClient");
+      }
+      
       const isAuthenticated = await this.authClient.isAuthenticated();
 
       if (!isAuthenticated) {
@@ -103,13 +115,19 @@ export class NNSAdapter implements Adapter.Interface {
           // Call login directly within the click handler context
           this.authClient!.login({
             derivationOrigin: this.config.derivationOrigin,
-            identityProvider: this.getIdentityProvider(config.isDev || true),
-            maxTimeToLive: BigInt(Number(config.delegationTimeout || 24 * 60 * 60 * 1000 * 1000 * 1000)),
+            identityProvider: this.getIdentityProvider(config.dfxNetwork === "local" || true),
+            maxTimeToLive: BigInt(
+              Number(
+                config.delegationTimeout || 24 * 60 * 60 * 1000 * 1000 * 1000,
+              ),
+            ),
             onSuccess: () => {
+              // Store authentication state in localStorage
+              localStorage.setItem('nns_auth_status', 'authenticated');
               // Properly handle void return type for onSuccess
               this._continueLogin(config.hostUrl || this.url)
-                .then(account => {
-                  this.setState(AdapterState.READY);
+                .then((account) => {
+                  this.setState(Adapter.Status.READY);
                   resolve(account);
                 })
                 .catch(reject);
@@ -124,10 +142,12 @@ export class NNSAdapter implements Adapter.Interface {
 
       // User is already authenticated, proceed with login
       const account = await this._continueLogin(config.hostUrl || this.url);
-      this.setState(AdapterState.READY);
+      // Also set localStorage status here for users who are already authenticated
+      localStorage.setItem('nns_auth_status', 'authenticated');
+      this.setState(Adapter.Status.READY);
       return account;
     } catch (error) {
-      this.setState(AdapterState.READY);
+      this.disconnect();
       throw error;
     }
   }
@@ -136,13 +156,13 @@ export class NNSAdapter implements Adapter.Interface {
     try {
       const identity = this.authClient!.getIdentity();
       const principal = identity.getPrincipal();
-      
+
       await this.initAgent(identity, host);
       return {
         owner: principal,
         subaccount: AccountIdentifier.fromPrincipal({
           principal,
-          subAccount: undefined  // This will use the default subaccount
+          subAccount: undefined, // This will use the default subaccount
         }).toUint8Array(),
       };
     } catch (error) {
@@ -153,13 +173,24 @@ export class NNSAdapter implements Adapter.Interface {
 
   // Check if the wallet is connected
   async isConnected(): Promise<boolean> {
-    return this.authClient ? this.authClient.isAuthenticated() : false;
+    // First check localStorage for a quick response
+    const nnsAuthStatus = localStorage.getItem('nns_auth_status');
+    if (nnsAuthStatus === 'authenticated') {
+      // Double-check with authClient if it's initialized
+      if (this.authClient) {
+        return this.authClient.isAuthenticated();
+      }
+      return true;
+    }
+    return false;
   }
 
   // Create an actor for interacting with a canister
   createActor<T>(canisterId: string, idl: any): ActorSubclass<T> {
     if (!this.agent) {
-      throw new Error("Agent is not initialized. Ensure the wallet is connected.");
+      throw new Error(
+        "Agent is not initialized. Ensure the wallet is connected.",
+      );
     }
     return Actor.createActor(idl, {
       agent: this.agent,
@@ -170,7 +201,9 @@ export class NNSAdapter implements Adapter.Interface {
   // Get the principal associated with the wallet
   async getPrincipal(): Promise<Principal> {
     if (!this.authClient) {
-      throw new Error("AuthClient is not initialized. Ensure the wallet is connected.");
+      throw new Error(
+        "AuthClient is not initialized. Ensure the wallet is connected.",
+      );
     }
     return this.authClient.getIdentity().getPrincipal();
   }
@@ -178,12 +211,14 @@ export class NNSAdapter implements Adapter.Interface {
   // Get the subaccount associated with the wallet
   async getAccountId(): Promise<string> {
     if (!this.authClient) {
-      throw new Error("AuthClient is not initialized. Ensure the wallet is connected.");
+      throw new Error(
+        "AuthClient is not initialized. Ensure the wallet is connected.",
+      );
     }
-    const principal = this.authClient.getIdentity().getPrincipal()
+    const principal = this.authClient.getIdentity().getPrincipal();
     const subAccount = AccountIdentifier.fromPrincipal({
       principal,
-      subAccount: undefined  // This will use the default subaccount
+      subAccount: undefined, // This will use the default subaccount
     }).toHex();
     if (subAccount) {
       return subAccount.toString() || "";
@@ -200,14 +235,12 @@ export class NNSAdapter implements Adapter.Interface {
     }
   }
 
-  undelegatedActor<T>(canisterId: string, idlFactory: any): ActorSubclass<T> {
-    return this.createActor(canisterId, idlFactory);
-  }
-
   // Disconnects from the wallet
   async disconnect(): Promise<void> {
     try {
-      this.setState(AdapterState.LOADING);
+      this.setState(Adapter.Status.DISCONNECTING);
+      // Clear authentication status in localStorage
+      localStorage.removeItem('nns_auth_status');
       if (this.authClient) {
         await this.authClient.logout();
         this.authClient = null;
@@ -215,10 +248,9 @@ export class NNSAdapter implements Adapter.Interface {
       if (this.agent) {
         this.agent = null;
       }
-      localStorage.removeItem(this.config.localStorageKey);
-      this.setState(AdapterState.READY);
+      this.setState(Adapter.Status.DISCONNECTED);
     } catch (error) {
-      this.setState(AdapterState.READY);
+      this.setState(Adapter.Status.ERROR);
       throw error;
     }
   }

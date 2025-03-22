@@ -1,10 +1,6 @@
 import { Principal } from "@dfinity/principal";
-import {
-  Actor,
-  HttpAgent,
-  type ActorSubclass,
-} from "@dfinity/agent";
-import type { Wallet, Adapter } from "../types/index";
+import { Actor, HttpAgent, type ActorSubclass } from "@dfinity/agent";
+import { type Wallet, Adapter } from "../types/index.d";
 import oisyLogo from "../../assets/oisy_logo.webp";
 import { PostMessageTransport } from "@slide-computer/signer-web";
 import { SignerAgent } from "@slide-computer/signer-agent";
@@ -29,30 +25,45 @@ export class OisyAdapter implements Adapter.Interface {
     windowOpenerFeatures: "width=525,height=705",
     establishTimeout: 45000,
     disconnectTimeout: 45000,
+    statusPollingRate: 500,
+    detectNonClickEstablishment: false,
   };
 
   private signer: Signer | null = null;
   private agent: HttpAgent | SignerAgent<any> | null = null;
   private signerAgent: SignerAgent<Signer>;
-  private accounts: OisyAccount[] = [];
-  private transport: PostMessageTransport | null = null;
+  private transport: PostMessageTransport;
 
   static readonly logo: string = oisyLogo;
   name: string = "Oisy Wallet";
   logo: string = OisyAdapter.logo;
   url: string = "https://oisy.com/sign";
   config: Wallet.PNPConfig;
+  public info: Adapter.Info = { id: "oisy", icon: OisyAdapter.logo, name: "Oisy Wallet", adapter: OisyAdapter };
+  state: Adapter.Status = Adapter.Status.INIT;
 
   constructor() {
     this.url = "https://oisy.com/sign";
     this.name = "Oisy Wallet";
     this.logo = OisyAdapter.logo;
-    this.agent = HttpAgent.createSync({ host: this.url }) 
-    this.signerAgent = SignerAgent.createSync({ 
-      signer: new Signer({ transport: new PostMessageTransport({ url: this.url, ...OisyAdapter.TRANSPORT_CONFIG }) }), 
-      account: Principal.anonymous(), 
-      agent: this.agent
+    this.agent = HttpAgent.createSync({ host: this.url });
+    
+    this.transport = new PostMessageTransport({
+      url: this.url,
+      ...OisyAdapter.TRANSPORT_CONFIG,
     });
+    
+    this.signer = new Signer({
+      transport: this.transport
+    });
+    
+    this.signerAgent = SignerAgent.createSync({
+      signer: this.signer,
+      account: Principal.anonymous(),
+      agent: this.agent,
+    });
+    
+    this.state = Adapter.Status.READY;
   }
 
   async isAvailable(): Promise<boolean> {
@@ -73,12 +84,15 @@ export class OisyAdapter implements Adapter.Interface {
   async getAccountId(): Promise<string> {
     return AccountIdentifier.fromPrincipal({
       principal: await this.getPrincipal(),
-      subAccount: undefined  // This will use the default subaccount
+      subAccount: undefined, // This will use the default subaccount
     }).toHex();
   }
 
   async connect(config: Wallet.PNPConfig): Promise<Wallet.Account> {
     try {
+      this.setState(Adapter.Status.CONNECTING);
+      this.config = config;
+            
       const accounts = await this.signerAgent.signer.accounts();
       if (!accounts || accounts.length === 0) {
         this.disconnect();
@@ -87,7 +101,10 @@ export class OisyAdapter implements Adapter.Interface {
 
       const principal = accounts[0].owner;
       if (principal.isAnonymous()) {
-        throw new Error("Failed to authenticate with Oisy - got anonymous principal");
+        this.setState(Adapter.Status.READY);
+        throw new Error(
+          "Failed to authenticate with Oisy - got anonymous principal",
+        );
       }
 
       this.signerAgent.replaceAccount(principal);
@@ -96,31 +113,30 @@ export class OisyAdapter implements Adapter.Interface {
         await this.signerAgent.fetchRootKey();
       }
 
-      this.accounts = accounts.map(acc => ({
-        id: acc.owner.toText(),
-        displayName: `Oisy Account ${acc.owner.toText().slice(0, 8)}...`,
-        principal: acc.owner.toText(),
-        subaccount: AccountIdentifier.fromPrincipal({
-          principal: acc.owner,
-          subAccount: undefined  // This will use the default subaccount
-        }).toUint8Array(),
-        type: AccountType.SESSION,
-      }));
-
+      localStorage.setItem('oisy_principal', principal.toText());
+      
+      this.setState(Adapter.Status.CONNECTED);
       return {
         owner: principal,
         subaccount: AccountIdentifier.fromPrincipal({
           principal,
-          subAccount: undefined  // This will use the default subaccount
+          subAccount: undefined, // This will use the default subaccount
         }).toUint8Array(),
         hasDelegation: false,
       };
-
     } catch (error) {
       console.error("[Oisy] Connection error:", error);
       await this.disconnect();
       throw error;
     }
+  }
+
+  private setState(newState: Adapter.Status) {
+    this.state = newState;
+  }
+
+  getState(): Adapter.Status {
+    return this.state;
   }
 
   createActor<T>(
@@ -132,7 +148,7 @@ export class OisyAdapter implements Adapter.Interface {
     } = {
       requiresSigning: true,
       anon: false,
-    }
+    },
   ): ActorSubclass<T> {
     if (!this.signerAgent) {
       throw new Error("No signer agent available. Please connect first.");
@@ -150,26 +166,20 @@ export class OisyAdapter implements Adapter.Interface {
   }
 
   async disconnect(): Promise<void> {
-    if (this.signer) {
+    this.setState(Adapter.Status.DISCONNECTING);
+    if (this.signer || this.signerAgent) {
       try {
-        this.signer.closeChannel();
+        console.log("Closing channel");
+        this.signer?.closeChannel();
+        this.signerAgent?.signer?.closeChannel();
       } catch (error) {
         console.debug("[Oisy] Error cleaning up signer:", error);
       }
       this.signer = null;
     }
 
-    if (this.transport) {
-      this.transport = null;
-    }
-
     this.agent = null;
     this.signerAgent = null;
-    this.transport = null;
-    this.accounts = [];
-  }
-
-  getAccounts(): OisyAccount[] {
-    return this.accounts;
+    this.setState(Adapter.Status.DISCONNECTED);
   }
 }

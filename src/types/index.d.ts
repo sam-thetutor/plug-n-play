@@ -19,7 +19,7 @@ export namespace Wallet {
     delegationTargets?: Principal[];
     delegationTimeout?: bigint;
     timeout?: number;
-    isDev?: boolean;
+    dfxNetwork?: string;
     [key: string]: any;
   }
 
@@ -76,6 +76,7 @@ export namespace Wallet {
 }
 
 export namespace Adapter {
+  // deprecated
   export interface Info {
     id: string;
     icon: string;
@@ -83,11 +84,28 @@ export namespace Adapter {
     adapter: AdapterConstructor;
   }
 
+  // replaces Info
+  export interface Wallet {
+    id: string;
+    icon: string;
+    name: string;
+    adapter: AdapterConstructor;
+  }
+
+
+  export enum Status {
+    INIT = "INIT",
+    READY = "READY",
+    CONNECTING = "CONNECTING",
+    CONNECTED = "CONNECTED",
+    DISCONNECTING = "DISCONNECTING",
+    DISCONNECTED = "DISCONNECTED",
+    ERROR = "ERROR",
+  }
+
   export interface Interface {
     // Required properties
-    name: string;
-    logo: string;
-    url: string;
+    info: Adapter.Info;
 
     // Core wallet functionality
     isAvailable(): Promise<boolean>;
@@ -96,25 +114,23 @@ export namespace Adapter {
     disconnect(): Promise<void>;
     getPrincipal(): Promise<Principal>;
     getAccountId(): Promise<string>;
-    
+
     // Actor creation
-    createActor<T>(canisterId: string, idl: any, options?: { requiresSigning?: boolean }): ActorSubclass<T>;
-    undelegatedActor?<T>(canisterId: string, idlFactory: any, options?: { requiresSigning?: boolean }): ActorSubclass<T>;
+    createActor<T>(
+      canisterId: string,
+      idl: any,
+      options?: { requiresSigning?: boolean },
+    ): ActorSubclass<T>;
+    undelegatedActor?<T>(
+      canisterId: string,
+      idlFactory: any,
+      options?: { requiresSigning?: boolean },
+    ): ActorSubclass<T>;
   }
 }
 
-export enum AdapterState {
-  READY = "ready",
-  CONNECTING = "connecting",
-  CONNECTED = "connected",
-  DISCONNECTED = "disconnected",
-  LOADING = "loading",
-}
-
-
 export class PNP {
   account: Wallet.Account | null;
-  activeWallet: Adapter.Info | null;
   provider: Adapter.Interface | null;
   config: Wallet.PNPConfig;
   actorCache: Map<string, ActorSubclass<any>>;
@@ -127,7 +143,11 @@ export class PNP {
   disconnect(): Promise<void>;
   isWalletConnected(): boolean;
   getActor<T>(canisterId: string, idl: any, isAnon?: boolean): ActorSubclass<T>;
-  createAnonymousActor<T>(canisterId: string, idl: any, options?: { requiresSigning?: boolean }): ActorSubclass<T>;
+  createAnonymousActor<T>(
+    canisterId: string,
+    idl: any,
+    options?: { requiresSigning?: boolean },
+  ): ActorSubclass<T>;
 }
 
 declare global {
@@ -144,8 +164,9 @@ declare global {
         createActor: <T>(options: {
           canisterId: string;
           interfaceFactory: any;
-        }) => ActorSubclass<T>;
+        }) => Promise<ActorSubclass<T>>;
         disconnect: () => Promise<void>;
+        onExternalDisconnect: (callback: () => void) => void;
         principalId?: string;
         accountId?: string;
       };
