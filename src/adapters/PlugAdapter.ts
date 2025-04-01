@@ -2,7 +2,7 @@
 
 import { ActorSubclass } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
-import { Adapter, Wallet } from "../types";
+import { Adapter, Wallet } from "../types/index.d";
 import plugLogo from "../../assets/plug.webp";
 
 export class PlugAdapter implements Adapter.Interface {
@@ -21,6 +21,7 @@ export class PlugAdapter implements Adapter.Interface {
   private _connectionState: boolean = false;
   private _connectionStateTimestamp: number = 0;
   private _connectionStateUpdateInterval: number = 2000; // Update every 2 seconds
+  private state: Adapter.Status = Adapter.Status.INIT;
 
   constructor() {
     this.initPlug();
@@ -47,6 +48,7 @@ export class PlugAdapter implements Adapter.Interface {
 
   // Connect to Plug wallet
   async connect(config: Wallet.AdapterConfig): Promise<Wallet.Account> {
+    this.state = Adapter.Status.CONNECTING;
     const isConnected = await window.ic!.plug!.isConnected();
 
     if (!isConnected) {
@@ -59,10 +61,12 @@ export class PlugAdapter implements Adapter.Interface {
           onConnectionUpdate: () => console.log("Plug connection updated"),
         });
         if (!connected) {
+          this.state = Adapter.Status.READY;
           throw new Error("User declined the connection request");
         }
         this.readyState = "Connected";
       } catch (e) {
+        this.state = Adapter.Status.READY;
         console.error("Failed to connect to Plug wallet:", e);
         throw e;
       }
@@ -70,6 +74,10 @@ export class PlugAdapter implements Adapter.Interface {
       this.readyState = "Connected";
     }
 
+    this._connectionState = true;
+    this._connectionStateTimestamp = Date.now();
+    this.state = Adapter.Status.CONNECTED;
+    
     const principal = await this.getPrincipal();
     const accountId = await this.getAccountId();
 
@@ -81,11 +89,22 @@ export class PlugAdapter implements Adapter.Interface {
 
   // Disconnect from Plug wallet
   async disconnect(): Promise<void> {
-    if (window.ic && window.ic.plug && window.ic.plug.disconnect) {
-      await window.ic.plug.disconnect();
+    this.state = Adapter.Status.DISCONNECTING;
+    
+    try {
+      if (window.ic && window.ic.plug && window.ic.plug.disconnect) {
+        await window.ic.plug.disconnect();
+      } else {
+        console.warn("Plug wallet is not available for disconnect");
+      }
+    } catch (error) {
+      console.error("Error disconnecting from Plug wallet:", error);
+    } finally {
+      // Update state regardless of whether disconnect succeeded
       this.readyState = "Disconnected";
-    } else {
-      throw new Error("Plug wallet is not available");
+      this._connectionState = false;
+      this._connectionStateTimestamp = Date.now();
+      this.state = Adapter.Status.DISCONNECTED;
     }
   }
 
@@ -212,5 +231,9 @@ export class PlugAdapter implements Adapter.Interface {
       principalId: window.ic?.plug?.principalId,
       accountId: window.ic?.plug?.accountId
     });
+  }
+
+  getState(): Adapter.Status {
+    return this.state;
   }
 }

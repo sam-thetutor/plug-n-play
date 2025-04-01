@@ -3,4226 +3,10 @@ import { AnonymousIdentity as AnonymousIdentity2 } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { Principal as Principal2 } from "@dfinity/principal";
 import { AuthClient } from "@dfinity/auth-client";
-import { asciiStringToByteArray, arrayOfNumberToUint8Array, bigEndianCrc32, uint8ArrayToHexString } from "@dfinity/utils";
+import { asciiStringToByteArray, arrayOfNumberToUint8Array, bigEndianCrc32, uint8ArrayToHexString, hexStringToUint8Array } from "@dfinity/utils";
 import { DelegationChain, Delegation, Ed25519KeyIdentity, DelegationIdentity } from "@dfinity/identity";
 import { lebDecode, PipeArrayBuffer } from "@dfinity/candid";
-var Adapter;
-((Adapter2) => {
-  ((Status2) => {
-    Status2["INIT"] = "INIT";
-    Status2["READY"] = "READY";
-    Status2["CONNECTING"] = "CONNECTING";
-    Status2["CONNECTED"] = "CONNECTED";
-    Status2["DISCONNECTING"] = "DISCONNECTING";
-    Status2["DISCONNECTED"] = "DISCONNECTED";
-    Status2["ERROR"] = "ERROR";
-  })(Adapter2.Status || (Adapter2.Status = {}));
-})(Adapter || (Adapter = {}));
 const dfinityLogo = "data:image/webp;base64,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";
-var N = Object.create;
-var H = Object.defineProperty;
-var F = Object.getOwnPropertyDescriptor;
-var j = Object.getOwnPropertyNames;
-var V = Object.getPrototypeOf, G = Object.prototype.hasOwnProperty;
-var z = (e3, t) => () => (t || e3((t = { exports: {} }).exports, t), t.exports);
-var v = (e3, t, n, r) => {
-  if (t && typeof t == "object" || typeof t == "function") for (let o of j(t)) !G.call(e3, o) && o !== n && H(e3, o, { get: () => t[o], enumerable: !(r = F(t, o)) || r.enumerable });
-  return e3;
-};
-var J$1 = (e3, t, n) => (n = e3 != null ? N(V(e3)) : {}, v(!e3 || !e3.__esModule ? H(n, "default", { value: e3, enumerable: true }) : n, e3));
-function W(e3) {
-  return e3 instanceof Uint8Array || e3 != null && typeof e3 == "object" && e3.constructor.name === "Uint8Array";
-}
-function A(e3, ...t) {
-  if (!W(e3)) throw new Error("Uint8Array expected");
-  if (t.length > 0 && !t.includes(e3.length)) throw new Error(`Uint8Array expected of length ${t}, not of length=${e3.length}`);
-}
-function U(e3, t = true) {
-  if (e3.destroyed) throw new Error("Hash instance has been destroyed");
-  if (t && e3.finished) throw new Error("Hash#digest() has already been called");
-}
-function S(e3, t) {
-  A(e3);
-  let n = t.outputLen;
-  if (e3.length < n) throw new Error(`digestInto() expects output buffer of length at least ${n}`);
-}
-var g = (e3) => new DataView(e3.buffer, e3.byteOffset, e3.byteLength), h = (e3, t) => e3 << 32 - t | e3 >>> t;
-new Uint8Array(new Uint32Array([287454020]).buffer)[0] === 68;
-function $(e3) {
-  if (typeof e3 != "string") throw new Error(`utf8ToBytes expected string, got ${typeof e3}`);
-  return new Uint8Array(new TextEncoder().encode(e3));
-}
-function B(e3) {
-  return typeof e3 == "string" && (e3 = $(e3)), A(e3), e3;
-}
-var d = class {
-  clone() {
-    return this._cloneInto();
-  }
-};
-function T(e3) {
-  let t = (r) => e3().update(B(r)).digest(), n = e3();
-  return t.outputLen = n.outputLen, t.blockLen = n.blockLen, t.create = () => e3(), t;
-}
-function M(e3, t, n, r) {
-  if (typeof e3.setBigUint64 == "function") return e3.setBigUint64(t, n, r);
-  let o = BigInt(32), c = BigInt(4294967295), i = Number(n >> o & c), s = Number(n & c), u = r ? 4 : 0, a = r ? 0 : 4;
-  e3.setUint32(t + u, i, r), e3.setUint32(t + a, s, r);
-}
-var C = (e3, t, n) => e3 & t ^ ~e3 & n, k = (e3, t, n) => e3 & t ^ e3 & n ^ t & n, w = class extends d {
-  constructor(t, n, r, o) {
-    super(), this.blockLen = t, this.outputLen = n, this.padOffset = r, this.isLE = o, this.finished = false, this.length = 0, this.pos = 0, this.destroyed = false, this.buffer = new Uint8Array(t), this.view = g(this.buffer);
-  }
-  update(t) {
-    U(this);
-    let { view: n, buffer: r, blockLen: o } = this;
-    t = B(t);
-    let c = t.length;
-    for (let i = 0; i < c; ) {
-      let s = Math.min(o - this.pos, c - i);
-      if (s === o) {
-        let u = g(t);
-        for (; o <= c - i; i += o) this.process(u, i);
-        continue;
-      }
-      r.set(t.subarray(i, i + s), this.pos), this.pos += s, i += s, this.pos === o && (this.process(n, 0), this.pos = 0);
-    }
-    return this.length += t.length, this.roundClean(), this;
-  }
-  digestInto(t) {
-    U(this), S(t, this), this.finished = true;
-    let { buffer: n, view: r, blockLen: o, isLE: c } = this, { pos: i } = this;
-    n[i++] = 128, this.buffer.subarray(i).fill(0), this.padOffset > o - i && (this.process(r, 0), i = 0);
-    for (let f = i; f < o; f++) n[f] = 0;
-    M(r, o - 8, BigInt(this.length * 8), c), this.process(r, 0);
-    let s = g(t), u = this.outputLen;
-    if (u % 4) throw new Error("_sha2: outputLen should be aligned to 32bit");
-    let a = u / 4, p = this.get();
-    if (a > p.length) throw new Error("_sha2: outputLen bigger than state");
-    for (let f = 0; f < a; f++) s.setUint32(4 * f, p[f], c);
-  }
-  digest() {
-    let { buffer: t, outputLen: n } = this;
-    this.digestInto(t);
-    let r = t.slice(0, n);
-    return this.destroy(), r;
-  }
-  _cloneInto(t) {
-    t || (t = new this.constructor()), t.set(...this.get());
-    let { blockLen: n, buffer: r, length: o, finished: c, destroyed: i, pos: s } = this;
-    return t.length = o, t.pos = s, t.finished = c, t.destroyed = i, o % n && t.buffer.set(r), t;
-  }
-};
-var P = new Uint32Array([1116352408, 1899447441, 3049323471, 3921009573, 961987163, 1508970993, 2453635748, 2870763221, 3624381080, 310598401, 607225278, 1426881987, 1925078388, 2162078206, 2614888103, 3248222580, 3835390401, 4022224774, 264347078, 604807628, 770255983, 1249150122, 1555081692, 1996064986, 2554220882, 2821834349, 2952996808, 3210313671, 3336571891, 3584528711, 113926993, 338241895, 666307205, 773529912, 1294757372, 1396182291, 1695183700, 1986661051, 2177026350, 2456956037, 2730485921, 2820302411, 3259730800, 3345764771, 3516065817, 3600352804, 4094571909, 275423344, 430227734, 506948616, 659060556, 883997877, 958139571, 1322822218, 1537002063, 1747873779, 1955562222, 2024104815, 2227730452, 2361852424, 2428436474, 2756734187, 3204031479, 3329325298]), x = new Uint32Array([1779033703, 3144134277, 1013904242, 2773480762, 1359893119, 2600822924, 528734635, 1541459225]), b = new Uint32Array(64), E = class extends w {
-  constructor() {
-    super(64, 32, 8, false), this.A = x[0] | 0, this.B = x[1] | 0, this.C = x[2] | 0, this.D = x[3] | 0, this.E = x[4] | 0, this.F = x[5] | 0, this.G = x[6] | 0, this.H = x[7] | 0;
-  }
-  get() {
-    let { A: t, B: n, C: r, D: o, E: c, F: i, G: s, H: u } = this;
-    return [t, n, r, o, c, i, s, u];
-  }
-  set(t, n, r, o, c, i, s, u) {
-    this.A = t | 0, this.B = n | 0, this.C = r | 0, this.D = o | 0, this.E = c | 0, this.F = i | 0, this.G = s | 0, this.H = u | 0;
-  }
-  process(t, n) {
-    for (let f = 0; f < 16; f++, n += 4) b[f] = t.getUint32(n, false);
-    for (let f = 16; f < 64; f++) {
-      let y = b[f - 15], l = b[f - 2], I = h(y, 7) ^ h(y, 18) ^ y >>> 3, m = h(l, 17) ^ h(l, 19) ^ l >>> 10;
-      b[f] = m + b[f - 7] + I + b[f - 16] | 0;
-    }
-    let { A: r, B: o, C: c, D: i, E: s, F: u, G: a, H: p } = this;
-    for (let f = 0; f < 64; f++) {
-      let y = h(s, 6) ^ h(s, 11) ^ h(s, 25), l = p + y + C(s, u, a) + P[f] + b[f] | 0, m = (h(r, 2) ^ h(r, 13) ^ h(r, 22)) + k(r, o, c) | 0;
-      p = a, a = u, u = s, s = i + l | 0, i = c, c = o, o = r, r = l + m | 0;
-    }
-    r = r + this.A | 0, o = o + this.B | 0, c = c + this.C | 0, i = i + this.D | 0, s = s + this.E | 0, u = u + this.F | 0, a = a + this.G | 0, p = p + this.H | 0, this.set(r, o, c, i, s, u, a, p);
-  }
-  roundClean() {
-    b.fill(0);
-  }
-  destroy() {
-    this.set(0, 0, 0, 0, 0, 0, 0, 0), this.buffer.fill(0);
-  }
-}, L = class extends E {
-  constructor() {
-    super(), this.A = -1056596264, this.B = 914150663, this.C = 812702999, this.D = -150054599, this.E = -4191439, this.F = 1750603025, this.G = 1694076839, this.H = -1090891868, this.outputLen = 28;
-  }
-};
-var O = T(() => new L());
-var D = class e {
-  constructor(t) {
-    this.bytes = t;
-  }
-  static fromHex(t) {
-    return new e(Uint8Array.from(Buffer.from(t, "hex")));
-  }
-  static fromPrincipal({ principal: t, subAccount: n = _.fromID(0) }) {
-    let r = asciiStringToByteArray(`
-account-id`), o = O.create();
-    o.update(arrayOfNumberToUint8Array([...r, ...t.toUint8Array(), ...n.toUint8Array()]));
-    let c = o.digest(), i = bigEndianCrc32(c), s = new Uint8Array([...i, ...c]);
-    return new e(s);
-  }
-  toHex() {
-    return uint8ArrayToHexString(this.bytes);
-  }
-  toUint8Array() {
-    return this.bytes;
-  }
-  toNumbers() {
-    return Array.from(this.bytes);
-  }
-  toAccountIdentifierHash() {
-    return { hash: this.toUint8Array() };
-  }
-}, _ = class e2 {
-  constructor(t) {
-    this.bytes = t;
-  }
-  static fromBytes(t) {
-    return t.length != 32 ? Error("Subaccount length must be 32-bytes") : new e2(t);
-  }
-  static fromPrincipal(t) {
-    let n = new Uint8Array(32).fill(0), r = t.toUint8Array();
-    n[0] = r.length;
-    for (let o = 0; o < r.length; o++) n[1 + o] = r[o];
-    return new e2(n);
-  }
-  static fromID(t) {
-    if (t < 0) throw new Error("Number cannot be negative");
-    if (t > Number.MAX_SAFE_INTEGER) throw new Error("Number is too large to fit in 32 bytes.");
-    let n = new DataView(new ArrayBuffer(32));
-    if (typeof n.setBigUint64 == "function") n.setBigUint64(24, BigInt(t));
-    else {
-      let o = BigInt(1) << BigInt(32);
-      n.setUint32(24, Number(BigInt(t) >> BigInt(32))), n.setUint32(28, Number(BigInt(t) % o));
-    }
-    let r = new Uint8Array(n.buffer);
-    return new e2(r);
-  }
-  toUint8Array() {
-    return this.bytes;
-  }
-};
-/*! Bundled license information:
-
-@noble/hashes/esm/utils.js:
-  (*! noble-hashes - MIT License (c) 2022 Paul Miller (paulmillr.com) *)
-*/
-Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
-Principal.fromText("qhbym-qaaaa-aaaaa-aaafq-cai");
-BigInt(1095062083);
-BigInt(1347768404);
-BigInt(1e4);
-BigInt(1e8);
-var J = z((S2) => {
-  S2.byteLength = gr;
-  S2.toByteArray = Ar;
-  S2.fromByteArray = Tr;
-  var B2 = [], x2 = [], Er = typeof Uint8Array < "u" ? Uint8Array : Array, M2 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-  for (g2 = 0, X = M2.length; g2 < X; ++g2) B2[g2] = M2[g2], x2[M2.charCodeAt(g2)] = g2;
-  var g2, X;
-  x2[45] = 62;
-  x2[95] = 63;
-  function z2(i) {
-    var r = i.length;
-    if (r % 4 > 0) throw new Error("Invalid string. Length must be a multiple of 4");
-    var t = i.indexOf("=");
-    t === -1 && (t = r);
-    var e3 = t === r ? 0 : 4 - t % 4;
-    return [t, e3];
-  }
-  function gr(i) {
-    var r = z2(i), t = r[0], e3 = r[1];
-    return (t + e3) * 3 / 4 - e3;
-  }
-  function Ir(i, r, t) {
-    return (r + t) * 3 / 4 - t;
-  }
-  function Ar(i) {
-    var r, t = z2(i), e3 = t[0], n = t[1], o = new Er(Ir(i, e3, n)), u = 0, h2 = n > 0 ? e3 - 4 : e3, f;
-    for (f = 0; f < h2; f += 4) r = x2[i.charCodeAt(f)] << 18 | x2[i.charCodeAt(f + 1)] << 12 | x2[i.charCodeAt(f + 2)] << 6 | x2[i.charCodeAt(f + 3)], o[u++] = r >> 16 & 255, o[u++] = r >> 8 & 255, o[u++] = r & 255;
-    return n === 2 && (r = x2[i.charCodeAt(f)] << 2 | x2[i.charCodeAt(f + 1)] >> 4, o[u++] = r & 255), n === 1 && (r = x2[i.charCodeAt(f)] << 10 | x2[i.charCodeAt(f + 1)] << 4 | x2[i.charCodeAt(f + 2)] >> 2, o[u++] = r >> 8 & 255, o[u++] = r & 255), o;
-  }
-  function Fr(i) {
-    return B2[i >> 18 & 63] + B2[i >> 12 & 63] + B2[i >> 6 & 63] + B2[i & 63];
-  }
-  function Ur(i, r, t) {
-    for (var e3, n = [], o = r; o < t; o += 3) e3 = (i[o] << 16 & 16711680) + (i[o + 1] << 8 & 65280) + (i[o + 2] & 255), n.push(Fr(e3));
-    return n.join("");
-  }
-  function Tr(i) {
-    for (var r, t = i.length, e3 = t % 3, n = [], o = 16383, u = 0, h2 = t - e3; u < h2; u += o) n.push(Ur(i, u, u + o > h2 ? h2 : u + o));
-    return e3 === 1 ? (r = i[t - 1], n.push(B2[r >> 2] + B2[r << 4 & 63] + "==")) : e3 === 2 && (r = (i[t - 2] << 8) + i[t - 1], n.push(B2[r >> 10] + B2[r >> 4 & 63] + B2[r << 2 & 63] + "=")), n.join("");
-  }
-});
-var K = z(($2) => {
-  $2.read = function(i, r, t, e3, n) {
-    var o, u, h2 = n * 8 - e3 - 1, f = (1 << h2) - 1, a = f >> 1, s = -7, p = t ? n - 1 : 0, A2 = t ? -1 : 1, w2 = i[r + p];
-    for (p += A2, o = w2 & (1 << -s) - 1, w2 >>= -s, s += h2; s > 0; o = o * 256 + i[r + p], p += A2, s -= 8) ;
-    for (u = o & (1 << -s) - 1, o >>= -s, s += e3; s > 0; u = u * 256 + i[r + p], p += A2, s -= 8) ;
-    if (o === 0) o = 1 - a;
-    else {
-      if (o === f) return u ? NaN : (w2 ? -1 : 1) * (1 / 0);
-      u = u + Math.pow(2, e3), o = o - a;
-    }
-    return (w2 ? -1 : 1) * u * Math.pow(2, o - e3);
-  };
-  $2.write = function(i, r, t, e3, n, o) {
-    var u, h2, f, a = o * 8 - n - 1, s = (1 << a) - 1, p = s >> 1, A2 = n === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0, w2 = e3 ? 0 : o - 1, L2 = e3 ? 1 : -1, yr = r < 0 || r === 0 && 1 / r < 0 ? 1 : 0;
-    for (r = Math.abs(r), isNaN(r) || r === 1 / 0 ? (h2 = isNaN(r) ? 1 : 0, u = s) : (u = Math.floor(Math.log(r) / Math.LN2), r * (f = Math.pow(2, -u)) < 1 && (u--, f *= 2), u + p >= 1 ? r += A2 / f : r += A2 * Math.pow(2, 1 - p), r * f >= 2 && (u++, f /= 2), u + p >= s ? (h2 = 0, u = s) : u + p >= 1 ? (h2 = (r * f - 1) * Math.pow(2, n), u = u + p) : (h2 = r * Math.pow(2, p - 1) * Math.pow(2, n), u = 0)); n >= 8; i[t + w2] = h2 & 255, w2 += L2, h2 /= 256, n -= 8) ;
-    for (u = u << n | h2, a += n; a > 0; i[t + w2] = u & 255, w2 += L2, u /= 256, a -= 8) ;
-    i[t + w2 - L2] |= yr * 128;
-  };
-});
-var lr = z((R) => {
-  var D2 = J(), U2 = K(), Z = typeof Symbol == "function" && typeof Symbol.for == "function" ? Symbol.for("nodejs.util.inspect.custom") : null;
-  R.Buffer = c;
-  R.SlowBuffer = Lr;
-  R.INSPECT_MAX_BYTES = 50;
-  var _2 = 2147483647;
-  R.kMaxLength = _2;
-  c.TYPED_ARRAY_SUPPORT = Rr();
-  !c.TYPED_ARRAY_SUPPORT && typeof console < "u" && typeof console.error == "function" && console.error("This browser lacks typed array (Uint8Array) support which is required by `buffer` v5.x. Use `buffer` v4.x if you require old browser support.");
-  function Rr() {
-    try {
-      let i = new Uint8Array(1), r = { foo: function() {
-        return 42;
-      } };
-      return Object.setPrototypeOf(r, Uint8Array.prototype), Object.setPrototypeOf(i, r), i.foo() === 42;
-    } catch {
-      return false;
-    }
-  }
-  Object.defineProperty(c.prototype, "parent", { enumerable: true, get: function() {
-    if (c.isBuffer(this)) return this.buffer;
-  } });
-  Object.defineProperty(c.prototype, "offset", { enumerable: true, get: function() {
-    if (c.isBuffer(this)) return this.byteOffset;
-  } });
-  function d2(i) {
-    if (i > _2) throw new RangeError('The value "' + i + '" is invalid for option "size"');
-    let r = new Uint8Array(i);
-    return Object.setPrototypeOf(r, c.prototype), r;
-  }
-  function c(i, r, t) {
-    if (typeof i == "number") {
-      if (typeof r == "string") throw new TypeError('The "string" argument must be of type string. Received type number');
-      return G2(i);
-    }
-    return tr(i, r, t);
-  }
-  c.poolSize = 8192;
-  function tr(i, r, t) {
-    if (typeof i == "string") return Sr(i, r);
-    if (ArrayBuffer.isView(i)) return _r(i);
-    if (i == null) throw new TypeError("The first argument must be one of type string, Buffer, ArrayBuffer, Array, or Array-like Object. Received type " + typeof i);
-    if (m(i, ArrayBuffer) || i && m(i.buffer, ArrayBuffer) || typeof SharedArrayBuffer < "u" && (m(i, SharedArrayBuffer) || i && m(i.buffer, SharedArrayBuffer))) return O2(i, r, t);
-    if (typeof i == "number") throw new TypeError('The "value" argument must not be of type number. Received type number');
-    let e3 = i.valueOf && i.valueOf();
-    if (e3 != null && e3 !== i) return c.from(e3, r, t);
-    let n = kr(i);
-    if (n) return n;
-    if (typeof Symbol < "u" && Symbol.toPrimitive != null && typeof i[Symbol.toPrimitive] == "function") return c.from(i[Symbol.toPrimitive]("string"), r, t);
-    throw new TypeError("The first argument must be one of type string, Buffer, ArrayBuffer, Array, or Array-like Object. Received type " + typeof i);
-  }
-  c.from = function(i, r, t) {
-    return tr(i, r, t);
-  };
-  Object.setPrototypeOf(c.prototype, Uint8Array.prototype);
-  Object.setPrototypeOf(c, Uint8Array);
-  function ir(i) {
-    if (typeof i != "number") throw new TypeError('"size" argument must be of type number');
-    if (i < 0) throw new RangeError('The value "' + i + '" is invalid for option "size"');
-  }
-  function Cr(i, r, t) {
-    return ir(i), i <= 0 ? d2(i) : r !== void 0 ? typeof t == "string" ? d2(i).fill(r, t) : d2(i).fill(r) : d2(i);
-  }
-  c.alloc = function(i, r, t) {
-    return Cr(i, r, t);
-  };
-  function G2(i) {
-    return ir(i), d2(i < 0 ? 0 : H2(i) | 0);
-  }
-  c.allocUnsafe = function(i) {
-    return G2(i);
-  };
-  c.allocUnsafeSlow = function(i) {
-    return G2(i);
-  };
-  function Sr(i, r) {
-    if ((typeof r != "string" || r === "") && (r = "utf8"), !c.isEncoding(r)) throw new TypeError("Unknown encoding: " + r);
-    let t = er(i, r) | 0, e3 = d2(t), n = e3.write(i, r);
-    return n !== t && (e3 = e3.slice(0, n)), e3;
-  }
-  function P2(i) {
-    let r = i.length < 0 ? 0 : H2(i.length) | 0, t = d2(r);
-    for (let e3 = 0; e3 < r; e3 += 1) t[e3] = i[e3] & 255;
-    return t;
-  }
-  function _r(i) {
-    if (m(i, Uint8Array)) {
-      let r = new Uint8Array(i);
-      return O2(r.buffer, r.byteOffset, r.byteLength);
-    }
-    return P2(i);
-  }
-  function O2(i, r, t) {
-    if (r < 0 || i.byteLength < r) throw new RangeError('"offset" is outside of buffer bounds');
-    if (i.byteLength < r + (t || 0)) throw new RangeError('"length" is outside of buffer bounds');
-    let e3;
-    return r === void 0 && t === void 0 ? e3 = new Uint8Array(i) : t === void 0 ? e3 = new Uint8Array(i, r) : e3 = new Uint8Array(i, r, t), Object.setPrototypeOf(e3, c.prototype), e3;
-  }
-  function kr(i) {
-    if (c.isBuffer(i)) {
-      let r = H2(i.length) | 0, t = d2(r);
-      return t.length === 0 || i.copy(t, 0, 0, r), t;
-    }
-    if (i.length !== void 0) return typeof i.length != "number" || W2(i.length) ? d2(0) : P2(i);
-    if (i.type === "Buffer" && Array.isArray(i.data)) return P2(i.data);
-  }
-  function H2(i) {
-    if (i >= _2) throw new RangeError("Attempt to allocate Buffer larger than maximum size: 0x" + _2.toString(16) + " bytes");
-    return i | 0;
-  }
-  function Lr(i) {
-    return +i != i && (i = 0), c.alloc(+i);
-  }
-  c.isBuffer = function(r) {
-    return r != null && r._isBuffer === true && r !== c.prototype;
-  };
-  c.compare = function(r, t) {
-    if (m(r, Uint8Array) && (r = c.from(r, r.offset, r.byteLength)), m(t, Uint8Array) && (t = c.from(t, t.offset, t.byteLength)), !c.isBuffer(r) || !c.isBuffer(t)) throw new TypeError('The "buf1", "buf2" arguments must be one of type Buffer or Uint8Array');
-    if (r === t) return 0;
-    let e3 = r.length, n = t.length;
-    for (let o = 0, u = Math.min(e3, n); o < u; ++o) if (r[o] !== t[o]) {
-      e3 = r[o], n = t[o];
-      break;
-    }
-    return e3 < n ? -1 : n < e3 ? 1 : 0;
-  };
-  c.isEncoding = function(r) {
-    switch (String(r).toLowerCase()) {
-      case "hex":
-      case "utf8":
-      case "utf-8":
-      case "ascii":
-      case "latin1":
-      case "binary":
-      case "base64":
-      case "ucs2":
-      case "ucs-2":
-      case "utf16le":
-      case "utf-16le":
-        return true;
-      default:
-        return false;
-    }
-  };
-  c.concat = function(r, t) {
-    if (!Array.isArray(r)) throw new TypeError('"list" argument must be an Array of Buffers');
-    if (r.length === 0) return c.alloc(0);
-    let e3;
-    if (t === void 0) for (t = 0, e3 = 0; e3 < r.length; ++e3) t += r[e3].length;
-    let n = c.allocUnsafe(t), o = 0;
-    for (e3 = 0; e3 < r.length; ++e3) {
-      let u = r[e3];
-      if (m(u, Uint8Array)) o + u.length > n.length ? (c.isBuffer(u) || (u = c.from(u)), u.copy(n, o)) : Uint8Array.prototype.set.call(n, u, o);
-      else if (c.isBuffer(u)) u.copy(n, o);
-      else throw new TypeError('"list" argument must be an Array of Buffers');
-      o += u.length;
-    }
-    return n;
-  };
-  function er(i, r) {
-    if (c.isBuffer(i)) return i.length;
-    if (ArrayBuffer.isView(i) || m(i, ArrayBuffer)) return i.byteLength;
-    if (typeof i != "string") throw new TypeError('The "string" argument must be one of type string, Buffer, or ArrayBuffer. Received type ' + typeof i);
-    let t = i.length, e3 = arguments.length > 2 && arguments[2] === true;
-    if (!e3 && t === 0) return 0;
-    let n = false;
-    for (; ; ) switch (r) {
-      case "ascii":
-      case "latin1":
-      case "binary":
-        return t;
-      case "utf8":
-      case "utf-8":
-        return q(i).length;
-      case "ucs2":
-      case "ucs-2":
-      case "utf16le":
-      case "utf-16le":
-        return t * 2;
-      case "hex":
-        return t >>> 1;
-      case "base64":
-        return ar(i).length;
-      default:
-        if (n) return e3 ? -1 : q(i).length;
-        r = ("" + r).toLowerCase(), n = true;
-    }
-  }
-  c.byteLength = er;
-  function br(i, r, t) {
-    let e3 = false;
-    if ((r === void 0 || r < 0) && (r = 0), r > this.length || ((t === void 0 || t > this.length) && (t = this.length), t <= 0) || (t >>>= 0, r >>>= 0, t <= r)) return "";
-    for (i || (i = "utf8"); ; ) switch (i) {
-      case "hex":
-        return Yr(this, r, t);
-      case "utf8":
-      case "utf-8":
-        return or(this, r, t);
-      case "ascii":
-        return Gr(this, r, t);
-      case "latin1":
-      case "binary":
-        return Hr(this, r, t);
-      case "base64":
-        return Or(this, r, t);
-      case "ucs2":
-      case "ucs-2":
-      case "utf16le":
-      case "utf-16le":
-        return Wr(this, r, t);
-      default:
-        if (e3) throw new TypeError("Unknown encoding: " + i);
-        i = (i + "").toLowerCase(), e3 = true;
-    }
-  }
-  c.prototype._isBuffer = true;
-  function I(i, r, t) {
-    let e3 = i[r];
-    i[r] = i[t], i[t] = e3;
-  }
-  c.prototype.swap16 = function() {
-    let r = this.length;
-    if (r % 2 !== 0) throw new RangeError("Buffer size must be a multiple of 16-bits");
-    for (let t = 0; t < r; t += 2) I(this, t, t + 1);
-    return this;
-  };
-  c.prototype.swap32 = function() {
-    let r = this.length;
-    if (r % 4 !== 0) throw new RangeError("Buffer size must be a multiple of 32-bits");
-    for (let t = 0; t < r; t += 4) I(this, t, t + 3), I(this, t + 1, t + 2);
-    return this;
-  };
-  c.prototype.swap64 = function() {
-    let r = this.length;
-    if (r % 8 !== 0) throw new RangeError("Buffer size must be a multiple of 64-bits");
-    for (let t = 0; t < r; t += 8) I(this, t, t + 7), I(this, t + 1, t + 6), I(this, t + 2, t + 5), I(this, t + 3, t + 4);
-    return this;
-  };
-  c.prototype.toString = function() {
-    let r = this.length;
-    return r === 0 ? "" : arguments.length === 0 ? or(this, 0, r) : br.apply(this, arguments);
-  };
-  c.prototype.toLocaleString = c.prototype.toString;
-  c.prototype.equals = function(r) {
-    if (!c.isBuffer(r)) throw new TypeError("Argument must be a Buffer");
-    return this === r ? true : c.compare(this, r) === 0;
-  };
-  c.prototype.inspect = function() {
-    let r = "", t = R.INSPECT_MAX_BYTES;
-    return r = this.toString("hex", 0, t).replace(/(.{2})/g, "$1 ").trim(), this.length > t && (r += " ... "), "<Buffer " + r + ">";
-  };
-  Z && (c.prototype[Z] = c.prototype.inspect);
-  c.prototype.compare = function(r, t, e3, n, o) {
-    if (m(r, Uint8Array) && (r = c.from(r, r.offset, r.byteLength)), !c.isBuffer(r)) throw new TypeError('The "target" argument must be one of type Buffer or Uint8Array. Received type ' + typeof r);
-    if (t === void 0 && (t = 0), e3 === void 0 && (e3 = r ? r.length : 0), n === void 0 && (n = 0), o === void 0 && (o = this.length), t < 0 || e3 > r.length || n < 0 || o > this.length) throw new RangeError("out of range index");
-    if (n >= o && t >= e3) return 0;
-    if (n >= o) return -1;
-    if (t >= e3) return 1;
-    if (t >>>= 0, e3 >>>= 0, n >>>= 0, o >>>= 0, this === r) return 0;
-    let u = o - n, h2 = e3 - t, f = Math.min(u, h2), a = this.slice(n, o), s = r.slice(t, e3);
-    for (let p = 0; p < f; ++p) if (a[p] !== s[p]) {
-      u = a[p], h2 = s[p];
-      break;
-    }
-    return u < h2 ? -1 : h2 < u ? 1 : 0;
-  };
-  function nr(i, r, t, e3, n) {
-    if (i.length === 0) return -1;
-    if (typeof t == "string" ? (e3 = t, t = 0) : t > 2147483647 ? t = 2147483647 : t < -2147483648 && (t = -2147483648), t = +t, W2(t) && (t = n ? 0 : i.length - 1), t < 0 && (t = i.length + t), t >= i.length) {
-      if (n) return -1;
-      t = i.length - 1;
-    } else if (t < 0) if (n) t = 0;
-    else return -1;
-    if (typeof r == "string" && (r = c.from(r, e3)), c.isBuffer(r)) return r.length === 0 ? -1 : Q(i, r, t, e3, n);
-    if (typeof r == "number") return r = r & 255, typeof Uint8Array.prototype.indexOf == "function" ? n ? Uint8Array.prototype.indexOf.call(i, r, t) : Uint8Array.prototype.lastIndexOf.call(i, r, t) : Q(i, [r], t, e3, n);
-    throw new TypeError("val must be string, number or Buffer");
-  }
-  function Q(i, r, t, e3, n) {
-    let o = 1, u = i.length, h2 = r.length;
-    if (e3 !== void 0 && (e3 = String(e3).toLowerCase(), e3 === "ucs2" || e3 === "ucs-2" || e3 === "utf16le" || e3 === "utf-16le")) {
-      if (i.length < 2 || r.length < 2) return -1;
-      o = 2, u /= 2, h2 /= 2, t /= 2;
-    }
-    function f(s, p) {
-      return o === 1 ? s[p] : s.readUInt16BE(p * o);
-    }
-    let a;
-    if (n) {
-      let s = -1;
-      for (a = t; a < u; a++) if (f(i, a) === f(r, s === -1 ? 0 : a - s)) {
-        if (s === -1 && (s = a), a - s + 1 === h2) return s * o;
-      } else s !== -1 && (a -= a - s), s = -1;
-    } else for (t + h2 > u && (t = u - h2), a = t; a >= 0; a--) {
-      let s = true;
-      for (let p = 0; p < h2; p++) if (f(i, a + p) !== f(r, p)) {
-        s = false;
-        break;
-      }
-      if (s) return a;
-    }
-    return -1;
-  }
-  c.prototype.includes = function(r, t, e3) {
-    return this.indexOf(r, t, e3) !== -1;
-  };
-  c.prototype.indexOf = function(r, t, e3) {
-    return nr(this, r, t, e3, true);
-  };
-  c.prototype.lastIndexOf = function(r, t, e3) {
-    return nr(this, r, t, e3, false);
-  };
-  function Nr(i, r, t, e3) {
-    t = Number(t) || 0;
-    let n = i.length - t;
-    e3 ? (e3 = Number(e3), e3 > n && (e3 = n)) : e3 = n;
-    let o = r.length;
-    e3 > o / 2 && (e3 = o / 2);
-    let u;
-    for (u = 0; u < e3; ++u) {
-      let h2 = parseInt(r.substr(u * 2, 2), 16);
-      if (W2(h2)) return u;
-      i[t + u] = h2;
-    }
-    return u;
-  }
-  function Mr(i, r, t, e3) {
-    return k2(q(r, i.length - t), i, t, e3);
-  }
-  function $r(i, r, t, e3) {
-    return k2(zr(r), i, t, e3);
-  }
-  function Dr(i, r, t, e3) {
-    return k2(ar(r), i, t, e3);
-  }
-  function Pr(i, r, t, e3) {
-    return k2(Jr(r, i.length - t), i, t, e3);
-  }
-  c.prototype.write = function(r, t, e3, n) {
-    if (t === void 0) n = "utf8", e3 = this.length, t = 0;
-    else if (e3 === void 0 && typeof t == "string") n = t, e3 = this.length, t = 0;
-    else if (isFinite(t)) t = t >>> 0, isFinite(e3) ? (e3 = e3 >>> 0, n === void 0 && (n = "utf8")) : (n = e3, e3 = void 0);
-    else throw new Error("Buffer.write(string, encoding, offset[, length]) is no longer supported");
-    let o = this.length - t;
-    if ((e3 === void 0 || e3 > o) && (e3 = o), r.length > 0 && (e3 < 0 || t < 0) || t > this.length) throw new RangeError("Attempt to write outside buffer bounds");
-    n || (n = "utf8");
-    let u = false;
-    for (; ; ) switch (n) {
-      case "hex":
-        return Nr(this, r, t, e3);
-      case "utf8":
-      case "utf-8":
-        return Mr(this, r, t, e3);
-      case "ascii":
-      case "latin1":
-      case "binary":
-        return $r(this, r, t, e3);
-      case "base64":
-        return Dr(this, r, t, e3);
-      case "ucs2":
-      case "ucs-2":
-      case "utf16le":
-      case "utf-16le":
-        return Pr(this, r, t, e3);
-      default:
-        if (u) throw new TypeError("Unknown encoding: " + n);
-        n = ("" + n).toLowerCase(), u = true;
-    }
-  };
-  c.prototype.toJSON = function() {
-    return { type: "Buffer", data: Array.prototype.slice.call(this._arr || this, 0) };
-  };
-  function Or(i, r, t) {
-    return r === 0 && t === i.length ? D2.fromByteArray(i) : D2.fromByteArray(i.slice(r, t));
-  }
-  function or(i, r, t) {
-    t = Math.min(i.length, t);
-    let e3 = [], n = r;
-    for (; n < t; ) {
-      let o = i[n], u = null, h2 = o > 239 ? 4 : o > 223 ? 3 : o > 191 ? 2 : 1;
-      if (n + h2 <= t) {
-        let f, a, s, p;
-        switch (h2) {
-          case 1:
-            o < 128 && (u = o);
-            break;
-          case 2:
-            f = i[n + 1], (f & 192) === 128 && (p = (o & 31) << 6 | f & 63, p > 127 && (u = p));
-            break;
-          case 3:
-            f = i[n + 1], a = i[n + 2], (f & 192) === 128 && (a & 192) === 128 && (p = (o & 15) << 12 | (f & 63) << 6 | a & 63, p > 2047 && (p < 55296 || p > 57343) && (u = p));
-            break;
-          case 4:
-            f = i[n + 1], a = i[n + 2], s = i[n + 3], (f & 192) === 128 && (a & 192) === 128 && (s & 192) === 128 && (p = (o & 15) << 18 | (f & 63) << 12 | (a & 63) << 6 | s & 63, p > 65535 && p < 1114112 && (u = p));
-        }
-      }
-      u === null ? (u = 65533, h2 = 1) : u > 65535 && (u -= 65536, e3.push(u >>> 10 & 1023 | 55296), u = 56320 | u & 1023), e3.push(u), n += h2;
-    }
-    return qr(e3);
-  }
-  var v2 = 4096;
-  function qr(i) {
-    let r = i.length;
-    if (r <= v2) return String.fromCharCode.apply(String, i);
-    let t = "", e3 = 0;
-    for (; e3 < r; ) t += String.fromCharCode.apply(String, i.slice(e3, e3 += v2));
-    return t;
-  }
-  function Gr(i, r, t) {
-    let e3 = "";
-    t = Math.min(i.length, t);
-    for (let n = r; n < t; ++n) e3 += String.fromCharCode(i[n] & 127);
-    return e3;
-  }
-  function Hr(i, r, t) {
-    let e3 = "";
-    t = Math.min(i.length, t);
-    for (let n = r; n < t; ++n) e3 += String.fromCharCode(i[n]);
-    return e3;
-  }
-  function Yr(i, r, t) {
-    let e3 = i.length;
-    (!r || r < 0) && (r = 0), (!t || t < 0 || t > e3) && (t = e3);
-    let n = "";
-    for (let o = r; o < t; ++o) n += Kr[i[o]];
-    return n;
-  }
-  function Wr(i, r, t) {
-    let e3 = i.slice(r, t), n = "";
-    for (let o = 0; o < e3.length - 1; o += 2) n += String.fromCharCode(e3[o] + e3[o + 1] * 256);
-    return n;
-  }
-  c.prototype.slice = function(r, t) {
-    let e3 = this.length;
-    r = ~~r, t = t === void 0 ? e3 : ~~t, r < 0 ? (r += e3, r < 0 && (r = 0)) : r > e3 && (r = e3), t < 0 ? (t += e3, t < 0 && (t = 0)) : t > e3 && (t = e3), t < r && (t = r);
-    let n = this.subarray(r, t);
-    return Object.setPrototypeOf(n, c.prototype), n;
-  };
-  function l(i, r, t) {
-    if (i % 1 !== 0 || i < 0) throw new RangeError("offset is not uint");
-    if (i + r > t) throw new RangeError("Trying to access beyond buffer length");
-  }
-  c.prototype.readUintLE = c.prototype.readUIntLE = function(r, t, e3) {
-    r = r >>> 0, t = t >>> 0, e3 || l(r, t, this.length);
-    let n = this[r], o = 1, u = 0;
-    for (; ++u < t && (o *= 256); ) n += this[r + u] * o;
-    return n;
-  };
-  c.prototype.readUintBE = c.prototype.readUIntBE = function(r, t, e3) {
-    r = r >>> 0, t = t >>> 0, e3 || l(r, t, this.length);
-    let n = this[r + --t], o = 1;
-    for (; t > 0 && (o *= 256); ) n += this[r + --t] * o;
-    return n;
-  };
-  c.prototype.readUint8 = c.prototype.readUInt8 = function(r, t) {
-    return r = r >>> 0, t || l(r, 1, this.length), this[r];
-  };
-  c.prototype.readUint16LE = c.prototype.readUInt16LE = function(r, t) {
-    return r = r >>> 0, t || l(r, 2, this.length), this[r] | this[r + 1] << 8;
-  };
-  c.prototype.readUint16BE = c.prototype.readUInt16BE = function(r, t) {
-    return r = r >>> 0, t || l(r, 2, this.length), this[r] << 8 | this[r + 1];
-  };
-  c.prototype.readUint32LE = c.prototype.readUInt32LE = function(r, t) {
-    return r = r >>> 0, t || l(r, 4, this.length), (this[r] | this[r + 1] << 8 | this[r + 2] << 16) + this[r + 3] * 16777216;
-  };
-  c.prototype.readUint32BE = c.prototype.readUInt32BE = function(r, t) {
-    return r = r >>> 0, t || l(r, 4, this.length), this[r] * 16777216 + (this[r + 1] << 16 | this[r + 2] << 8 | this[r + 3]);
-  };
-  c.prototype.readBigUInt64LE = E2(function(r) {
-    r = r >>> 0, T2(r, "offset");
-    let t = this[r], e3 = this[r + 7];
-    (t === void 0 || e3 === void 0) && C2(r, this.length - 8);
-    let n = t + this[++r] * 2 ** 8 + this[++r] * 2 ** 16 + this[++r] * 2 ** 24, o = this[++r] + this[++r] * 2 ** 8 + this[++r] * 2 ** 16 + e3 * 2 ** 24;
-    return BigInt(n) + (BigInt(o) << BigInt(32));
-  });
-  c.prototype.readBigUInt64BE = E2(function(r) {
-    r = r >>> 0, T2(r, "offset");
-    let t = this[r], e3 = this[r + 7];
-    (t === void 0 || e3 === void 0) && C2(r, this.length - 8);
-    let n = t * 2 ** 24 + this[++r] * 2 ** 16 + this[++r] * 2 ** 8 + this[++r], o = this[++r] * 2 ** 24 + this[++r] * 2 ** 16 + this[++r] * 2 ** 8 + e3;
-    return (BigInt(n) << BigInt(32)) + BigInt(o);
-  });
-  c.prototype.readIntLE = function(r, t, e3) {
-    r = r >>> 0, t = t >>> 0, e3 || l(r, t, this.length);
-    let n = this[r], o = 1, u = 0;
-    for (; ++u < t && (o *= 256); ) n += this[r + u] * o;
-    return o *= 128, n >= o && (n -= Math.pow(2, 8 * t)), n;
-  };
-  c.prototype.readIntBE = function(r, t, e3) {
-    r = r >>> 0, t = t >>> 0, e3 || l(r, t, this.length);
-    let n = t, o = 1, u = this[r + --n];
-    for (; n > 0 && (o *= 256); ) u += this[r + --n] * o;
-    return o *= 128, u >= o && (u -= Math.pow(2, 8 * t)), u;
-  };
-  c.prototype.readInt8 = function(r, t) {
-    return r = r >>> 0, t || l(r, 1, this.length), this[r] & 128 ? (255 - this[r] + 1) * -1 : this[r];
-  };
-  c.prototype.readInt16LE = function(r, t) {
-    r = r >>> 0, t || l(r, 2, this.length);
-    let e3 = this[r] | this[r + 1] << 8;
-    return e3 & 32768 ? e3 | 4294901760 : e3;
-  };
-  c.prototype.readInt16BE = function(r, t) {
-    r = r >>> 0, t || l(r, 2, this.length);
-    let e3 = this[r + 1] | this[r] << 8;
-    return e3 & 32768 ? e3 | 4294901760 : e3;
-  };
-  c.prototype.readInt32LE = function(r, t) {
-    return r = r >>> 0, t || l(r, 4, this.length), this[r] | this[r + 1] << 8 | this[r + 2] << 16 | this[r + 3] << 24;
-  };
-  c.prototype.readInt32BE = function(r, t) {
-    return r = r >>> 0, t || l(r, 4, this.length), this[r] << 24 | this[r + 1] << 16 | this[r + 2] << 8 | this[r + 3];
-  };
-  c.prototype.readBigInt64LE = E2(function(r) {
-    r = r >>> 0, T2(r, "offset");
-    let t = this[r], e3 = this[r + 7];
-    (t === void 0 || e3 === void 0) && C2(r, this.length - 8);
-    let n = this[r + 4] + this[r + 5] * 2 ** 8 + this[r + 6] * 2 ** 16 + (e3 << 24);
-    return (BigInt(n) << BigInt(32)) + BigInt(t + this[++r] * 2 ** 8 + this[++r] * 2 ** 16 + this[++r] * 2 ** 24);
-  });
-  c.prototype.readBigInt64BE = E2(function(r) {
-    r = r >>> 0, T2(r, "offset");
-    let t = this[r], e3 = this[r + 7];
-    (t === void 0 || e3 === void 0) && C2(r, this.length - 8);
-    let n = (t << 24) + this[++r] * 2 ** 16 + this[++r] * 2 ** 8 + this[++r];
-    return (BigInt(n) << BigInt(32)) + BigInt(this[++r] * 2 ** 24 + this[++r] * 2 ** 16 + this[++r] * 2 ** 8 + e3);
-  });
-  c.prototype.readFloatLE = function(r, t) {
-    return r = r >>> 0, t || l(r, 4, this.length), U2.read(this, r, true, 23, 4);
-  };
-  c.prototype.readFloatBE = function(r, t) {
-    return r = r >>> 0, t || l(r, 4, this.length), U2.read(this, r, false, 23, 4);
-  };
-  c.prototype.readDoubleLE = function(r, t) {
-    return r = r >>> 0, t || l(r, 8, this.length), U2.read(this, r, true, 52, 8);
-  };
-  c.prototype.readDoubleBE = function(r, t) {
-    return r = r >>> 0, t || l(r, 8, this.length), U2.read(this, r, false, 52, 8);
-  };
-  function y(i, r, t, e3, n, o) {
-    if (!c.isBuffer(i)) throw new TypeError('"buffer" argument must be a Buffer instance');
-    if (r > n || r < o) throw new RangeError('"value" argument is out of bounds');
-    if (t + e3 > i.length) throw new RangeError("Index out of range");
-  }
-  c.prototype.writeUintLE = c.prototype.writeUIntLE = function(r, t, e3, n) {
-    if (r = +r, t = t >>> 0, e3 = e3 >>> 0, !n) {
-      let h2 = Math.pow(2, 8 * e3) - 1;
-      y(this, r, t, e3, h2, 0);
-    }
-    let o = 1, u = 0;
-    for (this[t] = r & 255; ++u < e3 && (o *= 256); ) this[t + u] = r / o & 255;
-    return t + e3;
-  };
-  c.prototype.writeUintBE = c.prototype.writeUIntBE = function(r, t, e3, n) {
-    if (r = +r, t = t >>> 0, e3 = e3 >>> 0, !n) {
-      let h2 = Math.pow(2, 8 * e3) - 1;
-      y(this, r, t, e3, h2, 0);
-    }
-    let o = e3 - 1, u = 1;
-    for (this[t + o] = r & 255; --o >= 0 && (u *= 256); ) this[t + o] = r / u & 255;
-    return t + e3;
-  };
-  c.prototype.writeUint8 = c.prototype.writeUInt8 = function(r, t, e3) {
-    return r = +r, t = t >>> 0, e3 || y(this, r, t, 1, 255, 0), this[t] = r & 255, t + 1;
-  };
-  c.prototype.writeUint16LE = c.prototype.writeUInt16LE = function(r, t, e3) {
-    return r = +r, t = t >>> 0, e3 || y(this, r, t, 2, 65535, 0), this[t] = r & 255, this[t + 1] = r >>> 8, t + 2;
-  };
-  c.prototype.writeUint16BE = c.prototype.writeUInt16BE = function(r, t, e3) {
-    return r = +r, t = t >>> 0, e3 || y(this, r, t, 2, 65535, 0), this[t] = r >>> 8, this[t + 1] = r & 255, t + 2;
-  };
-  c.prototype.writeUint32LE = c.prototype.writeUInt32LE = function(r, t, e3) {
-    return r = +r, t = t >>> 0, e3 || y(this, r, t, 4, 4294967295, 0), this[t + 3] = r >>> 24, this[t + 2] = r >>> 16, this[t + 1] = r >>> 8, this[t] = r & 255, t + 4;
-  };
-  c.prototype.writeUint32BE = c.prototype.writeUInt32BE = function(r, t, e3) {
-    return r = +r, t = t >>> 0, e3 || y(this, r, t, 4, 4294967295, 0), this[t] = r >>> 24, this[t + 1] = r >>> 16, this[t + 2] = r >>> 8, this[t + 3] = r & 255, t + 4;
-  };
-  function ur(i, r, t, e3, n) {
-    sr(r, e3, n, i, t, 7);
-    let o = Number(r & BigInt(4294967295));
-    i[t++] = o, o = o >> 8, i[t++] = o, o = o >> 8, i[t++] = o, o = o >> 8, i[t++] = o;
-    let u = Number(r >> BigInt(32) & BigInt(4294967295));
-    return i[t++] = u, u = u >> 8, i[t++] = u, u = u >> 8, i[t++] = u, u = u >> 8, i[t++] = u, t;
-  }
-  function cr(i, r, t, e3, n) {
-    sr(r, e3, n, i, t, 7);
-    let o = Number(r & BigInt(4294967295));
-    i[t + 7] = o, o = o >> 8, i[t + 6] = o, o = o >> 8, i[t + 5] = o, o = o >> 8, i[t + 4] = o;
-    let u = Number(r >> BigInt(32) & BigInt(4294967295));
-    return i[t + 3] = u, u = u >> 8, i[t + 2] = u, u = u >> 8, i[t + 1] = u, u = u >> 8, i[t] = u, t + 8;
-  }
-  c.prototype.writeBigUInt64LE = E2(function(r, t = 0) {
-    return ur(this, r, t, BigInt(0), BigInt("0xffffffffffffffff"));
-  });
-  c.prototype.writeBigUInt64BE = E2(function(r, t = 0) {
-    return cr(this, r, t, BigInt(0), BigInt("0xffffffffffffffff"));
-  });
-  c.prototype.writeIntLE = function(r, t, e3, n) {
-    if (r = +r, t = t >>> 0, !n) {
-      let f = Math.pow(2, 8 * e3 - 1);
-      y(this, r, t, e3, f - 1, -f);
-    }
-    let o = 0, u = 1, h2 = 0;
-    for (this[t] = r & 255; ++o < e3 && (u *= 256); ) r < 0 && h2 === 0 && this[t + o - 1] !== 0 && (h2 = 1), this[t + o] = (r / u >> 0) - h2 & 255;
-    return t + e3;
-  };
-  c.prototype.writeIntBE = function(r, t, e3, n) {
-    if (r = +r, t = t >>> 0, !n) {
-      let f = Math.pow(2, 8 * e3 - 1);
-      y(this, r, t, e3, f - 1, -f);
-    }
-    let o = e3 - 1, u = 1, h2 = 0;
-    for (this[t + o] = r & 255; --o >= 0 && (u *= 256); ) r < 0 && h2 === 0 && this[t + o + 1] !== 0 && (h2 = 1), this[t + o] = (r / u >> 0) - h2 & 255;
-    return t + e3;
-  };
-  c.prototype.writeInt8 = function(r, t, e3) {
-    return r = +r, t = t >>> 0, e3 || y(this, r, t, 1, 127, -128), r < 0 && (r = 255 + r + 1), this[t] = r & 255, t + 1;
-  };
-  c.prototype.writeInt16LE = function(r, t, e3) {
-    return r = +r, t = t >>> 0, e3 || y(this, r, t, 2, 32767, -32768), this[t] = r & 255, this[t + 1] = r >>> 8, t + 2;
-  };
-  c.prototype.writeInt16BE = function(r, t, e3) {
-    return r = +r, t = t >>> 0, e3 || y(this, r, t, 2, 32767, -32768), this[t] = r >>> 8, this[t + 1] = r & 255, t + 2;
-  };
-  c.prototype.writeInt32LE = function(r, t, e3) {
-    return r = +r, t = t >>> 0, e3 || y(this, r, t, 4, 2147483647, -2147483648), this[t] = r & 255, this[t + 1] = r >>> 8, this[t + 2] = r >>> 16, this[t + 3] = r >>> 24, t + 4;
-  };
-  c.prototype.writeInt32BE = function(r, t, e3) {
-    return r = +r, t = t >>> 0, e3 || y(this, r, t, 4, 2147483647, -2147483648), r < 0 && (r = 4294967295 + r + 1), this[t] = r >>> 24, this[t + 1] = r >>> 16, this[t + 2] = r >>> 8, this[t + 3] = r & 255, t + 4;
-  };
-  c.prototype.writeBigInt64LE = E2(function(r, t = 0) {
-    return ur(this, r, t, -BigInt("0x8000000000000000"), BigInt("0x7fffffffffffffff"));
-  });
-  c.prototype.writeBigInt64BE = E2(function(r, t = 0) {
-    return cr(this, r, t, -BigInt("0x8000000000000000"), BigInt("0x7fffffffffffffff"));
-  });
-  function hr(i, r, t, e3, n, o) {
-    if (t + e3 > i.length) throw new RangeError("Index out of range");
-    if (t < 0) throw new RangeError("Index out of range");
-  }
-  function fr(i, r, t, e3, n) {
-    return r = +r, t = t >>> 0, n || hr(i, r, t, 4), U2.write(i, r, t, e3, 23, 4), t + 4;
-  }
-  c.prototype.writeFloatLE = function(r, t, e3) {
-    return fr(this, r, t, true, e3);
-  };
-  c.prototype.writeFloatBE = function(r, t, e3) {
-    return fr(this, r, t, false, e3);
-  };
-  function pr(i, r, t, e3, n) {
-    return r = +r, t = t >>> 0, n || hr(i, r, t, 8), U2.write(i, r, t, e3, 52, 8), t + 8;
-  }
-  c.prototype.writeDoubleLE = function(r, t, e3) {
-    return pr(this, r, t, true, e3);
-  };
-  c.prototype.writeDoubleBE = function(r, t, e3) {
-    return pr(this, r, t, false, e3);
-  };
-  c.prototype.copy = function(r, t, e3, n) {
-    if (!c.isBuffer(r)) throw new TypeError("argument should be a Buffer");
-    if (e3 || (e3 = 0), !n && n !== 0 && (n = this.length), t >= r.length && (t = r.length), t || (t = 0), n > 0 && n < e3 && (n = e3), n === e3 || r.length === 0 || this.length === 0) return 0;
-    if (t < 0) throw new RangeError("targetStart out of bounds");
-    if (e3 < 0 || e3 >= this.length) throw new RangeError("Index out of range");
-    if (n < 0) throw new RangeError("sourceEnd out of bounds");
-    n > this.length && (n = this.length), r.length - t < n - e3 && (n = r.length - t + e3);
-    let o = n - e3;
-    return this === r && typeof Uint8Array.prototype.copyWithin == "function" ? this.copyWithin(t, e3, n) : Uint8Array.prototype.set.call(r, this.subarray(e3, n), t), o;
-  };
-  c.prototype.fill = function(r, t, e3, n) {
-    if (typeof r == "string") {
-      if (typeof t == "string" ? (n = t, t = 0, e3 = this.length) : typeof e3 == "string" && (n = e3, e3 = this.length), n !== void 0 && typeof n != "string") throw new TypeError("encoding must be a string");
-      if (typeof n == "string" && !c.isEncoding(n)) throw new TypeError("Unknown encoding: " + n);
-      if (r.length === 1) {
-        let u = r.charCodeAt(0);
-        (n === "utf8" && u < 128 || n === "latin1") && (r = u);
-      }
-    } else typeof r == "number" ? r = r & 255 : typeof r == "boolean" && (r = Number(r));
-    if (t < 0 || this.length < t || this.length < e3) throw new RangeError("Out of range index");
-    if (e3 <= t) return this;
-    t = t >>> 0, e3 = e3 === void 0 ? this.length : e3 >>> 0, r || (r = 0);
-    let o;
-    if (typeof r == "number") for (o = t; o < e3; ++o) this[o] = r;
-    else {
-      let u = c.isBuffer(r) ? r : c.from(r, n), h2 = u.length;
-      if (h2 === 0) throw new TypeError('The value "' + r + '" is invalid for argument "value"');
-      for (o = 0; o < e3 - t; ++o) this[o + t] = u[o % h2];
-    }
-    return this;
-  };
-  var F2 = {};
-  function Y(i, r, t) {
-    F2[i] = class extends t {
-      constructor() {
-        super(), Object.defineProperty(this, "message", { value: r.apply(this, arguments), writable: true, configurable: true }), this.name = `${this.name} [${i}]`, this.stack, delete this.name;
-      }
-      get code() {
-        return i;
-      }
-      set code(n) {
-        Object.defineProperty(this, "code", { configurable: true, enumerable: true, value: n, writable: true });
-      }
-      toString() {
-        return `${this.name} [${i}]: ${this.message}`;
-      }
-    };
-  }
-  Y("ERR_BUFFER_OUT_OF_BOUNDS", function(i) {
-    return i ? `${i} is outside of buffer bounds` : "Attempt to access memory outside buffer bounds";
-  }, RangeError);
-  Y("ERR_INVALID_ARG_TYPE", function(i, r) {
-    return `The "${i}" argument must be of type number. Received type ${typeof r}`;
-  }, TypeError);
-  Y("ERR_OUT_OF_RANGE", function(i, r, t) {
-    let e3 = `The value of "${i}" is out of range.`, n = t;
-    return Number.isInteger(t) && Math.abs(t) > 2 ** 32 ? n = rr(String(t)) : typeof t == "bigint" && (n = String(t), (t > BigInt(2) ** BigInt(32) || t < -(BigInt(2) ** BigInt(32))) && (n = rr(n)), n += "n"), e3 += ` It must be ${r}. Received ${n}`, e3;
-  }, RangeError);
-  function rr(i) {
-    let r = "", t = i.length, e3 = i[0] === "-" ? 1 : 0;
-    for (; t >= e3 + 4; t -= 3) r = `_${i.slice(t - 3, t)}${r}`;
-    return `${i.slice(0, t)}${r}`;
-  }
-  function jr(i, r, t) {
-    T2(r, "offset"), (i[r] === void 0 || i[r + t] === void 0) && C2(r, i.length - (t + 1));
-  }
-  function sr(i, r, t, e3, n, o) {
-    if (i > t || i < r) {
-      let u = typeof r == "bigint" ? "n" : "", h2;
-      throw r === 0 || r === BigInt(0) ? h2 = `>= 0${u} and < 2${u} ** ${(o + 1) * 8}${u}` : h2 = `>= -(2${u} ** ${(o + 1) * 8 - 1}${u}) and < 2 ** ${(o + 1) * 8 - 1}${u}`, new F2.ERR_OUT_OF_RANGE("value", h2, i);
-    }
-    jr(e3, n, o);
-  }
-  function T2(i, r) {
-    if (typeof i != "number") throw new F2.ERR_INVALID_ARG_TYPE(r, "number", i);
-  }
-  function C2(i, r, t) {
-    throw Math.floor(i) !== i ? (T2(i, t), new F2.ERR_OUT_OF_RANGE("offset", "an integer", i)) : r < 0 ? new F2.ERR_BUFFER_OUT_OF_BOUNDS() : new F2.ERR_OUT_OF_RANGE("offset", `>= ${0} and <= ${r}`, i);
-  }
-  var Vr = /[^+/0-9A-Za-z-_]/g;
-  function Xr(i) {
-    if (i = i.split("=")[0], i = i.trim().replace(Vr, ""), i.length < 2) return "";
-    for (; i.length % 4 !== 0; ) i = i + "=";
-    return i;
-  }
-  function q(i, r) {
-    r = r || 1 / 0;
-    let t, e3 = i.length, n = null, o = [];
-    for (let u = 0; u < e3; ++u) {
-      if (t = i.charCodeAt(u), t > 55295 && t < 57344) {
-        if (!n) {
-          if (t > 56319) {
-            (r -= 3) > -1 && o.push(239, 191, 189);
-            continue;
-          } else if (u + 1 === e3) {
-            (r -= 3) > -1 && o.push(239, 191, 189);
-            continue;
-          }
-          n = t;
-          continue;
-        }
-        if (t < 56320) {
-          (r -= 3) > -1 && o.push(239, 191, 189), n = t;
-          continue;
-        }
-        t = (n - 55296 << 10 | t - 56320) + 65536;
-      } else n && (r -= 3) > -1 && o.push(239, 191, 189);
-      if (n = null, t < 128) {
-        if ((r -= 1) < 0) break;
-        o.push(t);
-      } else if (t < 2048) {
-        if ((r -= 2) < 0) break;
-        o.push(t >> 6 | 192, t & 63 | 128);
-      } else if (t < 65536) {
-        if ((r -= 3) < 0) break;
-        o.push(t >> 12 | 224, t >> 6 & 63 | 128, t & 63 | 128);
-      } else if (t < 1114112) {
-        if ((r -= 4) < 0) break;
-        o.push(t >> 18 | 240, t >> 12 & 63 | 128, t >> 6 & 63 | 128, t & 63 | 128);
-      } else throw new Error("Invalid code point");
-    }
-    return o;
-  }
-  function zr(i) {
-    let r = [];
-    for (let t = 0; t < i.length; ++t) r.push(i.charCodeAt(t) & 255);
-    return r;
-  }
-  function Jr(i, r) {
-    let t, e3, n, o = [];
-    for (let u = 0; u < i.length && !((r -= 2) < 0); ++u) t = i.charCodeAt(u), e3 = t >> 8, n = t % 256, o.push(n), o.push(e3);
-    return o;
-  }
-  function ar(i) {
-    return D2.toByteArray(Xr(i));
-  }
-  function k2(i, r, t, e3) {
-    let n;
-    for (n = 0; n < e3 && !(n + t >= r.length || n >= i.length); ++n) r[n + t] = i[n];
-    return n;
-  }
-  function m(i, r) {
-    return i instanceof r || i != null && i.constructor != null && i.constructor.name != null && i.constructor.name === r.name;
-  }
-  function W2(i) {
-    return i !== i;
-  }
-  var Kr = function() {
-    let i = "0123456789abcdef", r = new Array(256);
-    for (let t = 0; t < 16; ++t) {
-      let e3 = t * 16;
-      for (let n = 0; n < 16; ++n) r[e3 + n] = i[t] + i[n];
-    }
-    return r;
-  }();
-  function E2(i) {
-    return typeof BigInt > "u" ? Zr : i;
-  }
-  function Zr() {
-    throw new Error("BigInt not supported");
-  }
-});
-J$1(lr());
-/*! Bundled license information:
-
-ieee754/index.js:
-  (*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> *)
-
-buffer/index.js:
-  (*!
-   * The buffer module from node.js, for the browser.
-   *
-   * @author   Feross Aboukhadijeh <https://feross.org>
-   * @license  MIT
-   *)
-*/
-const _NNSAdapter = class _NNSAdapter {
-  constructor(config) {
-    this.name = "Internet Identity";
-    this.logo = _NNSAdapter.logo;
-    this.info = { id: "nns", icon: _NNSAdapter.logo, name: "Internet Identity", adapter: _NNSAdapter };
-    this.authClient = null;
-    this.agent = null;
-    this.state = Adapter.Status.INIT;
-    this.url = "https://identity.ic0.app";
-    this.config = {
-      fetchRootKeys: config == null ? void 0 : config.fetchRootKeys,
-      identityProviderUrl: (config == null ? void 0 : config.isDev) ? "https://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943/#authorize" : "https://identity.ic0.app/authenticate",
-      derivationOrigin: (config == null ? void 0 : config.derivationOrigin) || "https://localhost:5173",
-      ...config
-    };
-    this.initAuthClientSync();
-    this.setState(Adapter.Status.READY);
-  }
-  // Synchronous proxy method for initializing AuthClient
-  initAuthClientSync() {
-    this.initAuthClientAsync().catch((error) => {
-      console.error("Error in async AuthClient initialization:", error);
-    });
-  }
-  // Renamed to make the async nature clear
-  async initAuthClientAsync() {
-    var _a2, _b;
-    try {
-      this.authClient = await AuthClient.create({
-        idleOptions: {
-          idleTimeout: Number(1e3 * 60 * 60 * 24),
-          disableDefaultIdleCallback: true
-        }
-      });
-      (_b = (_a2 = this.authClient.idleManager) == null ? void 0 : _a2.registerCallback) == null ? void 0 : _b.call(
-        _a2,
-        () => this.refreshLogin()
-      );
-    } catch (error) {
-      console.error("Failed to initialize AuthClient:", error);
-    }
-  }
-  setState(newState) {
-    this.state = newState;
-  }
-  getState() {
-    return this.state;
-  }
-  // Helper method to initialize the HttpAgent
-  async initAgent(identity, host) {
-    var _a2;
-    this.agent = HttpAgent.createSync({
-      identity,
-      host,
-      verifyQuerySignatures: ((_a2 = this.config) == null ? void 0 : _a2.dfxNetwork) != "local"
-    });
-    if (this.config.dfxNetwork === "local") {
-      await this.agent.fetchRootKey();
-    }
-  }
-  // Checks if the wallet is available
-  async isAvailable() {
-    return true;
-  }
-  getIdentityProvider(isDev) {
-    return isDev ? this.config.identityProvider : "https://identity.ic0.app";
-  }
-  // Connects to the wallet using the provided configuration
-  async connect(config) {
-    try {
-      this.setState(Adapter.Status.CONNECTING);
-      this.config = config;
-      if (!this.authClient) {
-        await this.initAuthClientAsync();
-      }
-      if (!this.authClient) {
-        throw new Error("Failed to initialize AuthClient");
-      }
-      const isAuthenticated = await this.authClient.isAuthenticated();
-      if (!isAuthenticated) {
-        return new Promise((resolve, reject) => {
-          this.authClient.login({
-            derivationOrigin: this.config.derivationOrigin,
-            identityProvider: this.getIdentityProvider(config.dfxNetwork === "local" || true),
-            maxTimeToLive: BigInt(
-              Number(
-                config.delegationTimeout || 24 * 60 * 60 * 1e3 * 1e3 * 1e3
-              )
-            ),
-            onSuccess: () => {
-              localStorage.setItem("nns_auth_status", "authenticated");
-              this._continueLogin(config.hostUrl || this.url).then((account2) => {
-                this.setState(Adapter.Status.READY);
-                resolve(account2);
-              }).catch(reject);
-            },
-            onError: (error) => {
-              this.disconnect();
-              reject(new Error("Authentication failed: " + error));
-            }
-          });
-        });
-      }
-      const account = await this._continueLogin(config.hostUrl || this.url);
-      localStorage.setItem("nns_auth_status", "authenticated");
-      this.setState(Adapter.Status.READY);
-      return account;
-    } catch (error) {
-      this.disconnect();
-      throw error;
-    }
-  }
-  async _continueLogin(host) {
-    try {
-      const identity = this.authClient.getIdentity();
-      const principal = identity.getPrincipal();
-      await this.initAgent(identity, host);
-      return {
-        owner: principal,
-        subaccount: D.fromPrincipal({
-          principal,
-          subAccount: void 0
-          // This will use the default subaccount
-        }).toUint8Array()
-      };
-    } catch (error) {
-      console.error("Error during _continueLogin:", error);
-      throw error;
-    }
-  }
-  // Check if the wallet is connected
-  async isConnected() {
-    const nnsAuthStatus = localStorage.getItem("nns_auth_status");
-    if (nnsAuthStatus === "authenticated") {
-      if (this.authClient) {
-        return this.authClient.isAuthenticated();
-      }
-      return true;
-    }
-    return false;
-  }
-  // Create an actor for interacting with a canister
-  createActor(canisterId, idl) {
-    if (!this.agent) {
-      throw new Error(
-        "Agent is not initialized. Ensure the wallet is connected."
-      );
-    }
-    return Actor.createActor(idl, {
-      agent: this.agent,
-      canisterId
-    });
-  }
-  // Get the principal associated with the wallet
-  async getPrincipal() {
-    if (!this.authClient) {
-      throw new Error(
-        "AuthClient is not initialized. Ensure the wallet is connected."
-      );
-    }
-    return this.authClient.getIdentity().getPrincipal();
-  }
-  // Get the subaccount associated with the wallet
-  async getAccountId() {
-    if (!this.authClient) {
-      throw new Error(
-        "AuthClient is not initialized. Ensure the wallet is connected."
-      );
-    }
-    const principal = this.authClient.getIdentity().getPrincipal();
-    const subAccount = D.fromPrincipal({
-      principal,
-      subAccount: void 0
-      // This will use the default subaccount
-    }).toHex();
-    if (subAccount) {
-      return subAccount.toString() || "";
-    }
-  }
-  // Refresh login when session is about to expire
-  async refreshLogin() {
-    try {
-      await this.connect(this.config);
-    } catch (error) {
-      console.error("Failed to refresh login:", error);
-      await this.disconnect();
-    }
-  }
-  // Disconnects from the wallet
-  async disconnect() {
-    try {
-      this.setState(Adapter.Status.DISCONNECTING);
-      localStorage.removeItem("nns_auth_status");
-      if (this.authClient) {
-        await this.authClient.logout();
-        this.authClient = null;
-      }
-      if (this.agent) {
-        this.agent = null;
-      }
-      this.setState(Adapter.Status.DISCONNECTED);
-    } catch (error) {
-      this.setState(Adapter.Status.ERROR);
-      throw error;
-    }
-  }
-};
-_NNSAdapter.logo = dfinityLogo;
-let NNSAdapter = _NNSAdapter;
-const plugLogo = "data:image/webp;base64,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";
-const _PlugAdapter = class _PlugAdapter {
-  // Update every 2 seconds
-  constructor() {
-    this.logo = _PlugAdapter.logo;
-    this.name = "Plug";
-    this.url = "https://plugwallet.ooo/";
-    this.info = { id: "plug", icon: _PlugAdapter.logo, name: "Plug", adapter: _PlugAdapter };
-    this.readyState = "NotDetected";
-    this._connectionState = false;
-    this._connectionStateTimestamp = 0;
-    this._connectionStateUpdateInterval = 2e3;
-    this.initPlug();
-    this.updateConnectionState();
-  }
-  // Initialize Plug and set readyState accordingly
-  initPlug() {
-    if (typeof window !== "undefined" && window.ic && window.ic.plug) {
-      this.readyState = "Installed";
-      window.ic.plug.isConnected().then((connected) => {
-        this.readyState = connected ? "Connected" : "Installed";
-      });
-    } else {
-      this.readyState = "NotDetected";
-    }
-  }
-  // Check if the wallet is available
-  async isAvailable() {
-    return this.readyState !== "NotDetected";
-  }
-  // Connect to Plug wallet
-  async connect(config) {
-    const isConnected = await window.ic.plug.isConnected();
-    if (!isConnected) {
-      try {
-        console.log("Connecting to Plug wallet...", config);
-        const connected = await window.ic.plug.requestConnect({
-          whitelist: config.whitelist || [],
-          host: config.hostUrl || "https://mainnet.dfinity.network",
-          timeout: config.timeout || 1e3 * 60 * 60 * 24 * 7,
-          onConnectionUpdate: () => console.log("Plug connection updated")
-        });
-        if (!connected) {
-          throw new Error("User declined the connection request");
-        }
-        this.readyState = "Connected";
-      } catch (e3) {
-        console.error("Failed to connect to Plug wallet:", e3);
-        throw e3;
-      }
-    } else {
-      this.readyState = "Connected";
-    }
-    const principal = await this.getPrincipal();
-    await this.getAccountId();
-    return {
-      owner: principal,
-      subaccount: null
-    };
-  }
-  // Disconnect from Plug wallet
-  async disconnect() {
-    if (window.ic && window.ic.plug && window.ic.plug.disconnect) {
-      await window.ic.plug.disconnect();
-      this.readyState = "Disconnected";
-    } else {
-      throw new Error("Plug wallet is not available");
-    }
-  }
-  // Get the user's principal ID
-  async getPrincipal() {
-    if (window.ic && window.ic.plug && window.ic.plug.principalId) {
-      return Principal.fromText(window.ic.plug.principalId);
-    } else {
-      throw new Error("Plug wallet is not available or principal ID is unavailable");
-    }
-  }
-  // Get the user's account ID
-  async getAccountId() {
-    if (window.ic && window.ic.plug && window.ic.plug.accountId) {
-      return window.ic.plug.accountId;
-    } else {
-      throw new Error("Plug wallet is not available or account ID is unavailable");
-    }
-  }
-  // Create an actor to interact with a canister
-  createActor(canisterId, idl, options) {
-    if (!canisterId || !idl) {
-      throw new Error("Canister ID and IDL factory are required");
-    }
-    if (window.ic && window.ic.plug && window.ic.plug.createActor) {
-      try {
-        const actorPromise = window.ic.plug.createActor({
-          canisterId,
-          interfaceFactory: idl
-        });
-        const proxy = new Proxy({}, {
-          get: (_2, prop) => {
-            if (prop === "then") {
-              return void 0;
-            }
-            return (...args) => {
-              return actorPromise.then((actor) => {
-                const value = actor[prop];
-                if (typeof value === "function") {
-                  return value.apply(actor, args);
-                }
-                return value;
-              });
-            };
-          }
-        });
-        return proxy;
-      } catch (e3) {
-        console.error("Failed to create actor through Plug:", e3);
-        throw e3;
-      }
-    } else {
-      throw new Error("Plug wallet is not available or not connected");
-    }
-  }
-  async updateConnectionState() {
-    if (window.ic && window.ic.plug && window.ic.plug.isConnected) {
-      this._connectionState = await window.ic.plug.isConnected();
-      this._connectionStateTimestamp = Date.now();
-    } else {
-      this._connectionState = false;
-    }
-  }
-  async isConnected() {
-    if (Date.now() - this._connectionStateTimestamp > this._connectionStateUpdateInterval) {
-      this.updateConnectionState().catch((err) => console.error("Failed to update connection state:", err));
-    }
-    return this._connectionState;
-  }
-  // Keep the async version for backward compatibility
-  async isConnectedAsync() {
-    if (window.ic && window.ic.plug && window.ic.plug.isConnected) {
-      return await window.ic.plug.isConnected();
-    } else {
-      return false;
-    }
-  }
-  // Handle connection updates (e.g., account switching)
-  handleConnectionUpdate() {
-    var _a2, _b, _c, _d, _e, _f, _g, _h;
-    if (((_b = (_a2 = window.ic) == null ? void 0 : _a2.plug) == null ? void 0 : _b.principalId) && ((_d = (_c = window.ic) == null ? void 0 : _c.plug) == null ? void 0 : _d.accountId)) {
-      const { principalId, accountId } = window.ic.plug;
-      this.readyState = "Connected";
-      const event = new CustomEvent("plug-connection-update", {
-        detail: {
-          principalId,
-          accountId,
-          readyState: this.readyState
-        }
-      });
-      window.dispatchEvent(event);
-    } else {
-      this.readyState = "Disconnected";
-      const event = new CustomEvent("plug-connection-update", {
-        detail: {
-          principalId: null,
-          accountId: null,
-          readyState: this.readyState
-        }
-      });
-      window.dispatchEvent(event);
-    }
-    console.log("Plug connection updated:", {
-      readyState: this.readyState,
-      principalId: (_f = (_e = window.ic) == null ? void 0 : _e.plug) == null ? void 0 : _f.principalId,
-      accountId: (_h = (_g = window.ic) == null ? void 0 : _g.plug) == null ? void 0 : _h.accountId
-    });
-  }
-};
-_PlugAdapter.logo = plugLogo;
-let PlugAdapter = _PlugAdapter;
-const nfidLogo = "data:image/webp;base64,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";
-const NETWORK_ERROR = 4e3;
-const ENCODE_CHUNK_SIZE = 1e5;
-const fromBase64 = (base64) => {
-  if (typeof globalThis.Buffer !== "undefined") {
-    return globalThis.Buffer.from(base64, "base64").buffer;
-  }
-  if (typeof globalThis.atob !== "undefined") {
-    return Uint8Array.from(globalThis.atob(base64), (m) => m.charCodeAt(0)).buffer;
-  }
-  throw Error("Could not decode base64 string");
-};
-const toBase64 = (bytes) => {
-  if (typeof globalThis.Buffer !== "undefined") {
-    return globalThis.Buffer.from(bytes).toString("base64");
-  }
-  if (typeof globalThis.btoa !== "undefined") {
-    return btoa(Array.from({ length: Math.ceil(bytes.byteLength / ENCODE_CHUNK_SIZE) }).map((_2, index2) => String.fromCharCode(...new Uint8Array(bytes.slice(index2 * ENCODE_CHUNK_SIZE, (index2 + 1) * ENCODE_CHUNK_SIZE)))).join(""));
-  }
-  throw Error("Could not encode base64 string");
-};
-var __classPrivateFieldSet$5 = function(receiver, state, value, kind, f) {
-  if (typeof state === "function" ? receiver !== state || true : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
-  return state.set(receiver, value), value;
-};
-var __classPrivateFieldGet$5 = function(receiver, state, kind, f) {
-  if (typeof state === "function" ? receiver !== state || true : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
-  return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
-};
-var _Signer_options, _Signer_channel, _Signer_establishingChannel, _Signer_scheduledChannelClosure;
-class SignerError extends Error {
-  constructor(error) {
-    super(error.message);
-    Object.setPrototypeOf(this, SignerError.prototype);
-    this.code = error.code;
-    this.data = error.data;
-  }
-}
-const wrapTransportError = (error) => new SignerError({
-  code: NETWORK_ERROR,
-  message: error instanceof Error ? error.message : "Network error"
-});
-const unwrapResponse = (response) => {
-  if ("error" in response) {
-    throw new SignerError(response.error);
-  }
-  if ("result" in response) {
-    return response.result;
-  }
-  throw new SignerError({
-    code: NETWORK_ERROR,
-    message: "Invalid response"
-  });
-};
-class Signer {
-  constructor(options) {
-    _Signer_options.set(this, void 0);
-    _Signer_channel.set(this, void 0);
-    _Signer_establishingChannel.set(this, void 0);
-    _Signer_scheduledChannelClosure.set(this, void 0);
-    __classPrivateFieldSet$5(this, _Signer_options, Object.assign({ autoCloseTransportChannel: true, closeTransportChannelAfter: 200, crypto: globalThis.crypto }, options));
-  }
-  get transport() {
-    return __classPrivateFieldGet$5(this, _Signer_options, "f").transport;
-  }
-  async openChannel() {
-    clearTimeout(__classPrivateFieldGet$5(this, _Signer_scheduledChannelClosure, "f"));
-    if (__classPrivateFieldGet$5(this, _Signer_establishingChannel, "f")) {
-      await __classPrivateFieldGet$5(this, _Signer_establishingChannel, "f");
-    }
-    if (__classPrivateFieldGet$5(this, _Signer_channel, "f") && !__classPrivateFieldGet$5(this, _Signer_channel, "f").closed) {
-      return __classPrivateFieldGet$5(this, _Signer_channel, "f");
-    }
-    const channel = __classPrivateFieldGet$5(this, _Signer_options, "f").transport.establishChannel();
-    __classPrivateFieldSet$5(this, _Signer_establishingChannel, channel.then(() => {
-    }).catch(() => {
-    }));
-    __classPrivateFieldSet$5(this, _Signer_channel, void 0);
-    __classPrivateFieldSet$5(this, _Signer_channel, await channel.catch((error) => {
-      throw wrapTransportError(error);
-    }));
-    __classPrivateFieldSet$5(this, _Signer_establishingChannel, void 0);
-    return __classPrivateFieldGet$5(this, _Signer_channel, "f");
-  }
-  async closeChannel() {
-    var _a2;
-    await ((_a2 = __classPrivateFieldGet$5(this, _Signer_channel, "f")) === null || _a2 === void 0 ? void 0 : _a2.close());
-  }
-  async transformRequest(request) {
-    if (__classPrivateFieldGet$5(this, _Signer_options, "f").derivationOrigin) {
-      return Object.assign(Object.assign({}, request), { params: Object.assign(Object.assign({}, request.params), { icrc95DerivationOrigin: __classPrivateFieldGet$5(this, _Signer_options, "f").derivationOrigin }) });
-    }
-    return request;
-  }
-  async sendRequest(request) {
-    const channel = await this.openChannel();
-    return new Promise(async (resolve, reject) => {
-      const responseListener = channel.addEventListener("response", async (response) => {
-        if (response.id !== request.id) {
-          return;
-        }
-        responseListener();
-        closeListener();
-        resolve(response);
-        if (__classPrivateFieldGet$5(this, _Signer_options, "f").autoCloseTransportChannel) {
-          __classPrivateFieldSet$5(this, _Signer_scheduledChannelClosure, setTimeout(() => {
-            if (!channel.closed) {
-              channel.close();
-            }
-          }, __classPrivateFieldGet$5(this, _Signer_options, "f").closeTransportChannelAfter));
-        }
-      });
-      const closeListener = channel.addEventListener("close", () => {
-        responseListener();
-        closeListener();
-        reject(new SignerError({
-          code: NETWORK_ERROR,
-          message: "Channel was closed before a response was received"
-        }));
-      });
-      try {
-        await channel.send(await this.transformRequest(request));
-      } catch (error) {
-        responseListener();
-        closeListener();
-        reject(wrapTransportError(error));
-      }
-    });
-  }
-  async supportedStandards() {
-    const response = await this.sendRequest({
-      id: __classPrivateFieldGet$5(this, _Signer_options, "f").crypto.randomUUID(),
-      jsonrpc: "2.0",
-      method: "icrc25_supported_standards"
-    });
-    const result = unwrapResponse(response);
-    return result.supportedStandards;
-  }
-  async requestPermissions(scopes) {
-    const response = await this.sendRequest({
-      id: __classPrivateFieldGet$5(this, _Signer_options, "f").crypto.randomUUID(),
-      jsonrpc: "2.0",
-      method: "icrc25_request_permissions",
-      params: { scopes }
-    });
-    const result = unwrapResponse(response);
-    return result.scopes;
-  }
-  async permissions() {
-    const response = await this.sendRequest({
-      id: __classPrivateFieldGet$5(this, _Signer_options, "f").crypto.randomUUID(),
-      jsonrpc: "2.0",
-      method: "icrc25_permissions"
-    });
-    const result = unwrapResponse(response);
-    return result.scopes;
-  }
-  async accounts() {
-    const response = await this.sendRequest({
-      id: __classPrivateFieldGet$5(this, _Signer_options, "f").crypto.randomUUID(),
-      jsonrpc: "2.0",
-      method: "icrc27_accounts"
-    });
-    const result = unwrapResponse(response);
-    return result.accounts.map(({ owner, subaccount }) => ({
-      owner: Principal.fromText(owner),
-      subaccount: subaccount === void 0 ? void 0 : fromBase64(subaccount)
-    }));
-  }
-  async delegation(params) {
-    var _a2;
-    const response = await this.sendRequest({
-      id: __classPrivateFieldGet$5(this, _Signer_options, "f").crypto.randomUUID(),
-      jsonrpc: "2.0",
-      method: "icrc34_delegation",
-      params: {
-        publicKey: toBase64(params.publicKey),
-        targets: (_a2 = params.targets) === null || _a2 === void 0 ? void 0 : _a2.map((p) => p.toText()),
-        maxTimeToLive: params.maxTimeToLive === void 0 ? void 0 : String(params.maxTimeToLive)
-      }
-    });
-    const result = unwrapResponse(response);
-    return DelegationChain.fromDelegations(result.signerDelegation.map((delegation) => {
-      var _a22;
-      return {
-        delegation: new Delegation(fromBase64(delegation.delegation.pubkey), BigInt(delegation.delegation.expiration), (_a22 = delegation.delegation.targets) === null || _a22 === void 0 ? void 0 : _a22.map((principal) => Principal.fromText(principal))),
-        signature: fromBase64(delegation.signature)
-      };
-    }), fromBase64(result.publicKey));
-  }
-  async callCanister(params) {
-    const response = await this.sendRequest({
-      id: __classPrivateFieldGet$5(this, _Signer_options, "f").crypto.randomUUID(),
-      jsonrpc: "2.0",
-      method: "icrc49_call_canister",
-      params: {
-        canisterId: params.canisterId.toText(),
-        sender: params.sender.toText(),
-        method: params.method,
-        arg: toBase64(params.arg)
-      }
-    });
-    const result = unwrapResponse(response);
-    const contentMap = fromBase64(result.contentMap);
-    const certificate = fromBase64(result.certificate);
-    return { contentMap, certificate };
-  }
-  async batchCallCanister(params) {
-    const response = await this.sendRequest({
-      id: __classPrivateFieldGet$5(this, _Signer_options, "f").crypto.randomUUID(),
-      jsonrpc: "2.0",
-      method: "icrc112_batch_call_canister",
-      params: {
-        sender: params.sender.toText(),
-        requests: params.requests.map((requests) => requests.map((request) => ({
-          canisterId: request.canisterId.toText(),
-          method: request.method,
-          arg: toBase64(request.arg)
-        }))),
-        validation: params.validation ? {
-          canisterId: params.validation.canisterId.toText(),
-          method: params.validation.method
-        } : void 0
-      }
-    });
-    const result = unwrapResponse(response);
-    if (params.requests.length !== result.responses.length || params.requests.some((entries, index2) => entries.length !== result.responses[index2].length)) {
-      throw new SignerError({
-        code: NETWORK_ERROR,
-        message: "Invalid batch call canister response, responses structure does not match request structure"
-      });
-    }
-    return result.responses.map((responses) => responses.map((response2) => {
-      if ("result" in response2) {
-        const contentMap = fromBase64(response2.result.contentMap);
-        const certificate = fromBase64(response2.result.certificate);
-        return { result: { contentMap, certificate } };
-      }
-      return response2;
-    }));
-  }
-}
-_Signer_options = /* @__PURE__ */ new WeakMap(), _Signer_channel = /* @__PURE__ */ new WeakMap(), _Signer_establishingChannel = /* @__PURE__ */ new WeakMap(), _Signer_scheduledChannelClosure = /* @__PURE__ */ new WeakMap();
-const isJsonRpcMessage = (message) => typeof message === "object" && !!message && "jsonrpc" in message && message.jsonrpc === "2.0";
-const isJsonRpcResponse = (message) => isJsonRpcMessage(message) && "id" in message && (typeof message.id === "string" || typeof message.id === "number");
-var __classPrivateFieldSet$4 = function(receiver, state, value, kind, f) {
-  if (typeof state === "function" ? receiver !== state || true : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
-  return state.set(receiver, value), value;
-};
-var __classPrivateFieldGet$4 = function(receiver, state, kind, f) {
-  if (typeof state === "function" ? receiver !== state || true : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
-  return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
-};
-var _PostMessageChannel_closeListeners, _PostMessageChannel_options, _PostMessageChannel_closed;
-class PostMessageChannel {
-  constructor(options) {
-    _PostMessageChannel_closeListeners.set(this, /* @__PURE__ */ new Set());
-    _PostMessageChannel_options.set(this, void 0);
-    _PostMessageChannel_closed.set(this, false);
-    __classPrivateFieldSet$4(this, _PostMessageChannel_options, Object.assign({ window: globalThis.window, manageFocus: true }, options));
-  }
-  get closed() {
-    return __classPrivateFieldGet$4(this, _PostMessageChannel_closed, "f");
-  }
-  addEventListener(...[event, listener]) {
-    switch (event) {
-      case "close":
-        __classPrivateFieldGet$4(this, _PostMessageChannel_closeListeners, "f").add(listener);
-        return () => {
-          __classPrivateFieldGet$4(this, _PostMessageChannel_closeListeners, "f").delete(listener);
-        };
-      case "response":
-        const messageListener = async (event2) => {
-          if (event2.source !== __classPrivateFieldGet$4(this, _PostMessageChannel_options, "f").signerWindow || event2.origin !== __classPrivateFieldGet$4(this, _PostMessageChannel_options, "f").signerOrigin || !isJsonRpcResponse(event2.data)) {
-            return;
-          }
-          listener(event2.data);
-        };
-        __classPrivateFieldGet$4(this, _PostMessageChannel_options, "f").window.addEventListener("message", messageListener);
-        return () => {
-          __classPrivateFieldGet$4(this, _PostMessageChannel_options, "f").window.removeEventListener("message", messageListener);
-        };
-    }
-  }
-  async send(request) {
-    if (__classPrivateFieldGet$4(this, _PostMessageChannel_closed, "f")) {
-      throw new PostMessageTransportError("Communication channel is closed");
-    }
-    __classPrivateFieldGet$4(this, _PostMessageChannel_options, "f").signerWindow.postMessage(request, __classPrivateFieldGet$4(this, _PostMessageChannel_options, "f").signerOrigin);
-    if (__classPrivateFieldGet$4(this, _PostMessageChannel_options, "f").manageFocus) {
-      __classPrivateFieldGet$4(this, _PostMessageChannel_options, "f").signerWindow.focus();
-    }
-  }
-  async close() {
-    if (__classPrivateFieldGet$4(this, _PostMessageChannel_closed, "f")) {
-      return;
-    }
-    __classPrivateFieldSet$4(this, _PostMessageChannel_closed, true);
-    __classPrivateFieldGet$4(this, _PostMessageChannel_options, "f").signerWindow.close();
-    if (__classPrivateFieldGet$4(this, _PostMessageChannel_options, "f").manageFocus) {
-      __classPrivateFieldGet$4(this, _PostMessageChannel_options, "f").window.focus();
-    }
-    __classPrivateFieldGet$4(this, _PostMessageChannel_closeListeners, "f").forEach((listener) => listener());
-  }
-}
-_PostMessageChannel_closeListeners = /* @__PURE__ */ new WeakMap(), _PostMessageChannel_options = /* @__PURE__ */ new WeakMap(), _PostMessageChannel_closed = /* @__PURE__ */ new WeakMap();
-const urlIsSecureContext = (value) => {
-  try {
-    const url = new URL(value);
-    return url.protocol === "https:" || url.hostname === "127.0.0.1" || url.hostname.split(".").slice(-1)[0] === "localhost";
-  } catch (_a2) {
-    return false;
-  }
-};
-var __classPrivateFieldSet$3 = function(receiver, state, value, kind, f) {
-  if (typeof state === "function" ? receiver !== state || true : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
-  return state.set(receiver, value), value;
-};
-var __classPrivateFieldGet$3 = function(receiver, state, kind, f) {
-  if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
-  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
-  return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
-};
-var _HeartbeatClient_instances, _HeartbeatClient_options, _HeartbeatClient_establish, _HeartbeatClient_maintain, _HeartbeatClient_receiveReadyResponse, _HeartbeatClient_sendStatusRequest;
-class HeartbeatClient {
-  constructor(options) {
-    _HeartbeatClient_instances.add(this);
-    _HeartbeatClient_options.set(this, void 0);
-    __classPrivateFieldSet$3(this, _HeartbeatClient_options, Object.assign({ establishTimeout: 1e4, disconnectTimeout: 2e3, statusPollingRate: 300, window: globalThis.window, crypto: globalThis.crypto }, options));
-    __classPrivateFieldGet$3(this, _HeartbeatClient_instances, "m", _HeartbeatClient_establish).call(this);
-  }
-}
-_HeartbeatClient_options = /* @__PURE__ */ new WeakMap(), _HeartbeatClient_instances = /* @__PURE__ */ new WeakSet(), _HeartbeatClient_establish = function _HeartbeatClient_establish2() {
-  const pending = [];
-  const create = () => {
-    const id = __classPrivateFieldGet$3(this, _HeartbeatClient_options, "f").crypto.randomUUID();
-    pending.push(id);
-    return id;
-  };
-  const listener = __classPrivateFieldGet$3(this, _HeartbeatClient_instances, "m", _HeartbeatClient_receiveReadyResponse).call(this, (response) => {
-    if (pending.includes(response.data.id)) {
-      listener();
-      clearInterval(interval);
-      clearTimeout(timeout);
-      __classPrivateFieldGet$3(this, _HeartbeatClient_options, "f").onEstablish(response.origin);
-      __classPrivateFieldGet$3(this, _HeartbeatClient_instances, "m", _HeartbeatClient_maintain).call(this, response.origin);
-    }
-  });
-  const timeout = setTimeout(() => {
-    listener();
-    clearInterval(interval);
-    __classPrivateFieldGet$3(this, _HeartbeatClient_options, "f").onEstablishTimeout();
-  }, __classPrivateFieldGet$3(this, _HeartbeatClient_options, "f").establishTimeout);
-  const interval = setInterval(() => __classPrivateFieldGet$3(this, _HeartbeatClient_instances, "m", _HeartbeatClient_sendStatusRequest).call(this, create()), __classPrivateFieldGet$3(this, _HeartbeatClient_options, "f").statusPollingRate);
-}, _HeartbeatClient_maintain = function _HeartbeatClient_maintain2(origin) {
-  let interval;
-  let timeout;
-  let pending = [];
-  const consume = (id) => {
-    const index2 = pending.findIndex((entry) => entry.id === id);
-    if (index2 > -1) {
-      pending.splice(index2, 1);
-    }
-    return index2 > -1;
-  };
-  const create = () => {
-    const id = __classPrivateFieldGet$3(this, _HeartbeatClient_options, "f").crypto.randomUUID();
-    const time = (/* @__PURE__ */ new Date()).getTime();
-    pending = pending.filter((entry) => time - __classPrivateFieldGet$3(this, _HeartbeatClient_options, "f").disconnectTimeout > entry.time);
-    pending.push({ id, time });
-    return id;
-  };
-  const resetTimeout = () => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => {
-      listener();
-      clearInterval(interval);
-      __classPrivateFieldGet$3(this, _HeartbeatClient_options, "f").onDisconnect();
-    }, __classPrivateFieldGet$3(this, _HeartbeatClient_options, "f").disconnectTimeout);
-  };
-  const listener = __classPrivateFieldGet$3(this, _HeartbeatClient_instances, "m", _HeartbeatClient_receiveReadyResponse).call(this, (response) => {
-    if (response.origin === origin && consume(response.data.id)) {
-      resetTimeout();
-    }
-  });
-  resetTimeout();
-  interval = setInterval(() => __classPrivateFieldGet$3(this, _HeartbeatClient_instances, "m", _HeartbeatClient_sendStatusRequest).call(this, create()), __classPrivateFieldGet$3(this, _HeartbeatClient_options, "f").statusPollingRate);
-}, _HeartbeatClient_receiveReadyResponse = function _HeartbeatClient_receiveReadyResponse2(handler) {
-  const listener = (event) => {
-    if (event.source === __classPrivateFieldGet$3(this, _HeartbeatClient_options, "f").signerWindow && isJsonRpcResponse(event.data) && "result" in event.data && event.data.result === "ready") {
-      handler(event);
-    }
-  };
-  __classPrivateFieldGet$3(this, _HeartbeatClient_options, "f").window.addEventListener("message", listener);
-  return () => __classPrivateFieldGet$3(this, _HeartbeatClient_options, "f").window.removeEventListener("message", listener);
-}, _HeartbeatClient_sendStatusRequest = function _HeartbeatClient_sendStatusRequest2(id) {
-  __classPrivateFieldGet$3(this, _HeartbeatClient_options, "f").signerWindow.postMessage({ jsonrpc: "2.0", id, method: "icrc29_status" }, "*");
-};
-var __classPrivateFieldSet$2 = function(receiver, state, value, kind, f) {
-  if (typeof state === "function" ? receiver !== state || true : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
-  return state.set(receiver, value), value;
-};
-var __classPrivateFieldGet$2 = function(receiver, state, kind, f) {
-  if (typeof state === "function" ? receiver !== state || true : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
-  return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
-};
-var _PostMessageTransport_options;
-const NON_CLICK_ESTABLISHMENT_LINK = "https://github.com/slide-computer/signer-js/blob/main/packages/signer-web/README.md#channels-must-be-established-in-a-click-handler";
-class PostMessageTransportError extends Error {
-  constructor(message) {
-    super(message);
-    Object.setPrototypeOf(this, PostMessageTransportError.prototype);
-  }
-}
-let withinClick = false;
-if (globalThis.window) {
-  globalThis.window.addEventListener("click", () => withinClick = true, true);
-  globalThis.window.addEventListener("click", () => withinClick = false);
-}
-class PostMessageTransport {
-  constructor(options) {
-    _PostMessageTransport_options.set(this, void 0);
-    if (!urlIsSecureContext(options.url)) {
-      throw new PostMessageTransportError("Invalid signer RPC url");
-    }
-    __classPrivateFieldSet$2(this, _PostMessageTransport_options, Object.assign({ windowOpenerFeatures: "", window: globalThis.window, establishTimeout: 12e4, disconnectTimeout: 2e3, statusPollingRate: 300, crypto: globalThis.crypto, manageFocus: true, closeOnEstablishTimeout: true, detectNonClickEstablishment: true }, options));
-  }
-  async establishChannel() {
-    if (__classPrivateFieldGet$2(this, _PostMessageTransport_options, "f").detectNonClickEstablishment && !withinClick) {
-      throw new PostMessageTransportError(`Signer window should not be opened outside of click handler, see: ${NON_CLICK_ESTABLISHMENT_LINK}`);
-    }
-    const signerWindow = __classPrivateFieldGet$2(this, _PostMessageTransport_options, "f").window.open(__classPrivateFieldGet$2(this, _PostMessageTransport_options, "f").url, "signerWindow", __classPrivateFieldGet$2(this, _PostMessageTransport_options, "f").windowOpenerFeatures);
-    if (!signerWindow) {
-      throw new PostMessageTransportError("Signer window could not be opened");
-    }
-    return new Promise((resolve, reject) => {
-      let channel;
-      new HeartbeatClient(Object.assign(Object.assign({}, __classPrivateFieldGet$2(this, _PostMessageTransport_options, "f")), { signerWindow, onEstablish: (origin) => {
-        channel = new PostMessageChannel(Object.assign(Object.assign({}, __classPrivateFieldGet$2(this, _PostMessageTransport_options, "f")), { signerOrigin: origin, signerWindow }));
-        resolve(channel);
-      }, onEstablishTimeout: () => {
-        if (__classPrivateFieldGet$2(this, _PostMessageTransport_options, "f").closeOnEstablishTimeout) {
-          signerWindow.close();
-        }
-        reject(new PostMessageTransportError("Communication channel could not be established within a reasonable time"));
-      }, onDisconnect: () => channel.close() }));
-    });
-  }
-}
-_PostMessageTransport_options = /* @__PURE__ */ new WeakMap();
-var isNumeric = /^-?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i, mathceil = Math.ceil, mathfloor = Math.floor, bignumberError = "[BigNumber Error] ", tooManyDigits = bignumberError + "Number primitive has more than 15 significant digits: ", BASE = 1e14, LOG_BASE = 14, MAX_SAFE_INTEGER = 9007199254740991, POWS_TEN = [1, 10, 100, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11, 1e12, 1e13], SQRT_BASE = 1e7, MAX = 1e9;
-function clone(configObject) {
-  var div, convertBase, parseNumeric, P2 = BigNumber.prototype = { constructor: BigNumber, toString: null, valueOf: null }, ONE = new BigNumber(1), DECIMAL_PLACES = 20, ROUNDING_MODE = 4, TO_EXP_NEG = -7, TO_EXP_POS = 21, MIN_EXP = -1e7, MAX_EXP = 1e7, CRYPTO = false, MODULO_MODE = 1, POW_PRECISION = 0, FORMAT = {
-    prefix: "",
-    groupSize: 3,
-    secondaryGroupSize: 0,
-    groupSeparator: ",",
-    decimalSeparator: ".",
-    fractionGroupSize: 0,
-    fractionGroupSeparator: " ",
-    // non-breaking space
-    suffix: ""
-  }, ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyz", alphabetHasNormalDecimalDigits = true;
-  function BigNumber(v2, b2) {
-    var alphabet, c, caseChanged, e3, i, isNum, len, str, x2 = this;
-    if (!(x2 instanceof BigNumber)) return new BigNumber(v2, b2);
-    if (b2 == null) {
-      if (v2 && v2._isBigNumber === true) {
-        x2.s = v2.s;
-        if (!v2.c || v2.e > MAX_EXP) {
-          x2.c = x2.e = null;
-        } else if (v2.e < MIN_EXP) {
-          x2.c = [x2.e = 0];
-        } else {
-          x2.e = v2.e;
-          x2.c = v2.c.slice();
-        }
-        return;
-      }
-      if ((isNum = typeof v2 == "number") && v2 * 0 == 0) {
-        x2.s = 1 / v2 < 0 ? (v2 = -v2, -1) : 1;
-        if (v2 === ~~v2) {
-          for (e3 = 0, i = v2; i >= 10; i /= 10, e3++) ;
-          if (e3 > MAX_EXP) {
-            x2.c = x2.e = null;
-          } else {
-            x2.e = e3;
-            x2.c = [v2];
-          }
-          return;
-        }
-        str = String(v2);
-      } else {
-        if (!isNumeric.test(str = String(v2))) return parseNumeric(x2, str, isNum);
-        x2.s = str.charCodeAt(0) == 45 ? (str = str.slice(1), -1) : 1;
-      }
-      if ((e3 = str.indexOf(".")) > -1) str = str.replace(".", "");
-      if ((i = str.search(/e/i)) > 0) {
-        if (e3 < 0) e3 = i;
-        e3 += +str.slice(i + 1);
-        str = str.substring(0, i);
-      } else if (e3 < 0) {
-        e3 = str.length;
-      }
-    } else {
-      intCheck(b2, 2, ALPHABET.length, "Base");
-      if (b2 == 10 && alphabetHasNormalDecimalDigits) {
-        x2 = new BigNumber(v2);
-        return round(x2, DECIMAL_PLACES + x2.e + 1, ROUNDING_MODE);
-      }
-      str = String(v2);
-      if (isNum = typeof v2 == "number") {
-        if (v2 * 0 != 0) return parseNumeric(x2, str, isNum, b2);
-        x2.s = 1 / v2 < 0 ? (str = str.slice(1), -1) : 1;
-        if (BigNumber.DEBUG && str.replace(/^0\.0*|\./, "").length > 15) {
-          throw Error(tooManyDigits + v2);
-        }
-      } else {
-        x2.s = str.charCodeAt(0) === 45 ? (str = str.slice(1), -1) : 1;
-      }
-      alphabet = ALPHABET.slice(0, b2);
-      e3 = i = 0;
-      for (len = str.length; i < len; i++) {
-        if (alphabet.indexOf(c = str.charAt(i)) < 0) {
-          if (c == ".") {
-            if (i > e3) {
-              e3 = len;
-              continue;
-            }
-          } else if (!caseChanged) {
-            if (str == str.toUpperCase() && (str = str.toLowerCase()) || str == str.toLowerCase() && (str = str.toUpperCase())) {
-              caseChanged = true;
-              i = -1;
-              e3 = 0;
-              continue;
-            }
-          }
-          return parseNumeric(x2, String(v2), isNum, b2);
-        }
-      }
-      isNum = false;
-      str = convertBase(str, b2, 10, x2.s);
-      if ((e3 = str.indexOf(".")) > -1) str = str.replace(".", "");
-      else e3 = str.length;
-    }
-    for (i = 0; str.charCodeAt(i) === 48; i++) ;
-    for (len = str.length; str.charCodeAt(--len) === 48; ) ;
-    if (str = str.slice(i, ++len)) {
-      len -= i;
-      if (isNum && BigNumber.DEBUG && len > 15 && (v2 > MAX_SAFE_INTEGER || v2 !== mathfloor(v2))) {
-        throw Error(tooManyDigits + x2.s * v2);
-      }
-      if ((e3 = e3 - i - 1) > MAX_EXP) {
-        x2.c = x2.e = null;
-      } else if (e3 < MIN_EXP) {
-        x2.c = [x2.e = 0];
-      } else {
-        x2.e = e3;
-        x2.c = [];
-        i = (e3 + 1) % LOG_BASE;
-        if (e3 < 0) i += LOG_BASE;
-        if (i < len) {
-          if (i) x2.c.push(+str.slice(0, i));
-          for (len -= LOG_BASE; i < len; ) {
-            x2.c.push(+str.slice(i, i += LOG_BASE));
-          }
-          i = LOG_BASE - (str = str.slice(i)).length;
-        } else {
-          i -= len;
-        }
-        for (; i--; str += "0") ;
-        x2.c.push(+str);
-      }
-    } else {
-      x2.c = [x2.e = 0];
-    }
-  }
-  BigNumber.clone = clone;
-  BigNumber.ROUND_UP = 0;
-  BigNumber.ROUND_DOWN = 1;
-  BigNumber.ROUND_CEIL = 2;
-  BigNumber.ROUND_FLOOR = 3;
-  BigNumber.ROUND_HALF_UP = 4;
-  BigNumber.ROUND_HALF_DOWN = 5;
-  BigNumber.ROUND_HALF_EVEN = 6;
-  BigNumber.ROUND_HALF_CEIL = 7;
-  BigNumber.ROUND_HALF_FLOOR = 8;
-  BigNumber.EUCLID = 9;
-  BigNumber.config = BigNumber.set = function(obj) {
-    var p, v2;
-    if (obj != null) {
-      if (typeof obj == "object") {
-        if (obj.hasOwnProperty(p = "DECIMAL_PLACES")) {
-          v2 = obj[p];
-          intCheck(v2, 0, MAX, p);
-          DECIMAL_PLACES = v2;
-        }
-        if (obj.hasOwnProperty(p = "ROUNDING_MODE")) {
-          v2 = obj[p];
-          intCheck(v2, 0, 8, p);
-          ROUNDING_MODE = v2;
-        }
-        if (obj.hasOwnProperty(p = "EXPONENTIAL_AT")) {
-          v2 = obj[p];
-          if (v2 && v2.pop) {
-            intCheck(v2[0], -1e9, 0, p);
-            intCheck(v2[1], 0, MAX, p);
-            TO_EXP_NEG = v2[0];
-            TO_EXP_POS = v2[1];
-          } else {
-            intCheck(v2, -1e9, MAX, p);
-            TO_EXP_NEG = -(TO_EXP_POS = v2 < 0 ? -v2 : v2);
-          }
-        }
-        if (obj.hasOwnProperty(p = "RANGE")) {
-          v2 = obj[p];
-          if (v2 && v2.pop) {
-            intCheck(v2[0], -1e9, -1, p);
-            intCheck(v2[1], 1, MAX, p);
-            MIN_EXP = v2[0];
-            MAX_EXP = v2[1];
-          } else {
-            intCheck(v2, -1e9, MAX, p);
-            if (v2) {
-              MIN_EXP = -(MAX_EXP = v2 < 0 ? -v2 : v2);
-            } else {
-              throw Error(bignumberError + p + " cannot be zero: " + v2);
-            }
-          }
-        }
-        if (obj.hasOwnProperty(p = "CRYPTO")) {
-          v2 = obj[p];
-          if (v2 === !!v2) {
-            if (v2) {
-              if (typeof crypto != "undefined" && crypto && (crypto.getRandomValues || crypto.randomBytes)) {
-                CRYPTO = v2;
-              } else {
-                CRYPTO = !v2;
-                throw Error(bignumberError + "crypto unavailable");
-              }
-            } else {
-              CRYPTO = v2;
-            }
-          } else {
-            throw Error(bignumberError + p + " not true or false: " + v2);
-          }
-        }
-        if (obj.hasOwnProperty(p = "MODULO_MODE")) {
-          v2 = obj[p];
-          intCheck(v2, 0, 9, p);
-          MODULO_MODE = v2;
-        }
-        if (obj.hasOwnProperty(p = "POW_PRECISION")) {
-          v2 = obj[p];
-          intCheck(v2, 0, MAX, p);
-          POW_PRECISION = v2;
-        }
-        if (obj.hasOwnProperty(p = "FORMAT")) {
-          v2 = obj[p];
-          if (typeof v2 == "object") FORMAT = v2;
-          else throw Error(bignumberError + p + " not an object: " + v2);
-        }
-        if (obj.hasOwnProperty(p = "ALPHABET")) {
-          v2 = obj[p];
-          if (typeof v2 == "string" && !/^.?$|[+\-.\s]|(.).*\1/.test(v2)) {
-            alphabetHasNormalDecimalDigits = v2.slice(0, 10) == "0123456789";
-            ALPHABET = v2;
-          } else {
-            throw Error(bignumberError + p + " invalid: " + v2);
-          }
-        }
-      } else {
-        throw Error(bignumberError + "Object expected: " + obj);
-      }
-    }
-    return {
-      DECIMAL_PLACES,
-      ROUNDING_MODE,
-      EXPONENTIAL_AT: [TO_EXP_NEG, TO_EXP_POS],
-      RANGE: [MIN_EXP, MAX_EXP],
-      CRYPTO,
-      MODULO_MODE,
-      POW_PRECISION,
-      FORMAT,
-      ALPHABET
-    };
-  };
-  BigNumber.isBigNumber = function(v2) {
-    if (!v2 || v2._isBigNumber !== true) return false;
-    if (!BigNumber.DEBUG) return true;
-    var i, n, c = v2.c, e3 = v2.e, s = v2.s;
-    out: if ({}.toString.call(c) == "[object Array]") {
-      if ((s === 1 || s === -1) && e3 >= -1e9 && e3 <= MAX && e3 === mathfloor(e3)) {
-        if (c[0] === 0) {
-          if (e3 === 0 && c.length === 1) return true;
-          break out;
-        }
-        i = (e3 + 1) % LOG_BASE;
-        if (i < 1) i += LOG_BASE;
-        if (String(c[0]).length == i) {
-          for (i = 0; i < c.length; i++) {
-            n = c[i];
-            if (n < 0 || n >= BASE || n !== mathfloor(n)) break out;
-          }
-          if (n !== 0) return true;
-        }
-      }
-    } else if (c === null && e3 === null && (s === null || s === 1 || s === -1)) {
-      return true;
-    }
-    throw Error(bignumberError + "Invalid BigNumber: " + v2);
-  };
-  BigNumber.maximum = BigNumber.max = function() {
-    return maxOrMin(arguments, -1);
-  };
-  BigNumber.minimum = BigNumber.min = function() {
-    return maxOrMin(arguments, 1);
-  };
-  BigNumber.random = function() {
-    var pow2_53 = 9007199254740992;
-    var random53bitInt = Math.random() * pow2_53 & 2097151 ? function() {
-      return mathfloor(Math.random() * pow2_53);
-    } : function() {
-      return (Math.random() * 1073741824 | 0) * 8388608 + (Math.random() * 8388608 | 0);
-    };
-    return function(dp) {
-      var a, b2, e3, k2, v2, i = 0, c = [], rand = new BigNumber(ONE);
-      if (dp == null) dp = DECIMAL_PLACES;
-      else intCheck(dp, 0, MAX);
-      k2 = mathceil(dp / LOG_BASE);
-      if (CRYPTO) {
-        if (crypto.getRandomValues) {
-          a = crypto.getRandomValues(new Uint32Array(k2 *= 2));
-          for (; i < k2; ) {
-            v2 = a[i] * 131072 + (a[i + 1] >>> 11);
-            if (v2 >= 9e15) {
-              b2 = crypto.getRandomValues(new Uint32Array(2));
-              a[i] = b2[0];
-              a[i + 1] = b2[1];
-            } else {
-              c.push(v2 % 1e14);
-              i += 2;
-            }
-          }
-          i = k2 / 2;
-        } else if (crypto.randomBytes) {
-          a = crypto.randomBytes(k2 *= 7);
-          for (; i < k2; ) {
-            v2 = (a[i] & 31) * 281474976710656 + a[i + 1] * 1099511627776 + a[i + 2] * 4294967296 + a[i + 3] * 16777216 + (a[i + 4] << 16) + (a[i + 5] << 8) + a[i + 6];
-            if (v2 >= 9e15) {
-              crypto.randomBytes(7).copy(a, i);
-            } else {
-              c.push(v2 % 1e14);
-              i += 7;
-            }
-          }
-          i = k2 / 7;
-        } else {
-          CRYPTO = false;
-          throw Error(bignumberError + "crypto unavailable");
-        }
-      }
-      if (!CRYPTO) {
-        for (; i < k2; ) {
-          v2 = random53bitInt();
-          if (v2 < 9e15) c[i++] = v2 % 1e14;
-        }
-      }
-      k2 = c[--i];
-      dp %= LOG_BASE;
-      if (k2 && dp) {
-        v2 = POWS_TEN[LOG_BASE - dp];
-        c[i] = mathfloor(k2 / v2) * v2;
-      }
-      for (; c[i] === 0; c.pop(), i--) ;
-      if (i < 0) {
-        c = [e3 = 0];
-      } else {
-        for (e3 = -1; c[0] === 0; c.splice(0, 1), e3 -= LOG_BASE) ;
-        for (i = 1, v2 = c[0]; v2 >= 10; v2 /= 10, i++) ;
-        if (i < LOG_BASE) e3 -= LOG_BASE - i;
-      }
-      rand.e = e3;
-      rand.c = c;
-      return rand;
-    };
-  }();
-  BigNumber.sum = function() {
-    var i = 1, args = arguments, sum = new BigNumber(args[0]);
-    for (; i < args.length; ) sum = sum.plus(args[i++]);
-    return sum;
-  };
-  convertBase = /* @__PURE__ */ function() {
-    var decimal = "0123456789";
-    function toBaseOut(str, baseIn, baseOut, alphabet) {
-      var j2, arr = [0], arrL, i = 0, len = str.length;
-      for (; i < len; ) {
-        for (arrL = arr.length; arrL--; arr[arrL] *= baseIn) ;
-        arr[0] += alphabet.indexOf(str.charAt(i++));
-        for (j2 = 0; j2 < arr.length; j2++) {
-          if (arr[j2] > baseOut - 1) {
-            if (arr[j2 + 1] == null) arr[j2 + 1] = 0;
-            arr[j2 + 1] += arr[j2] / baseOut | 0;
-            arr[j2] %= baseOut;
-          }
-        }
-      }
-      return arr.reverse();
-    }
-    return function(str, baseIn, baseOut, sign, callerIsToString) {
-      var alphabet, d2, e3, k2, r, x2, xc, y, i = str.indexOf("."), dp = DECIMAL_PLACES, rm = ROUNDING_MODE;
-      if (i >= 0) {
-        k2 = POW_PRECISION;
-        POW_PRECISION = 0;
-        str = str.replace(".", "");
-        y = new BigNumber(baseIn);
-        x2 = y.pow(str.length - i);
-        POW_PRECISION = k2;
-        y.c = toBaseOut(
-          toFixedPoint(coeffToString(x2.c), x2.e, "0"),
-          10,
-          baseOut,
-          decimal
-        );
-        y.e = y.c.length;
-      }
-      xc = toBaseOut(str, baseIn, baseOut, callerIsToString ? (alphabet = ALPHABET, decimal) : (alphabet = decimal, ALPHABET));
-      e3 = k2 = xc.length;
-      for (; xc[--k2] == 0; xc.pop()) ;
-      if (!xc[0]) return alphabet.charAt(0);
-      if (i < 0) {
-        --e3;
-      } else {
-        x2.c = xc;
-        x2.e = e3;
-        x2.s = sign;
-        x2 = div(x2, y, dp, rm, baseOut);
-        xc = x2.c;
-        r = x2.r;
-        e3 = x2.e;
-      }
-      d2 = e3 + dp + 1;
-      i = xc[d2];
-      k2 = baseOut / 2;
-      r = r || d2 < 0 || xc[d2 + 1] != null;
-      r = rm < 4 ? (i != null || r) && (rm == 0 || rm == (x2.s < 0 ? 3 : 2)) : i > k2 || i == k2 && (rm == 4 || r || rm == 6 && xc[d2 - 1] & 1 || rm == (x2.s < 0 ? 8 : 7));
-      if (d2 < 1 || !xc[0]) {
-        str = r ? toFixedPoint(alphabet.charAt(1), -dp, alphabet.charAt(0)) : alphabet.charAt(0);
-      } else {
-        xc.length = d2;
-        if (r) {
-          for (--baseOut; ++xc[--d2] > baseOut; ) {
-            xc[d2] = 0;
-            if (!d2) {
-              ++e3;
-              xc = [1].concat(xc);
-            }
-          }
-        }
-        for (k2 = xc.length; !xc[--k2]; ) ;
-        for (i = 0, str = ""; i <= k2; str += alphabet.charAt(xc[i++])) ;
-        str = toFixedPoint(str, e3, alphabet.charAt(0));
-      }
-      return str;
-    };
-  }();
-  div = /* @__PURE__ */ function() {
-    function multiply(x2, k2, base) {
-      var m, temp, xlo, xhi, carry = 0, i = x2.length, klo = k2 % SQRT_BASE, khi = k2 / SQRT_BASE | 0;
-      for (x2 = x2.slice(); i--; ) {
-        xlo = x2[i] % SQRT_BASE;
-        xhi = x2[i] / SQRT_BASE | 0;
-        m = khi * xlo + xhi * klo;
-        temp = klo * xlo + m % SQRT_BASE * SQRT_BASE + carry;
-        carry = (temp / base | 0) + (m / SQRT_BASE | 0) + khi * xhi;
-        x2[i] = temp % base;
-      }
-      if (carry) x2 = [carry].concat(x2);
-      return x2;
-    }
-    function compare2(a, b2, aL, bL) {
-      var i, cmp;
-      if (aL != bL) {
-        cmp = aL > bL ? 1 : -1;
-      } else {
-        for (i = cmp = 0; i < aL; i++) {
-          if (a[i] != b2[i]) {
-            cmp = a[i] > b2[i] ? 1 : -1;
-            break;
-          }
-        }
-      }
-      return cmp;
-    }
-    function subtract(a, b2, aL, base) {
-      var i = 0;
-      for (; aL--; ) {
-        a[aL] -= i;
-        i = a[aL] < b2[aL] ? 1 : 0;
-        a[aL] = i * base + a[aL] - b2[aL];
-      }
-      for (; !a[0] && a.length > 1; a.splice(0, 1)) ;
-    }
-    return function(x2, y, dp, rm, base) {
-      var cmp, e3, i, more, n, prod, prodL, q, qc, rem, remL, rem0, xi, xL, yc0, yL, yz, s = x2.s == y.s ? 1 : -1, xc = x2.c, yc = y.c;
-      if (!xc || !xc[0] || !yc || !yc[0]) {
-        return new BigNumber(
-          // Return NaN if either NaN, or both Infinity or 0.
-          !x2.s || !y.s || (xc ? yc && xc[0] == yc[0] : !yc) ? NaN : (
-            // Return ±0 if x is ±0 or y is ±Infinity, or return ±Infinity as y is ±0.
-            xc && xc[0] == 0 || !yc ? s * 0 : s / 0
-          )
-        );
-      }
-      q = new BigNumber(s);
-      qc = q.c = [];
-      e3 = x2.e - y.e;
-      s = dp + e3 + 1;
-      if (!base) {
-        base = BASE;
-        e3 = bitFloor(x2.e / LOG_BASE) - bitFloor(y.e / LOG_BASE);
-        s = s / LOG_BASE | 0;
-      }
-      for (i = 0; yc[i] == (xc[i] || 0); i++) ;
-      if (yc[i] > (xc[i] || 0)) e3--;
-      if (s < 0) {
-        qc.push(1);
-        more = true;
-      } else {
-        xL = xc.length;
-        yL = yc.length;
-        i = 0;
-        s += 2;
-        n = mathfloor(base / (yc[0] + 1));
-        if (n > 1) {
-          yc = multiply(yc, n, base);
-          xc = multiply(xc, n, base);
-          yL = yc.length;
-          xL = xc.length;
-        }
-        xi = yL;
-        rem = xc.slice(0, yL);
-        remL = rem.length;
-        for (; remL < yL; rem[remL++] = 0) ;
-        yz = yc.slice();
-        yz = [0].concat(yz);
-        yc0 = yc[0];
-        if (yc[1] >= base / 2) yc0++;
-        do {
-          n = 0;
-          cmp = compare2(yc, rem, yL, remL);
-          if (cmp < 0) {
-            rem0 = rem[0];
-            if (yL != remL) rem0 = rem0 * base + (rem[1] || 0);
-            n = mathfloor(rem0 / yc0);
-            if (n > 1) {
-              if (n >= base) n = base - 1;
-              prod = multiply(yc, n, base);
-              prodL = prod.length;
-              remL = rem.length;
-              while (compare2(prod, rem, prodL, remL) == 1) {
-                n--;
-                subtract(prod, yL < prodL ? yz : yc, prodL, base);
-                prodL = prod.length;
-                cmp = 1;
-              }
-            } else {
-              if (n == 0) {
-                cmp = n = 1;
-              }
-              prod = yc.slice();
-              prodL = prod.length;
-            }
-            if (prodL < remL) prod = [0].concat(prod);
-            subtract(rem, prod, remL, base);
-            remL = rem.length;
-            if (cmp == -1) {
-              while (compare2(yc, rem, yL, remL) < 1) {
-                n++;
-                subtract(rem, yL < remL ? yz : yc, remL, base);
-                remL = rem.length;
-              }
-            }
-          } else if (cmp === 0) {
-            n++;
-            rem = [0];
-          }
-          qc[i++] = n;
-          if (rem[0]) {
-            rem[remL++] = xc[xi] || 0;
-          } else {
-            rem = [xc[xi]];
-            remL = 1;
-          }
-        } while ((xi++ < xL || rem[0] != null) && s--);
-        more = rem[0] != null;
-        if (!qc[0]) qc.splice(0, 1);
-      }
-      if (base == BASE) {
-        for (i = 1, s = qc[0]; s >= 10; s /= 10, i++) ;
-        round(q, dp + (q.e = i + e3 * LOG_BASE - 1) + 1, rm, more);
-      } else {
-        q.e = e3;
-        q.r = +more;
-      }
-      return q;
-    };
-  }();
-  function format(n, i, rm, id) {
-    var c0, e3, ne, len, str;
-    if (rm == null) rm = ROUNDING_MODE;
-    else intCheck(rm, 0, 8);
-    if (!n.c) return n.toString();
-    c0 = n.c[0];
-    ne = n.e;
-    if (i == null) {
-      str = coeffToString(n.c);
-      str = id == 1 || id == 2 && (ne <= TO_EXP_NEG || ne >= TO_EXP_POS) ? toExponential(str, ne) : toFixedPoint(str, ne, "0");
-    } else {
-      n = round(new BigNumber(n), i, rm);
-      e3 = n.e;
-      str = coeffToString(n.c);
-      len = str.length;
-      if (id == 1 || id == 2 && (i <= e3 || e3 <= TO_EXP_NEG)) {
-        for (; len < i; str += "0", len++) ;
-        str = toExponential(str, e3);
-      } else {
-        i -= ne;
-        str = toFixedPoint(str, e3, "0");
-        if (e3 + 1 > len) {
-          if (--i > 0) for (str += "."; i--; str += "0") ;
-        } else {
-          i += e3 - len;
-          if (i > 0) {
-            if (e3 + 1 == len) str += ".";
-            for (; i--; str += "0") ;
-          }
-        }
-      }
-    }
-    return n.s < 0 && c0 ? "-" + str : str;
-  }
-  function maxOrMin(args, n) {
-    var k2, y, i = 1, x2 = new BigNumber(args[0]);
-    for (; i < args.length; i++) {
-      y = new BigNumber(args[i]);
-      if (!y.s || (k2 = compare(x2, y)) === n || k2 === 0 && x2.s === n) {
-        x2 = y;
-      }
-    }
-    return x2;
-  }
-  function normalise(n, c, e3) {
-    var i = 1, j2 = c.length;
-    for (; !c[--j2]; c.pop()) ;
-    for (j2 = c[0]; j2 >= 10; j2 /= 10, i++) ;
-    if ((e3 = i + e3 * LOG_BASE - 1) > MAX_EXP) {
-      n.c = n.e = null;
-    } else if (e3 < MIN_EXP) {
-      n.c = [n.e = 0];
-    } else {
-      n.e = e3;
-      n.c = c;
-    }
-    return n;
-  }
-  parseNumeric = /* @__PURE__ */ function() {
-    var basePrefix = /^(-?)0([xbo])(?=\w[\w.]*$)/i, dotAfter = /^([^.]+)\.$/, dotBefore = /^\.([^.]+)$/, isInfinityOrNaN = /^-?(Infinity|NaN)$/, whitespaceOrPlus = /^\s*\+(?=[\w.])|^\s+|\s+$/g;
-    return function(x2, str, isNum, b2) {
-      var base, s = isNum ? str : str.replace(whitespaceOrPlus, "");
-      if (isInfinityOrNaN.test(s)) {
-        x2.s = isNaN(s) ? null : s < 0 ? -1 : 1;
-      } else {
-        if (!isNum) {
-          s = s.replace(basePrefix, function(m, p1, p2) {
-            base = (p2 = p2.toLowerCase()) == "x" ? 16 : p2 == "b" ? 2 : 8;
-            return !b2 || b2 == base ? p1 : m;
-          });
-          if (b2) {
-            base = b2;
-            s = s.replace(dotAfter, "$1").replace(dotBefore, "0.$1");
-          }
-          if (str != s) return new BigNumber(s, base);
-        }
-        if (BigNumber.DEBUG) {
-          throw Error(bignumberError + "Not a" + (b2 ? " base " + b2 : "") + " number: " + str);
-        }
-        x2.s = null;
-      }
-      x2.c = x2.e = null;
-    };
-  }();
-  function round(x2, sd, rm, r) {
-    var d2, i, j2, k2, n, ni, rd, xc = x2.c, pows10 = POWS_TEN;
-    if (xc) {
-      out: {
-        for (d2 = 1, k2 = xc[0]; k2 >= 10; k2 /= 10, d2++) ;
-        i = sd - d2;
-        if (i < 0) {
-          i += LOG_BASE;
-          j2 = sd;
-          n = xc[ni = 0];
-          rd = mathfloor(n / pows10[d2 - j2 - 1] % 10);
-        } else {
-          ni = mathceil((i + 1) / LOG_BASE);
-          if (ni >= xc.length) {
-            if (r) {
-              for (; xc.length <= ni; xc.push(0)) ;
-              n = rd = 0;
-              d2 = 1;
-              i %= LOG_BASE;
-              j2 = i - LOG_BASE + 1;
-            } else {
-              break out;
-            }
-          } else {
-            n = k2 = xc[ni];
-            for (d2 = 1; k2 >= 10; k2 /= 10, d2++) ;
-            i %= LOG_BASE;
-            j2 = i - LOG_BASE + d2;
-            rd = j2 < 0 ? 0 : mathfloor(n / pows10[d2 - j2 - 1] % 10);
-          }
-        }
-        r = r || sd < 0 || // Are there any non-zero digits after the rounding digit?
-        // The expression  n % pows10[d - j - 1]  returns all digits of n to the right
-        // of the digit at j, e.g. if n is 908714 and j is 2, the expression gives 714.
-        xc[ni + 1] != null || (j2 < 0 ? n : n % pows10[d2 - j2 - 1]);
-        r = rm < 4 ? (rd || r) && (rm == 0 || rm == (x2.s < 0 ? 3 : 2)) : rd > 5 || rd == 5 && (rm == 4 || r || rm == 6 && // Check whether the digit to the left of the rounding digit is odd.
-        (i > 0 ? j2 > 0 ? n / pows10[d2 - j2] : 0 : xc[ni - 1]) % 10 & 1 || rm == (x2.s < 0 ? 8 : 7));
-        if (sd < 1 || !xc[0]) {
-          xc.length = 0;
-          if (r) {
-            sd -= x2.e + 1;
-            xc[0] = pows10[(LOG_BASE - sd % LOG_BASE) % LOG_BASE];
-            x2.e = -sd || 0;
-          } else {
-            xc[0] = x2.e = 0;
-          }
-          return x2;
-        }
-        if (i == 0) {
-          xc.length = ni;
-          k2 = 1;
-          ni--;
-        } else {
-          xc.length = ni + 1;
-          k2 = pows10[LOG_BASE - i];
-          xc[ni] = j2 > 0 ? mathfloor(n / pows10[d2 - j2] % pows10[j2]) * k2 : 0;
-        }
-        if (r) {
-          for (; ; ) {
-            if (ni == 0) {
-              for (i = 1, j2 = xc[0]; j2 >= 10; j2 /= 10, i++) ;
-              j2 = xc[0] += k2;
-              for (k2 = 1; j2 >= 10; j2 /= 10, k2++) ;
-              if (i != k2) {
-                x2.e++;
-                if (xc[0] == BASE) xc[0] = 1;
-              }
-              break;
-            } else {
-              xc[ni] += k2;
-              if (xc[ni] != BASE) break;
-              xc[ni--] = 0;
-              k2 = 1;
-            }
-          }
-        }
-        for (i = xc.length; xc[--i] === 0; xc.pop()) ;
-      }
-      if (x2.e > MAX_EXP) {
-        x2.c = x2.e = null;
-      } else if (x2.e < MIN_EXP) {
-        x2.c = [x2.e = 0];
-      }
-    }
-    return x2;
-  }
-  function valueOf(n) {
-    var str, e3 = n.e;
-    if (e3 === null) return n.toString();
-    str = coeffToString(n.c);
-    str = e3 <= TO_EXP_NEG || e3 >= TO_EXP_POS ? toExponential(str, e3) : toFixedPoint(str, e3, "0");
-    return n.s < 0 ? "-" + str : str;
-  }
-  P2.absoluteValue = P2.abs = function() {
-    var x2 = new BigNumber(this);
-    if (x2.s < 0) x2.s = 1;
-    return x2;
-  };
-  P2.comparedTo = function(y, b2) {
-    return compare(this, new BigNumber(y, b2));
-  };
-  P2.decimalPlaces = P2.dp = function(dp, rm) {
-    var c, n, v2, x2 = this;
-    if (dp != null) {
-      intCheck(dp, 0, MAX);
-      if (rm == null) rm = ROUNDING_MODE;
-      else intCheck(rm, 0, 8);
-      return round(new BigNumber(x2), dp + x2.e + 1, rm);
-    }
-    if (!(c = x2.c)) return null;
-    n = ((v2 = c.length - 1) - bitFloor(this.e / LOG_BASE)) * LOG_BASE;
-    if (v2 = c[v2]) for (; v2 % 10 == 0; v2 /= 10, n--) ;
-    if (n < 0) n = 0;
-    return n;
-  };
-  P2.dividedBy = P2.div = function(y, b2) {
-    return div(this, new BigNumber(y, b2), DECIMAL_PLACES, ROUNDING_MODE);
-  };
-  P2.dividedToIntegerBy = P2.idiv = function(y, b2) {
-    return div(this, new BigNumber(y, b2), 0, 1);
-  };
-  P2.exponentiatedBy = P2.pow = function(n, m) {
-    var half, isModExp, i, k2, more, nIsBig, nIsNeg, nIsOdd, y, x2 = this;
-    n = new BigNumber(n);
-    if (n.c && !n.isInteger()) {
-      throw Error(bignumberError + "Exponent not an integer: " + valueOf(n));
-    }
-    if (m != null) m = new BigNumber(m);
-    nIsBig = n.e > 14;
-    if (!x2.c || !x2.c[0] || x2.c[0] == 1 && !x2.e && x2.c.length == 1 || !n.c || !n.c[0]) {
-      y = new BigNumber(Math.pow(+valueOf(x2), nIsBig ? n.s * (2 - isOdd(n)) : +valueOf(n)));
-      return m ? y.mod(m) : y;
-    }
-    nIsNeg = n.s < 0;
-    if (m) {
-      if (m.c ? !m.c[0] : !m.s) return new BigNumber(NaN);
-      isModExp = !nIsNeg && x2.isInteger() && m.isInteger();
-      if (isModExp) x2 = x2.mod(m);
-    } else if (n.e > 9 && (x2.e > 0 || x2.e < -1 || (x2.e == 0 ? x2.c[0] > 1 || nIsBig && x2.c[1] >= 24e7 : x2.c[0] < 8e13 || nIsBig && x2.c[0] <= 9999975e7))) {
-      k2 = x2.s < 0 && isOdd(n) ? -0 : 0;
-      if (x2.e > -1) k2 = 1 / k2;
-      return new BigNumber(nIsNeg ? 1 / k2 : k2);
-    } else if (POW_PRECISION) {
-      k2 = mathceil(POW_PRECISION / LOG_BASE + 2);
-    }
-    if (nIsBig) {
-      half = new BigNumber(0.5);
-      if (nIsNeg) n.s = 1;
-      nIsOdd = isOdd(n);
-    } else {
-      i = Math.abs(+valueOf(n));
-      nIsOdd = i % 2;
-    }
-    y = new BigNumber(ONE);
-    for (; ; ) {
-      if (nIsOdd) {
-        y = y.times(x2);
-        if (!y.c) break;
-        if (k2) {
-          if (y.c.length > k2) y.c.length = k2;
-        } else if (isModExp) {
-          y = y.mod(m);
-        }
-      }
-      if (i) {
-        i = mathfloor(i / 2);
-        if (i === 0) break;
-        nIsOdd = i % 2;
-      } else {
-        n = n.times(half);
-        round(n, n.e + 1, 1);
-        if (n.e > 14) {
-          nIsOdd = isOdd(n);
-        } else {
-          i = +valueOf(n);
-          if (i === 0) break;
-          nIsOdd = i % 2;
-        }
-      }
-      x2 = x2.times(x2);
-      if (k2) {
-        if (x2.c && x2.c.length > k2) x2.c.length = k2;
-      } else if (isModExp) {
-        x2 = x2.mod(m);
-      }
-    }
-    if (isModExp) return y;
-    if (nIsNeg) y = ONE.div(y);
-    return m ? y.mod(m) : k2 ? round(y, POW_PRECISION, ROUNDING_MODE, more) : y;
-  };
-  P2.integerValue = function(rm) {
-    var n = new BigNumber(this);
-    if (rm == null) rm = ROUNDING_MODE;
-    else intCheck(rm, 0, 8);
-    return round(n, n.e + 1, rm);
-  };
-  P2.isEqualTo = P2.eq = function(y, b2) {
-    return compare(this, new BigNumber(y, b2)) === 0;
-  };
-  P2.isFinite = function() {
-    return !!this.c;
-  };
-  P2.isGreaterThan = P2.gt = function(y, b2) {
-    return compare(this, new BigNumber(y, b2)) > 0;
-  };
-  P2.isGreaterThanOrEqualTo = P2.gte = function(y, b2) {
-    return (b2 = compare(this, new BigNumber(y, b2))) === 1 || b2 === 0;
-  };
-  P2.isInteger = function() {
-    return !!this.c && bitFloor(this.e / LOG_BASE) > this.c.length - 2;
-  };
-  P2.isLessThan = P2.lt = function(y, b2) {
-    return compare(this, new BigNumber(y, b2)) < 0;
-  };
-  P2.isLessThanOrEqualTo = P2.lte = function(y, b2) {
-    return (b2 = compare(this, new BigNumber(y, b2))) === -1 || b2 === 0;
-  };
-  P2.isNaN = function() {
-    return !this.s;
-  };
-  P2.isNegative = function() {
-    return this.s < 0;
-  };
-  P2.isPositive = function() {
-    return this.s > 0;
-  };
-  P2.isZero = function() {
-    return !!this.c && this.c[0] == 0;
-  };
-  P2.minus = function(y, b2) {
-    var i, j2, t, xLTy, x2 = this, a = x2.s;
-    y = new BigNumber(y, b2);
-    b2 = y.s;
-    if (!a || !b2) return new BigNumber(NaN);
-    if (a != b2) {
-      y.s = -b2;
-      return x2.plus(y);
-    }
-    var xe = x2.e / LOG_BASE, ye = y.e / LOG_BASE, xc = x2.c, yc = y.c;
-    if (!xe || !ye) {
-      if (!xc || !yc) return xc ? (y.s = -b2, y) : new BigNumber(yc ? x2 : NaN);
-      if (!xc[0] || !yc[0]) {
-        return yc[0] ? (y.s = -b2, y) : new BigNumber(xc[0] ? x2 : (
-          // IEEE 754 (2008) 6.3: n - n = -0 when rounding to -Infinity
-          ROUNDING_MODE == 3 ? -0 : 0
-        ));
-      }
-    }
-    xe = bitFloor(xe);
-    ye = bitFloor(ye);
-    xc = xc.slice();
-    if (a = xe - ye) {
-      if (xLTy = a < 0) {
-        a = -a;
-        t = xc;
-      } else {
-        ye = xe;
-        t = yc;
-      }
-      t.reverse();
-      for (b2 = a; b2--; t.push(0)) ;
-      t.reverse();
-    } else {
-      j2 = (xLTy = (a = xc.length) < (b2 = yc.length)) ? a : b2;
-      for (a = b2 = 0; b2 < j2; b2++) {
-        if (xc[b2] != yc[b2]) {
-          xLTy = xc[b2] < yc[b2];
-          break;
-        }
-      }
-    }
-    if (xLTy) {
-      t = xc;
-      xc = yc;
-      yc = t;
-      y.s = -y.s;
-    }
-    b2 = (j2 = yc.length) - (i = xc.length);
-    if (b2 > 0) for (; b2--; xc[i++] = 0) ;
-    b2 = BASE - 1;
-    for (; j2 > a; ) {
-      if (xc[--j2] < yc[j2]) {
-        for (i = j2; i && !xc[--i]; xc[i] = b2) ;
-        --xc[i];
-        xc[j2] += BASE;
-      }
-      xc[j2] -= yc[j2];
-    }
-    for (; xc[0] == 0; xc.splice(0, 1), --ye) ;
-    if (!xc[0]) {
-      y.s = ROUNDING_MODE == 3 ? -1 : 1;
-      y.c = [y.e = 0];
-      return y;
-    }
-    return normalise(y, xc, ye);
-  };
-  P2.modulo = P2.mod = function(y, b2) {
-    var q, s, x2 = this;
-    y = new BigNumber(y, b2);
-    if (!x2.c || !y.s || y.c && !y.c[0]) {
-      return new BigNumber(NaN);
-    } else if (!y.c || x2.c && !x2.c[0]) {
-      return new BigNumber(x2);
-    }
-    if (MODULO_MODE == 9) {
-      s = y.s;
-      y.s = 1;
-      q = div(x2, y, 0, 3);
-      y.s = s;
-      q.s *= s;
-    } else {
-      q = div(x2, y, 0, MODULO_MODE);
-    }
-    y = x2.minus(q.times(y));
-    if (!y.c[0] && MODULO_MODE == 1) y.s = x2.s;
-    return y;
-  };
-  P2.multipliedBy = P2.times = function(y, b2) {
-    var c, e3, i, j2, k2, m, xcL, xlo, xhi, ycL, ylo, yhi, zc, base, sqrtBase, x2 = this, xc = x2.c, yc = (y = new BigNumber(y, b2)).c;
-    if (!xc || !yc || !xc[0] || !yc[0]) {
-      if (!x2.s || !y.s || xc && !xc[0] && !yc || yc && !yc[0] && !xc) {
-        y.c = y.e = y.s = null;
-      } else {
-        y.s *= x2.s;
-        if (!xc || !yc) {
-          y.c = y.e = null;
-        } else {
-          y.c = [0];
-          y.e = 0;
-        }
-      }
-      return y;
-    }
-    e3 = bitFloor(x2.e / LOG_BASE) + bitFloor(y.e / LOG_BASE);
-    y.s *= x2.s;
-    xcL = xc.length;
-    ycL = yc.length;
-    if (xcL < ycL) {
-      zc = xc;
-      xc = yc;
-      yc = zc;
-      i = xcL;
-      xcL = ycL;
-      ycL = i;
-    }
-    for (i = xcL + ycL, zc = []; i--; zc.push(0)) ;
-    base = BASE;
-    sqrtBase = SQRT_BASE;
-    for (i = ycL; --i >= 0; ) {
-      c = 0;
-      ylo = yc[i] % sqrtBase;
-      yhi = yc[i] / sqrtBase | 0;
-      for (k2 = xcL, j2 = i + k2; j2 > i; ) {
-        xlo = xc[--k2] % sqrtBase;
-        xhi = xc[k2] / sqrtBase | 0;
-        m = yhi * xlo + xhi * ylo;
-        xlo = ylo * xlo + m % sqrtBase * sqrtBase + zc[j2] + c;
-        c = (xlo / base | 0) + (m / sqrtBase | 0) + yhi * xhi;
-        zc[j2--] = xlo % base;
-      }
-      zc[j2] = c;
-    }
-    if (c) {
-      ++e3;
-    } else {
-      zc.splice(0, 1);
-    }
-    return normalise(y, zc, e3);
-  };
-  P2.negated = function() {
-    var x2 = new BigNumber(this);
-    x2.s = -x2.s || null;
-    return x2;
-  };
-  P2.plus = function(y, b2) {
-    var t, x2 = this, a = x2.s;
-    y = new BigNumber(y, b2);
-    b2 = y.s;
-    if (!a || !b2) return new BigNumber(NaN);
-    if (a != b2) {
-      y.s = -b2;
-      return x2.minus(y);
-    }
-    var xe = x2.e / LOG_BASE, ye = y.e / LOG_BASE, xc = x2.c, yc = y.c;
-    if (!xe || !ye) {
-      if (!xc || !yc) return new BigNumber(a / 0);
-      if (!xc[0] || !yc[0]) return yc[0] ? y : new BigNumber(xc[0] ? x2 : a * 0);
-    }
-    xe = bitFloor(xe);
-    ye = bitFloor(ye);
-    xc = xc.slice();
-    if (a = xe - ye) {
-      if (a > 0) {
-        ye = xe;
-        t = yc;
-      } else {
-        a = -a;
-        t = xc;
-      }
-      t.reverse();
-      for (; a--; t.push(0)) ;
-      t.reverse();
-    }
-    a = xc.length;
-    b2 = yc.length;
-    if (a - b2 < 0) {
-      t = yc;
-      yc = xc;
-      xc = t;
-      b2 = a;
-    }
-    for (a = 0; b2; ) {
-      a = (xc[--b2] = xc[b2] + yc[b2] + a) / BASE | 0;
-      xc[b2] = BASE === xc[b2] ? 0 : xc[b2] % BASE;
-    }
-    if (a) {
-      xc = [a].concat(xc);
-      ++ye;
-    }
-    return normalise(y, xc, ye);
-  };
-  P2.precision = P2.sd = function(sd, rm) {
-    var c, n, v2, x2 = this;
-    if (sd != null && sd !== !!sd) {
-      intCheck(sd, 1, MAX);
-      if (rm == null) rm = ROUNDING_MODE;
-      else intCheck(rm, 0, 8);
-      return round(new BigNumber(x2), sd, rm);
-    }
-    if (!(c = x2.c)) return null;
-    v2 = c.length - 1;
-    n = v2 * LOG_BASE + 1;
-    if (v2 = c[v2]) {
-      for (; v2 % 10 == 0; v2 /= 10, n--) ;
-      for (v2 = c[0]; v2 >= 10; v2 /= 10, n++) ;
-    }
-    if (sd && x2.e + 1 > n) n = x2.e + 1;
-    return n;
-  };
-  P2.shiftedBy = function(k2) {
-    intCheck(k2, -9007199254740991, MAX_SAFE_INTEGER);
-    return this.times("1e" + k2);
-  };
-  P2.squareRoot = P2.sqrt = function() {
-    var m, n, r, rep, t, x2 = this, c = x2.c, s = x2.s, e3 = x2.e, dp = DECIMAL_PLACES + 4, half = new BigNumber("0.5");
-    if (s !== 1 || !c || !c[0]) {
-      return new BigNumber(!s || s < 0 && (!c || c[0]) ? NaN : c ? x2 : 1 / 0);
-    }
-    s = Math.sqrt(+valueOf(x2));
-    if (s == 0 || s == 1 / 0) {
-      n = coeffToString(c);
-      if ((n.length + e3) % 2 == 0) n += "0";
-      s = Math.sqrt(+n);
-      e3 = bitFloor((e3 + 1) / 2) - (e3 < 0 || e3 % 2);
-      if (s == 1 / 0) {
-        n = "5e" + e3;
-      } else {
-        n = s.toExponential();
-        n = n.slice(0, n.indexOf("e") + 1) + e3;
-      }
-      r = new BigNumber(n);
-    } else {
-      r = new BigNumber(s + "");
-    }
-    if (r.c[0]) {
-      e3 = r.e;
-      s = e3 + dp;
-      if (s < 3) s = 0;
-      for (; ; ) {
-        t = r;
-        r = half.times(t.plus(div(x2, t, dp, 1)));
-        if (coeffToString(t.c).slice(0, s) === (n = coeffToString(r.c)).slice(0, s)) {
-          if (r.e < e3) --s;
-          n = n.slice(s - 3, s + 1);
-          if (n == "9999" || !rep && n == "4999") {
-            if (!rep) {
-              round(t, t.e + DECIMAL_PLACES + 2, 0);
-              if (t.times(t).eq(x2)) {
-                r = t;
-                break;
-              }
-            }
-            dp += 4;
-            s += 4;
-            rep = 1;
-          } else {
-            if (!+n || !+n.slice(1) && n.charAt(0) == "5") {
-              round(r, r.e + DECIMAL_PLACES + 2, 1);
-              m = !r.times(r).eq(x2);
-            }
-            break;
-          }
-        }
-      }
-    }
-    return round(r, r.e + DECIMAL_PLACES + 1, ROUNDING_MODE, m);
-  };
-  P2.toExponential = function(dp, rm) {
-    if (dp != null) {
-      intCheck(dp, 0, MAX);
-      dp++;
-    }
-    return format(this, dp, rm, 1);
-  };
-  P2.toFixed = function(dp, rm) {
-    if (dp != null) {
-      intCheck(dp, 0, MAX);
-      dp = dp + this.e + 1;
-    }
-    return format(this, dp, rm);
-  };
-  P2.toFormat = function(dp, rm, format2) {
-    var str, x2 = this;
-    if (format2 == null) {
-      if (dp != null && rm && typeof rm == "object") {
-        format2 = rm;
-        rm = null;
-      } else if (dp && typeof dp == "object") {
-        format2 = dp;
-        dp = rm = null;
-      } else {
-        format2 = FORMAT;
-      }
-    } else if (typeof format2 != "object") {
-      throw Error(bignumberError + "Argument not an object: " + format2);
-    }
-    str = x2.toFixed(dp, rm);
-    if (x2.c) {
-      var i, arr = str.split("."), g1 = +format2.groupSize, g2 = +format2.secondaryGroupSize, groupSeparator = format2.groupSeparator || "", intPart = arr[0], fractionPart = arr[1], isNeg = x2.s < 0, intDigits = isNeg ? intPart.slice(1) : intPart, len = intDigits.length;
-      if (g2) {
-        i = g1;
-        g1 = g2;
-        g2 = i;
-        len -= i;
-      }
-      if (g1 > 0 && len > 0) {
-        i = len % g1 || g1;
-        intPart = intDigits.substr(0, i);
-        for (; i < len; i += g1) intPart += groupSeparator + intDigits.substr(i, g1);
-        if (g2 > 0) intPart += groupSeparator + intDigits.slice(i);
-        if (isNeg) intPart = "-" + intPart;
-      }
-      str = fractionPart ? intPart + (format2.decimalSeparator || "") + ((g2 = +format2.fractionGroupSize) ? fractionPart.replace(
-        new RegExp("\\d{" + g2 + "}\\B", "g"),
-        "$&" + (format2.fractionGroupSeparator || "")
-      ) : fractionPart) : intPart;
-    }
-    return (format2.prefix || "") + str + (format2.suffix || "");
-  };
-  P2.toFraction = function(md) {
-    var d2, d0, d1, d22, e3, exp, n, n0, n1, q, r, s, x2 = this, xc = x2.c;
-    if (md != null) {
-      n = new BigNumber(md);
-      if (!n.isInteger() && (n.c || n.s !== 1) || n.lt(ONE)) {
-        throw Error(bignumberError + "Argument " + (n.isInteger() ? "out of range: " : "not an integer: ") + valueOf(n));
-      }
-    }
-    if (!xc) return new BigNumber(x2);
-    d2 = new BigNumber(ONE);
-    n1 = d0 = new BigNumber(ONE);
-    d1 = n0 = new BigNumber(ONE);
-    s = coeffToString(xc);
-    e3 = d2.e = s.length - x2.e - 1;
-    d2.c[0] = POWS_TEN[(exp = e3 % LOG_BASE) < 0 ? LOG_BASE + exp : exp];
-    md = !md || n.comparedTo(d2) > 0 ? e3 > 0 ? d2 : n1 : n;
-    exp = MAX_EXP;
-    MAX_EXP = 1 / 0;
-    n = new BigNumber(s);
-    n0.c[0] = 0;
-    for (; ; ) {
-      q = div(n, d2, 0, 1);
-      d22 = d0.plus(q.times(d1));
-      if (d22.comparedTo(md) == 1) break;
-      d0 = d1;
-      d1 = d22;
-      n1 = n0.plus(q.times(d22 = n1));
-      n0 = d22;
-      d2 = n.minus(q.times(d22 = d2));
-      n = d22;
-    }
-    d22 = div(md.minus(d0), d1, 0, 1);
-    n0 = n0.plus(d22.times(n1));
-    d0 = d0.plus(d22.times(d1));
-    n0.s = n1.s = x2.s;
-    e3 = e3 * 2;
-    r = div(n1, d1, e3, ROUNDING_MODE).minus(x2).abs().comparedTo(
-      div(n0, d0, e3, ROUNDING_MODE).minus(x2).abs()
-    ) < 1 ? [n1, d1] : [n0, d0];
-    MAX_EXP = exp;
-    return r;
-  };
-  P2.toNumber = function() {
-    return +valueOf(this);
-  };
-  P2.toPrecision = function(sd, rm) {
-    if (sd != null) intCheck(sd, 1, MAX);
-    return format(this, sd, rm, 2);
-  };
-  P2.toString = function(b2) {
-    var str, n = this, s = n.s, e3 = n.e;
-    if (e3 === null) {
-      if (s) {
-        str = "Infinity";
-        if (s < 0) str = "-" + str;
-      } else {
-        str = "NaN";
-      }
-    } else {
-      if (b2 == null) {
-        str = e3 <= TO_EXP_NEG || e3 >= TO_EXP_POS ? toExponential(coeffToString(n.c), e3) : toFixedPoint(coeffToString(n.c), e3, "0");
-      } else if (b2 === 10 && alphabetHasNormalDecimalDigits) {
-        n = round(new BigNumber(n), DECIMAL_PLACES + e3 + 1, ROUNDING_MODE);
-        str = toFixedPoint(coeffToString(n.c), n.e, "0");
-      } else {
-        intCheck(b2, 2, ALPHABET.length, "Base");
-        str = convertBase(toFixedPoint(coeffToString(n.c), e3, "0"), 10, b2, s, true);
-      }
-      if (s < 0 && n.c[0]) str = "-" + str;
-    }
-    return str;
-  };
-  P2.valueOf = P2.toJSON = function() {
-    return valueOf(this);
-  };
-  P2._isBigNumber = true;
-  P2[Symbol.toStringTag] = "BigNumber";
-  P2[Symbol.for("nodejs.util.inspect.custom")] = P2.valueOf;
-  if (configObject != null) BigNumber.set(configObject);
-  return BigNumber;
-}
-function bitFloor(n) {
-  var i = n | 0;
-  return n > 0 || n === i ? i : i - 1;
-}
-function coeffToString(a) {
-  var s, z2, i = 1, j2 = a.length, r = a[0] + "";
-  for (; i < j2; ) {
-    s = a[i++] + "";
-    z2 = LOG_BASE - s.length;
-    for (; z2--; s = "0" + s) ;
-    r += s;
-  }
-  for (j2 = r.length; r.charCodeAt(--j2) === 48; ) ;
-  return r.slice(0, j2 + 1 || 1);
-}
-function compare(x2, y) {
-  var a, b2, xc = x2.c, yc = y.c, i = x2.s, j2 = y.s, k2 = x2.e, l = y.e;
-  if (!i || !j2) return null;
-  a = xc && !xc[0];
-  b2 = yc && !yc[0];
-  if (a || b2) return a ? b2 ? 0 : -j2 : i;
-  if (i != j2) return i;
-  a = i < 0;
-  b2 = k2 == l;
-  if (!xc || !yc) return b2 ? 0 : !xc ^ a ? 1 : -1;
-  if (!b2) return k2 > l ^ a ? 1 : -1;
-  j2 = (k2 = xc.length) < (l = yc.length) ? k2 : l;
-  for (i = 0; i < j2; i++) if (xc[i] != yc[i]) return xc[i] > yc[i] ^ a ? 1 : -1;
-  return k2 == l ? 0 : k2 > l ^ a ? 1 : -1;
-}
-function intCheck(n, min, max, name) {
-  if (n < min || n > max || n !== mathfloor(n)) {
-    throw Error(bignumberError + (name || "Argument") + (typeof n == "number" ? n < min || n > max ? " out of range: " : " not an integer: " : " not a primitive number: ") + String(n));
-  }
-}
-function isOdd(n) {
-  var k2 = n.c.length - 1;
-  return bitFloor(n.e / LOG_BASE) == k2 && n.c[k2] % 2 != 0;
-}
-function toExponential(str, e3) {
-  return (str.length > 1 ? str.charAt(0) + "." + str.slice(1) : str) + (e3 < 0 ? "e" : "e+") + e3;
-}
-function toFixedPoint(str, e3, z2) {
-  var len, zs;
-  if (e3 < 0) {
-    for (zs = z2 + "."; ++e3; zs += z2) ;
-    str = zs + str;
-  } else {
-    len = str.length;
-    if (++e3 > len) {
-      for (zs = z2, e3 -= len; --e3; zs += z2) ;
-      str += zs;
-    } else if (e3 < len) {
-      str = str.slice(0, e3) + "." + str.slice(e3);
-    }
-  }
-  return str;
-}
-clone();
-const decodeCallRequest = (contentMap) => {
-  const decoded = Cbor.decode(contentMap);
-  const expiry = new Expiry(0);
-  expiry._value = BigInt(decoded.ingress_expiry.toString(10));
-  return Object.assign(Object.assign({}, decoded), { canister_id: Principal.from(decoded.canister_id), ingress_expiry: expiry });
-};
-var __classPrivateFieldGet$1 = function(receiver, state, kind, f) {
-  if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
-  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
-  return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
-};
-var __classPrivateFieldSet$1 = function(receiver, state, value, kind, f) {
-  if (kind === "m") throw new TypeError("Private method is not writable");
-  if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
-  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
-  return kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value), value;
-};
-var _Queue_ongoing;
-class Queue {
-  constructor() {
-    _Queue_ongoing.set(this, Promise.resolve());
-  }
-  async schedule(job) {
-    return new Promise((resolve, reject) => {
-      __classPrivateFieldSet$1(this, _Queue_ongoing, __classPrivateFieldGet$1(this, _Queue_ongoing, "f").finally(async () => {
-        try {
-          resolve(await job());
-        } catch (error) {
-          reject(error);
-        }
-      }), "f");
-    });
-  }
-}
-_Queue_ongoing = /* @__PURE__ */ new WeakMap();
-var __classPrivateFieldGet = function(receiver, state, kind, f) {
-  if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
-  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
-  return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
-};
-var __classPrivateFieldSet = function(receiver, state, value, kind, f) {
-  if (kind === "m") throw new TypeError("Private method is not writable");
-  if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
-  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
-  return kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value), value;
-};
-var _SignerAgent_instances, _a, _SignerAgent_isInternalConstructing, _SignerAgent_options, _SignerAgent_certificates, _SignerAgent_queue, _SignerAgent_executeTimeout, _SignerAgent_scheduled, _SignerAgent_autoBatch, _SignerAgent_validation, _SignerAgent_executeQueue, _SignerAgent_executeBatch;
-const ROOT_KEY = new Uint8Array(IC_ROOT_KEY.match(/[\da-f]{2}/gi).map((h2) => parseInt(h2, 16))).buffer;
-const MAX_AGE_IN_MINUTES = 5;
-const INVALID_RESPONSE_MESSAGE = "Received invalid response from signer";
-class SignerAgentError extends Error {
-  constructor(message) {
-    super(message);
-    Object.setPrototypeOf(this, SignerAgentError.prototype);
-  }
-}
-class SignerAgent {
-  constructor(options) {
-    _SignerAgent_instances.add(this);
-    _SignerAgent_options.set(this, void 0);
-    _SignerAgent_certificates.set(this, /* @__PURE__ */ new Map());
-    _SignerAgent_queue.set(this, new Queue());
-    _SignerAgent_executeTimeout.set(this, void 0);
-    _SignerAgent_scheduled.set(this, [[]]);
-    _SignerAgent_autoBatch.set(this, true);
-    _SignerAgent_validation.set(this, void 0);
-    const throwError = !__classPrivateFieldGet(_a, _a, "f", _SignerAgent_isInternalConstructing);
-    __classPrivateFieldSet(_a, _a, false, "f", _SignerAgent_isInternalConstructing);
-    if (throwError) {
-      throw new SignerAgentError("SignerAgent is not constructable");
-    }
-    __classPrivateFieldSet(this, _SignerAgent_options, options, "f");
-  }
-  get rootKey() {
-    var _b;
-    return (_b = __classPrivateFieldGet(this, _SignerAgent_options, "f").agent.rootKey) !== null && _b !== void 0 ? _b : ROOT_KEY;
-  }
-  get signer() {
-    return __classPrivateFieldGet(this, _SignerAgent_options, "f").signer;
-  }
-  static async create(options) {
-    var _b, _c, _d;
-    __classPrivateFieldSet(_a, _a, true, "f", _SignerAgent_isInternalConstructing);
-    return new _a(Object.assign(Object.assign({}, options), { agent: (_b = options.agent) !== null && _b !== void 0 ? _b : await HttpAgent.create(), scheduleDelay: (_c = options.scheduleDelay) !== null && _c !== void 0 ? _c : 20, validation: (_d = options.validation) !== null && _d !== void 0 ? _d : null }));
-  }
-  static createSync(options) {
-    var _b, _c, _d;
-    __classPrivateFieldSet(_a, _a, true, "f", _SignerAgent_isInternalConstructing);
-    return new _a(Object.assign(Object.assign({}, options), { agent: (_b = options.agent) !== null && _b !== void 0 ? _b : HttpAgent.createSync(), scheduleDelay: (_c = options.scheduleDelay) !== null && _c !== void 0 ? _c : 20, validation: (_d = options.validation) !== null && _d !== void 0 ? _d : null }));
-  }
-  async execute() {
-    const scheduled = [...__classPrivateFieldGet(this, _SignerAgent_scheduled, "f")];
-    const validation = __classPrivateFieldGet(this, _SignerAgent_validation, "f");
-    this.clear();
-    const pending = scheduled.flat().length;
-    if (pending === 0) {
-      __classPrivateFieldSet(this, _SignerAgent_validation, void 0, "f");
-      return;
-    }
-    const needsBatch = pending > 1;
-    if (!needsBatch) {
-      await __classPrivateFieldGet(this, _SignerAgent_instances, "m", _SignerAgent_executeQueue).call(this, scheduled);
-      return;
-    }
-    const supportedStandards = await __classPrivateFieldGet(this, _SignerAgent_queue, "f").schedule(() => this.signer.supportedStandards());
-    const supportsBatch = supportedStandards.some((supportedStandard) => supportedStandard.name === "ICRC-112");
-    if (supportsBatch) {
-      await __classPrivateFieldGet(this, _SignerAgent_instances, "m", _SignerAgent_executeBatch).call(this, scheduled, validation);
-    } else {
-      await __classPrivateFieldGet(this, _SignerAgent_instances, "m", _SignerAgent_executeQueue).call(this, scheduled);
-    }
-  }
-  async call(canisterId, options) {
-    canisterId = Principal.from(canisterId);
-    await __classPrivateFieldGet(this, _SignerAgent_options, "f").signer.openChannel();
-    const response = await new Promise((resolve, reject) => {
-      clearTimeout(__classPrivateFieldGet(this, _SignerAgent_executeTimeout, "f"));
-      __classPrivateFieldGet(this, _SignerAgent_scheduled, "f").slice(-1)[0].push({
-        options: {
-          canisterId,
-          method: options.methodName,
-          arg: options.arg
-        },
-        resolve,
-        reject
-      });
-      if (__classPrivateFieldGet(this, _SignerAgent_autoBatch, "f")) {
-        __classPrivateFieldSet(this, _SignerAgent_executeTimeout, setTimeout(() => this.execute(), __classPrivateFieldGet(this, _SignerAgent_options, "f").scheduleDelay), "f");
-      }
-    });
-    const requestBody = decodeCallRequest(response.contentMap);
-    const contentMapMatchesRequest = SubmitRequestType.Call === requestBody.request_type && canisterId.compareTo(requestBody.canister_id) === "eq" && options.methodName === requestBody.method_name && compare$1(options.arg, requestBody.arg) === 0 && __classPrivateFieldGet(this, _SignerAgent_options, "f").account.compareTo(Principal.from(requestBody.sender)) === "eq";
-    if (!contentMapMatchesRequest) {
-      throw new SignerAgentError(INVALID_RESPONSE_MESSAGE);
-    }
-    const requestId = requestIdOf(requestBody);
-    const certificate = await Certificate.create({
-      certificate: response.certificate,
-      rootKey: this.rootKey,
-      canisterId,
-      maxAgeInMinutes: MAX_AGE_IN_MINUTES
-    }).catch(() => {
-      throw new SignerAgentError(INVALID_RESPONSE_MESSAGE);
-    });
-    const certificateIsResponseToContentMap = certificate.lookup(["request_status", requestId, "status"]).status === LookupStatus.Found;
-    if (!certificateIsResponseToContentMap) {
-      throw new SignerAgentError(INVALID_RESPONSE_MESSAGE);
-    }
-    const requestKey = toBase64(requestId);
-    if (__classPrivateFieldGet(this, _SignerAgent_certificates, "f").has(requestKey)) {
-      throw new SignerAgentError(INVALID_RESPONSE_MESSAGE);
-    }
-    __classPrivateFieldGet(this, _SignerAgent_certificates, "f").set(requestKey, response.certificate);
-    const now = Date.now();
-    const lookupTime = lookupResultToBuffer(certificate.lookup(["time"]));
-    if (!lookupTime) {
-      throw new SignerAgentError(INVALID_RESPONSE_MESSAGE);
-    }
-    const certificateTime = Number(lebDecode(new PipeArrayBuffer(lookupTime))) / 1e6;
-    const expiry = certificateTime - now + MAX_AGE_IN_MINUTES * 60 * 1e3;
-    setTimeout(() => __classPrivateFieldGet(this, _SignerAgent_certificates, "f").delete(requestKey), expiry);
-    return {
-      requestId,
-      response: {
-        ok: true,
-        status: 202,
-        statusText: "Call has been sent over ICRC-25 JSON-RPC",
-        body: null,
-        headers: []
-      }
-    };
-  }
-  async fetchRootKey() {
-    return __classPrivateFieldGet(this, _SignerAgent_options, "f").agent.fetchRootKey();
-  }
-  async getPrincipal() {
-    return __classPrivateFieldGet(this, _SignerAgent_options, "f").account;
-  }
-  async query(canisterId, options) {
-    canisterId = Principal.from(canisterId);
-    const submitResponse = await this.call(canisterId, options);
-    const readStateResponse = await this.readState(canisterId, {
-      paths: [
-        [new TextEncoder().encode("request_status"), submitResponse.requestId]
-      ]
-    });
-    const certificate = await Certificate.create({
-      certificate: readStateResponse.certificate,
-      rootKey: this.rootKey,
-      canisterId
-    });
-    const status = certificate.lookup([
-      "request_status",
-      submitResponse.requestId,
-      "status"
-    ]);
-    const reply = certificate.lookup([
-      "request_status",
-      submitResponse.requestId,
-      "reply"
-    ]);
-    if (status.status !== LookupStatus.Found || new TextDecoder().decode(status.value) !== "replied" || reply.status !== LookupStatus.Found) {
-      throw new SignerAgentError("Certificate is missing reply");
-    }
-    return {
-      requestId: submitResponse.requestId,
-      status: "replied",
-      reply: {
-        arg: reply.value
-      },
-      httpDetails: {
-        ok: true,
-        status: 202,
-        statusText: "Certificate with reply has been received over ICRC-25 JSON-RPC",
-        headers: []
-      }
-    };
-  }
-  async createReadStateRequest(_options) {
-    return {
-      body: {
-        content: {}
-      }
-    };
-  }
-  async readState(_canisterId, options, _identity, _request) {
-    if (options.paths.length !== 1 || options.paths[0].length !== 2 || new TextDecoder().decode(options.paths[0][0]) !== "request_status") {
-      throw new SignerAgentError("Given paths are not supported");
-    }
-    const requestId = options.paths[0][1];
-    const key = toBase64(requestId);
-    const certificate = __classPrivateFieldGet(this, _SignerAgent_certificates, "f").get(key);
-    if (!certificate) {
-      throw new SignerAgentError("Certificate could not be found");
-    }
-    return { certificate };
-  }
-  async status() {
-    return __classPrivateFieldGet(this, _SignerAgent_options, "f").agent.status();
-  }
-  replaceAccount(account) {
-    __classPrivateFieldGet(this, _SignerAgent_options, "f").account = account;
-  }
-  replaceValidation(validation) {
-    __classPrivateFieldSet(this, _SignerAgent_validation, validation, "f");
-  }
-  /**
-   * Enable manual triggering of canister calls execution
-   */
-  batch() {
-    __classPrivateFieldSet(this, _SignerAgent_autoBatch, false, "f");
-    if (__classPrivateFieldGet(this, _SignerAgent_scheduled, "f").slice(-1)[0].length > 0) {
-      __classPrivateFieldGet(this, _SignerAgent_scheduled, "f").push([]);
-    }
-  }
-  /**
-   * Clear scheduled canister calls and switch back to automatic canister calls execution
-   */
-  clear() {
-    __classPrivateFieldSet(this, _SignerAgent_scheduled, [[]], "f");
-    __classPrivateFieldSet(this, _SignerAgent_autoBatch, true, "f");
-  }
-}
-_a = SignerAgent, _SignerAgent_options = /* @__PURE__ */ new WeakMap(), _SignerAgent_certificates = /* @__PURE__ */ new WeakMap(), _SignerAgent_queue = /* @__PURE__ */ new WeakMap(), _SignerAgent_executeTimeout = /* @__PURE__ */ new WeakMap(), _SignerAgent_scheduled = /* @__PURE__ */ new WeakMap(), _SignerAgent_autoBatch = /* @__PURE__ */ new WeakMap(), _SignerAgent_validation = /* @__PURE__ */ new WeakMap(), _SignerAgent_instances = /* @__PURE__ */ new WeakSet(), _SignerAgent_executeQueue = async function _SignerAgent_executeQueue2(scheduled) {
-  await Promise.all(scheduled.flat().map(({ options, resolve, reject }) => __classPrivateFieldGet(this, _SignerAgent_queue, "f").schedule(async () => {
-    try {
-      const response = await this.signer.callCanister(Object.assign({ sender: __classPrivateFieldGet(this, _SignerAgent_options, "f").account }, options));
-      resolve(response);
-    } catch (error) {
-      reject(error);
-    }
-  })));
-}, _SignerAgent_executeBatch = async function _SignerAgent_executeBatch2(scheduled, validation) {
-  await __classPrivateFieldGet(this, _SignerAgent_queue, "f").schedule(async () => {
-    try {
-      const responses = await this.signer.batchCallCanister({
-        sender: __classPrivateFieldGet(this, _SignerAgent_options, "f").account,
-        requests: scheduled.map((entries) => entries.map(({ options }) => options)),
-        validation: validation !== null && validation !== void 0 ? validation : void 0
-      });
-      scheduled.forEach((entries, sequenceIndex) => entries.forEach(({ resolve, reject }, requestIndex) => {
-        const response = responses[sequenceIndex][requestIndex];
-        if ("result" in response) {
-          resolve(response.result);
-          return;
-        }
-        if ("error" in response) {
-          reject(new SignerAgentError(`${response.error.code}: ${response.error.message}
-${JSON.stringify(response.error.data)}`));
-          return;
-        }
-        reject(new SignerAgentError(INVALID_RESPONSE_MESSAGE));
-      }));
-    } catch (error) {
-      scheduled.flat().forEach(({ reject }) => reject(error));
-    }
-  });
-};
-_SignerAgent_isInternalConstructing = { value: false };
-class LocalDelegationStorage {
-  async get(key) {
-    const storedData = localStorage.getItem(key);
-    if (!storedData) return null;
-    return JSON.parse(storedData);
-  }
-  async set(key, value) {
-    localStorage.setItem(key, JSON.stringify(value));
-  }
-  async remove(key) {
-    localStorage.removeItem(key);
-  }
-}
-const _NFIDAdapter = class _NFIDAdapter {
-  constructor() {
-    this.identity = null;
-    this.state = Adapter.Status.INIT;
-    this.actorCache = /* @__PURE__ */ new Map();
-    this.sessionKey = null;
-    this.name = "NFID";
-    this.logo = _NFIDAdapter.logo;
-    this.url = "https://nfid.one/rpc";
-    this.info = { id: "nfid", icon: _NFIDAdapter.logo, name: "NFID", adapter: _NFIDAdapter };
-    this.unwrapResponse = (response) => {
-      if ("error" in response) {
-        throw new SignerError(response.error);
-      }
-      if ("result" in response) {
-        return response.result;
-      }
-      throw new SignerError({
-        code: 500,
-        message: "Invalid response"
-      });
-    };
-    this.url = "https://nfid.one/rpc";
-    this.name = "NFID";
-    this.logo = _NFIDAdapter.logo;
-    this.delegationStorage = new LocalDelegationStorage();
-    this.transport = new PostMessageTransport({
-      url: this.url,
-      ..._NFIDAdapter.TRANSPORT_CONFIG
-    });
-    this.signer = new Signer({
-      transport: this.transport
-    });
-    this.signerAgent = SignerAgent.createSync({
-      signer: this.signer,
-      account: Principal.anonymous(),
-      agent: HttpAgent.createSync({ host: this.url })
-    });
-    this.agent = HttpAgent.createSync({ host: this.url });
-    this.setState(Adapter.Status.READY);
-  }
-  setState(newState) {
-    this.state = newState;
-  }
-  async isAvailable() {
-    return true;
-  }
-  async isConnected() {
-    return this.identity !== null && this.agent !== null;
-  }
-  async getPrincipal() {
-    if (!this.identity) {
-      throw new Error("Not connected");
-    }
-    return this.identity.getPrincipal();
-  }
-  async getAccountId() {
-    if (!this.identity) {
-      throw new Error("Not connected");
-    }
-    return D.fromPrincipal({
-      principal: this.identity.getPrincipal(),
-      subAccount: void 0
-      // This will use the default subaccount
-    }).toHex();
-  }
-  async connect(config) {
-    this.setState(Adapter.Status.CONNECTING);
-    this.config = config;
-    try {
-      await this.signer.openChannel();
-      const stored = await this.delegationStorage.get(_NFIDAdapter.STORAGE_KEY);
-      if (stored) {
-        try {
-          this.sessionKey = typeof stored.sessionKey === "string" ? Ed25519KeyIdentity.fromJSON(stored.sessionKey) : stored.sessionKey;
-          const delegationIdentity2 = DelegationIdentity.fromDelegation(
-            this.sessionKey,
-            this.unwrapDelegation(stored.delegationChain)
-          );
-          const isValid = delegationIdentity2.getDelegation().delegations.every(
-            (d2) => d2.delegation.expiration > BigInt(Date.now()) * BigInt(1e6)
-          );
-          if (isValid) {
-            this.identity = delegationIdentity2;
-            const principal2 = this.identity.getPrincipal();
-            this.signerAgent = SignerAgent.createSync({
-              signer: this.signer,
-              account: principal2
-            });
-            if (config.fetchRootKeys) {
-              await this.agent.fetchRootKey();
-            }
-            this.setState(Adapter.Status.CONNECTED);
-            return {
-              owner: principal2,
-              subaccount: D.fromPrincipal({
-                principal: principal2,
-                subAccount: void 0
-              }).toUint8Array(),
-              hasDelegation: true
-            };
-          }
-        } catch (error) {
-          console.warn("Failed to restore session, creating new one:", error);
-          await this.delegationStorage.remove(_NFIDAdapter.STORAGE_KEY);
-        }
-      }
-      if (!this.sessionKey) {
-        this.sessionKey = Ed25519KeyIdentity.generate();
-      }
-      const delegationChain = await this.signer.delegation({
-        publicKey: this.sessionKey.getPublicKey().toDer(),
-        targets: config.delegationTargets,
-        maxTimeToLive: this.config.delegationTimeout === void 0 ? BigInt(24 * 60 * 60 * 1e3 * 1e3 * 1e3 * 1e3) : BigInt(Date.now()) + this.config.delegationTimeout
-      });
-      const delegationIdentity = DelegationIdentity.fromDelegation(
-        this.sessionKey,
-        delegationChain
-      );
-      this.signerAgent.replaceAccount(delegationIdentity.getPrincipal());
-      if (config.fetchRootKeys) {
-        await this.agent.fetchRootKey();
-      }
-      const principal = delegationIdentity.getPrincipal();
-      if (principal.isAnonymous()) {
-        this.setState(Adapter.Status.READY);
-        throw new Error(
-          "Failed to authenticate with NFID - got anonymous principal"
-        );
-      }
-      this.signerAgent = SignerAgent.createSync({
-        signer: this.signer,
-        account: principal
-      });
-      this.identity = delegationIdentity;
-      try {
-        if (this.identity && this.agent && this.signerAgent && this.signer) {
-          await this.delegationStorage.set(_NFIDAdapter.STORAGE_KEY, {
-            sessionKey: this.sessionKey.toJSON(),
-            delegationChain: this.wrapDelegation(delegationChain)
-          });
-          this.setState(Adapter.Status.CONNECTED);
-          return {
-            owner: principal,
-            subaccount: D.fromPrincipal({
-              principal,
-              subAccount: void 0
-              // This will use the default subaccount
-            }).toUint8Array(),
-            hasDelegation: true
-          };
-        }
-      } catch (error) {
-        this.disconnect();
-        this.setState(Adapter.Status.READY);
-        console.error("[NFID] New session verification failed:", error);
-      }
-      this.identity = null;
-      this.agent = null;
-      this.signerAgent = null;
-      await this.delegationStorage.remove(_NFIDAdapter.STORAGE_KEY);
-      this.disconnect();
-      throw new Error("Failed to establish session");
-    } catch (error) {
-      console.error("Error connecting to NFID:", error);
-      this.setState(Adapter.Status.READY);
-      throw error;
-    }
-  }
-  // Helper method to convert DelegationChain to JsonnableDelegationChain
-  wrapDelegation(chain) {
-    return {
-      delegations: chain.delegations.map((d2) => {
-        var _a2;
-        return {
-          signature: JSON.stringify(Array.from(new Uint8Array(d2.signature))),
-          delegation: {
-            pubkey: JSON.stringify(Array.from(new Uint8Array(d2.delegation.pubkey))),
-            expiration: d2.delegation.expiration.toString(),
-            targets: (_a2 = d2.delegation.targets) == null ? void 0 : _a2.map((t) => t.toText())
-          }
-        };
-      }),
-      publicKey: JSON.stringify(Array.from(new Uint8Array(this.sessionKey.getPublicKey().toDer())))
-    };
-  }
-  // Helper method to convert JsonnableDelegationChain to DelegationChain
-  unwrapDelegation(jsonChain) {
-    return {
-      delegations: jsonChain.delegations.map((d2) => {
-        var _a2;
-        return {
-          signature: new Uint8Array(typeof d2.signature === "string" ? JSON.parse(d2.signature) : d2.signature),
-          delegation: {
-            pubkey: new Uint8Array(typeof d2.delegation.pubkey === "string" ? JSON.parse(d2.delegation.pubkey) : d2.delegation.pubkey),
-            expiration: BigInt(d2.delegation.expiration),
-            targets: (_a2 = d2.delegation.targets) == null ? void 0 : _a2.map((t) => Principal.fromText(t))
-          }
-        };
-      }),
-      publicKey: new Uint8Array(typeof jsonChain.publicKey === "string" ? JSON.parse(jsonChain.publicKey) : jsonChain.publicKey)
-    };
-  }
-  createActor(canisterId, idlFactory, options = {
-    requiresSigning: true,
-    anon: false
-  }) {
-    const { requiresSigning = true, anon = false } = options;
-    try {
-      const inTargets = this.identity.getDelegation().delegations.some(
-        (d2) => {
-          var _a2;
-          return (_a2 = d2.delegation.targets) == null ? void 0 : _a2.some((p) => p.toText() === canisterId);
-        }
-      );
-      const isUndelegated = inTargets && !requiresSigning || !inTargets && requiresSigning || !inTargets && !requiresSigning;
-      const cacheKey = `${canisterId}-${inTargets}-${requiresSigning}-${isUndelegated}-${this.identity.getPrincipal().toText()}`;
-      const cachedActor = this.actorCache.get(cacheKey);
-      if (cachedActor) {
-        return cachedActor;
-      }
-      if (inTargets && !requiresSigning || !inTargets && !requiresSigning) {
-        const actor2 = this.undelegatedActor(canisterId, idlFactory);
-        this.actorCache.set(cacheKey, actor2);
-        return actor2;
-      }
-      const actor = Actor.createActor(idlFactory, {
-        agent: this.signerAgent,
-        canisterId
-      });
-      if (requiresSigning) {
-        if (!this.signerAgent) {
-          throw new Error("No signer agent available. Please connect first.");
-        }
-        const finalActor = Actor.createActor(idlFactory, {
-          agent: this.signerAgent,
-          canisterId
-        });
-        this.actorCache.set(cacheKey, finalActor);
-        return finalActor;
-      }
-      return actor;
-    } catch (error) {
-      console.error("Error creating actor:", error);
-      throw new Error(
-        `Failed to create actor: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
-  }
-  undelegatedActor(canisterId, idlFactory) {
-    var _a2;
-    const agent = HttpAgent.createSync({
-      identity: this.identity,
-      host: this.config.hostUrl,
-      verifyQuerySignatures: ((_a2 = this.config) == null ? void 0 : _a2.dfxNetwork) != "local"
-    });
-    const actor = Actor.createActor(idlFactory, {
-      agent,
-      canisterId
-    });
-    return actor;
-  }
-  async disconnect() {
-    this.setState(Adapter.Status.DISCONNECTING);
-    this.identity = null;
-    this.agent = null;
-    this.signerAgent = null;
-    await this.delegationStorage.remove(_NFIDAdapter.STORAGE_KEY);
-    this.setState(Adapter.Status.DISCONNECTED);
-  }
-  getState() {
-    return this.state;
-  }
-};
-_NFIDAdapter.STORAGE_KEY = "nfid_session";
-_NFIDAdapter.TRANSPORT_CONFIG = {
-  windowOpenerFeatures: "width=525,height=705",
-  establishTimeout: 45e3,
-  disconnectTimeout: 45e3,
-  statusPollingRate: 500,
-  detectNonClickEstablishment: false
-  // Allow connection outside of click handler for auto-connect
-};
-_NFIDAdapter.logo = nfidLogo;
-let NFIDAdapter = _NFIDAdapter;
-const oisyLogo = "data:image/webp;base64,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";
-const _OisyAdapter = class _OisyAdapter {
-  constructor() {
-    this.signer = null;
-    this.agent = null;
-    this.name = "Oisy Wallet";
-    this.logo = _OisyAdapter.logo;
-    this.url = "https://oisy.com/sign";
-    this.info = { id: "oisy", icon: _OisyAdapter.logo, name: "Oisy Wallet", adapter: _OisyAdapter };
-    this.state = Adapter.Status.INIT;
-    this.url = "https://oisy.com/sign";
-    this.name = "Oisy Wallet";
-    this.logo = _OisyAdapter.logo;
-    this.agent = HttpAgent.createSync({ host: this.url });
-    this.transport = new PostMessageTransport({
-      url: this.url,
-      ..._OisyAdapter.TRANSPORT_CONFIG
-    });
-    this.signer = new Signer({
-      transport: this.transport
-    });
-    this.signerAgent = SignerAgent.createSync({
-      signer: this.signer,
-      account: Principal.anonymous(),
-      agent: this.agent
-    });
-    this.state = Adapter.Status.READY;
-  }
-  async isAvailable() {
-    return true;
-  }
-  async isConnected() {
-    return this.agent !== null && this.signer !== null;
-  }
-  async getPrincipal() {
-    if (!this.signerAgent) {
-      throw new Error("Not connected");
-    }
-    return this.signerAgent.getPrincipal();
-  }
-  async getAccountId() {
-    return D.fromPrincipal({
-      principal: await this.getPrincipal(),
-      subAccount: void 0
-      // This will use the default subaccount
-    }).toHex();
-  }
-  async connect(config) {
-    try {
-      this.setState(Adapter.Status.CONNECTING);
-      this.config = config;
-      const accounts = await this.signerAgent.signer.accounts();
-      if (!accounts || accounts.length === 0) {
-        this.disconnect();
-        throw new Error("No accounts returned from Oisy");
-      }
-      const principal = accounts[0].owner;
-      if (principal.isAnonymous()) {
-        this.setState(Adapter.Status.READY);
-        throw new Error(
-          "Failed to authenticate with Oisy - got anonymous principal"
-        );
-      }
-      this.signerAgent.replaceAccount(principal);
-      if (config.fetchRootKeys) {
-        await this.signerAgent.fetchRootKey();
-      }
-      localStorage.setItem("oisy_principal", principal.toText());
-      this.setState(Adapter.Status.CONNECTED);
-      return {
-        owner: principal,
-        subaccount: D.fromPrincipal({
-          principal,
-          subAccount: void 0
-          // This will use the default subaccount
-        }).toUint8Array(),
-        hasDelegation: false
-      };
-    } catch (error) {
-      console.error("[Oisy] Connection error:", error);
-      await this.disconnect();
-      throw error;
-    }
-  }
-  setState(newState) {
-    this.state = newState;
-  }
-  getState() {
-    return this.state;
-  }
-  createActor(canisterId, idlFactory, options = {
-    requiresSigning: true,
-    anon: false
-  }) {
-    if (!this.signerAgent) {
-      throw new Error("No signer agent available. Please connect first.");
-    }
-    try {
-      const actor = Actor.createActor(idlFactory, {
-        agent: this.signerAgent,
-        canisterId
-      });
-      return actor;
-    } catch (error) {
-      console.error("[Oisy] Actor creation error:", error);
-      throw error;
-    }
-  }
-  async disconnect() {
-    var _a2, _b, _c;
-    this.setState(Adapter.Status.DISCONNECTING);
-    if (this.signer || this.signerAgent) {
-      try {
-        console.log("Closing channel");
-        (_a2 = this.signer) == null ? void 0 : _a2.closeChannel();
-        (_c = (_b = this.signerAgent) == null ? void 0 : _b.signer) == null ? void 0 : _c.closeChannel();
-      } catch (error) {
-        console.debug("[Oisy] Error cleaning up signer:", error);
-      }
-      this.signer = null;
-    }
-    this.agent = null;
-    this.signerAgent = null;
-    this.setState(Adapter.Status.DISCONNECTED);
-  }
-};
-_OisyAdapter.TRANSPORT_CONFIG = {
-  windowOpenerFeatures: "width=525,height=705",
-  establishTimeout: 45e3,
-  disconnectTimeout: 45e3,
-  statusPollingRate: 500,
-  detectNonClickEstablishment: false
-};
-_OisyAdapter.logo = oisyLogo;
-let OisyAdapter = _OisyAdapter;
-const walletList = [
-  {
-    id: "oisy",
-    name: "Oisy Wallet",
-    icon: OisyAdapter.logo,
-    adapter: OisyAdapter
-  },
-  {
-    id: "nfid",
-    name: "NFID",
-    icon: NFIDAdapter.logo,
-    adapter: NFIDAdapter
-  },
-  {
-    id: "nns",
-    name: "Internet Identity",
-    icon: NNSAdapter.logo,
-    adapter: NNSAdapter
-  },
-  {
-    id: "plug",
-    name: "Plug Wallet",
-    icon: PlugAdapter.logo,
-    adapter: PlugAdapter
-  }
-];
-class PNP {
-  constructor(config = {}) {
-    this.account = null;
-    this.activeWallet = null;
-    this.provider = null;
-    this.actorCache = /* @__PURE__ */ new Map();
-    this.dfxNetwork = "local";
-    this.isDev = true;
-    this.isConnecting = false;
-    this.config = {
-      hostUrl: config.hostUrl || "http://localhost:4943",
-      identityProvider: config.identityProvider || "https://identity.ic0.app",
-      localStorageKey: config.localStorageKey || "pnpConnectedWallet",
-      timeout: config.timeout || 1e3 * 60 * 60 * 24,
-      // 1 day in milliseconds
-      delegationTimeout: config.delegationTimeout || BigInt(24 * 60 * 60 * 1e3 * 1e3 * 1e3),
-      delegationTargets: config.delegationTargets || [],
-      dfxNetwork: config.dfxNetwork || "local",
-      isDev: config.dfxNetwork === "local",
-      derivationOrigin: config.derivationOrigin || "https://identity.ic0.app",
-      ...config
-    };
-  }
-  async connect(walletId) {
-    if (this.isConnecting) return null;
-    this.isConnecting = true;
-    try {
-      const targetWalletId = walletId || localStorage.getItem(this.config.localStorageKey);
-      if (!targetWalletId) return null;
-      localStorage.setItem(this.config.localStorageKey, targetWalletId);
-      const adapter = walletList.find((w2) => w2.id === targetWalletId);
-      if (!adapter) throw new Error(`Wallet ${targetWalletId} not found`);
-      const instance = new adapter.adapter(this.config);
-      const account = await instance.connect(this.config);
-      this.account = account;
-      this.activeWallet = adapter;
-      this.provider = instance;
-      return account;
-    } catch (error) {
-      console.warn("[PNP] Connection failed:", error);
-      return null;
-    } finally {
-      this.isConnecting = false;
-    }
-  }
-  getAdapter(walletId) {
-    const wallet = walletList.find((w2) => w2.id === walletId);
-    if (!wallet) throw new Error(`Wallet ${walletId} not found`);
-    return new wallet.adapter();
-  }
-  async disconnect() {
-    try {
-      if (this.provider) await this.provider.disconnect();
-      this.account = null;
-      this.provider = null;
-      this.activeWallet = null;
-      this.actorCache.clear();
-      localStorage.removeItem(this.config.localStorageKey);
-    } catch (error) {
-      console.warn("[PNP] Disconnect error:", error);
-    }
-  }
-  getActor(canisterId, idl, options) {
-    const { anon = false, requiresSigning = true } = options || {};
-    return anon ? this.createAnonymousActor(canisterId, idl) : this.provider.createActor(canisterId, idl, { requiresSigning });
-  }
-  createAnonymousActor(canisterId, idl) {
-    var _a2, _b;
-    const cacheKey = `anon-${canisterId}`;
-    const cachedActor = this.actorCache.get(cacheKey);
-    if (cachedActor) return cachedActor;
-    const actor = Actor.createActor(idl, {
-      agent: HttpAgent.createSync({
-        host: ((_a2 = this.config) == null ? void 0 : _a2.hostUrl) || "https://icp0.io",
-        verifyQuerySignatures: ((_b = this.config) == null ? void 0 : _b.dfxNetwork) != "local"
-      }),
-      canisterId
-    });
-    this.actorCache.set(cacheKey, actor);
-    return actor;
-  }
-  isWalletConnected() {
-    return this.activeWallet !== null;
-  }
-}
-const walletsList = walletList;
-const createPNP = (config = {}) => new PNP(config);
-class BatchTransact {
-  constructor(transactionLlist = {}, _adapterObj) {
-    this.state = "idle";
-    this.transactionLlist = {};
-    this.stepsList = [];
-    this.completed = [];
-    this.activeStep = "";
-    this.failedSteps = [];
-    this.transactionResults = {};
-    this.trxArray = [];
-    this._info = false;
-    this._adapterObj = false;
-    if (!_adapterObj || !_adapterObj.provider) return;
-    Object.entries(transactionLlist).forEach(([key, value]) => {
-      if (typeof value === "object") {
-        this.transactionLlist[key] = value;
-      }
-    });
-    if (Object.keys(this.transactionLlist).length > 0) {
-      this.stepsList = Object.keys(this.transactionLlist);
-      this._adapterObj = _adapterObj;
-    }
-  }
-  _prepareTrxArry() {
-    this.trxArray = [];
-    let tempArray = [];
-    Object.values(this.transactionLlist).forEach((x2) => {
-      tempArray.push(x2);
-      if (x2.updateNextStep) {
-        this.trxArray.push(tempArray);
-        tempArray = [];
-      }
-    });
-    if (tempArray.length > 0) this.trxArray.push(tempArray);
-    let trxIndex = 0;
-    this.trxArray.forEach((subArray, i) => {
-      subArray.forEach((el, j2) => {
-        this.trxArray[i][j2].stepIndex = trxIndex;
-        this.trxArray[i][j2].state = "idle";
-        this.trxArray[i][j2].onSuccessMain = async (data, _this) => {
-          const stepIndex = _this.stepIndex;
-          const onSucessCall = el.onSuccess;
-          const onFailCall = el.onFail;
-          if (data.err || data.Err || data.ERR) {
-            this.failedSteps.push(this.stepsList[stepIndex]);
-            this.transactionResults[this.stepsList[stepIndex]] = data;
-            this.state = "error";
-            _this.state = "error";
-            if (onFailCall) await onFailCall(data);
-            return false;
-          } else {
-            this.completed.push(this.stepsList[stepIndex]);
-            this.activeStep = this.stepsList[stepIndex + 1];
-            this.transactionResults[this.stepsList[stepIndex]] = data;
-            _this.state = "done";
-          }
-          if (typeof _this.updateNextStep === "function" && this.trxArray[i + 1]) {
-            await _this.updateNextStep(data, this.trxArray[i + 1][0]);
-          }
-          if (onSucessCall) await onSucessCall(data);
-        };
-        this.trxArray[i][j2].onFailMain = async (err, _this) => {
-          const onFailCall = el.onFail;
-          const stepIndex = _this.stepIndex;
-          console.error(`error in  ${this.stepsList[stepIndex]} `, this.trxArray[i][j2]);
-          console.error(err);
-          this.failedSteps.push(this.stepsList[stepIndex]);
-          this.activeStep = this.stepsList[stepIndex];
-          this.state = "error";
-          _this.state = "error";
-          if (onFailCall) await onFailCall(err);
-          return false;
-        };
-        trxIndex++;
-      });
-    });
-    return this.trxArray;
-  }
-  async retryExecute() {
-    this.state = "idle";
-    this.failedSteps = [];
-    await this.execute();
-  }
-  async execute() {
-    if (!this._adapterObj || !this._adapterObj.provider) {
-      throw new Error("Provider not found");
-    }
-    this.state = "processing";
-    await this._processBatch();
-  }
-  async _processBatch() {
-    if (this.trxArray.length === 0) {
-      this._prepareTrxArry();
-    }
-    for (const batch of this.trxArray) {
-      for (const trx of batch) {
-        if (trx.state === "error") continue;
-        await this._adapterObj.provider.processTransaction(trx);
-      }
-    }
-  }
-}
 function getDefaultExportFromCjs$1(x2) {
   return x2 && x2.__esModule && Object.prototype.hasOwnProperty.call(x2, "default") ? x2["default"] : x2;
 }
@@ -12973,6 +8757,4244 @@ const getAccountIdentifier = (principalId, subAccount = "") => {
     throw new Error(error);
   }
 };
+var N = Object.create;
+var H = Object.defineProperty;
+var F = Object.getOwnPropertyDescriptor;
+var j = Object.getOwnPropertyNames;
+var V = Object.getPrototypeOf, G = Object.prototype.hasOwnProperty;
+var z = (e3, t) => () => (t || e3((t = { exports: {} }).exports, t), t.exports);
+var v = (e3, t, n, r) => {
+  if (t && typeof t == "object" || typeof t == "function") for (let o of j(t)) !G.call(e3, o) && o !== n && H(e3, o, { get: () => t[o], enumerable: !(r = F(t, o)) || r.enumerable });
+  return e3;
+};
+var J$1 = (e3, t, n) => (n = e3 != null ? N(V(e3)) : {}, v(!e3 || !e3.__esModule ? H(n, "default", { value: e3, enumerable: true }) : n, e3));
+function W(e3) {
+  return e3 instanceof Uint8Array || e3 != null && typeof e3 == "object" && e3.constructor.name === "Uint8Array";
+}
+function A(e3, ...t) {
+  if (!W(e3)) throw new Error("Uint8Array expected");
+  if (t.length > 0 && !t.includes(e3.length)) throw new Error(`Uint8Array expected of length ${t}, not of length=${e3.length}`);
+}
+function U(e3, t = true) {
+  if (e3.destroyed) throw new Error("Hash instance has been destroyed");
+  if (t && e3.finished) throw new Error("Hash#digest() has already been called");
+}
+function S(e3, t) {
+  A(e3);
+  let n = t.outputLen;
+  if (e3.length < n) throw new Error(`digestInto() expects output buffer of length at least ${n}`);
+}
+var g = (e3) => new DataView(e3.buffer, e3.byteOffset, e3.byteLength), h = (e3, t) => e3 << 32 - t | e3 >>> t;
+new Uint8Array(new Uint32Array([287454020]).buffer)[0] === 68;
+function $(e3) {
+  if (typeof e3 != "string") throw new Error(`utf8ToBytes expected string, got ${typeof e3}`);
+  return new Uint8Array(new TextEncoder().encode(e3));
+}
+function B(e3) {
+  return typeof e3 == "string" && (e3 = $(e3)), A(e3), e3;
+}
+var d = class {
+  clone() {
+    return this._cloneInto();
+  }
+};
+function T(e3) {
+  let t = (r) => e3().update(B(r)).digest(), n = e3();
+  return t.outputLen = n.outputLen, t.blockLen = n.blockLen, t.create = () => e3(), t;
+}
+function M(e3, t, n, r) {
+  if (typeof e3.setBigUint64 == "function") return e3.setBigUint64(t, n, r);
+  let o = BigInt(32), c = BigInt(4294967295), i = Number(n >> o & c), s = Number(n & c), u = r ? 4 : 0, a = r ? 0 : 4;
+  e3.setUint32(t + u, i, r), e3.setUint32(t + a, s, r);
+}
+var C = (e3, t, n) => e3 & t ^ ~e3 & n, k = (e3, t, n) => e3 & t ^ e3 & n ^ t & n, w = class extends d {
+  constructor(t, n, r, o) {
+    super(), this.blockLen = t, this.outputLen = n, this.padOffset = r, this.isLE = o, this.finished = false, this.length = 0, this.pos = 0, this.destroyed = false, this.buffer = new Uint8Array(t), this.view = g(this.buffer);
+  }
+  update(t) {
+    U(this);
+    let { view: n, buffer: r, blockLen: o } = this;
+    t = B(t);
+    let c = t.length;
+    for (let i = 0; i < c; ) {
+      let s = Math.min(o - this.pos, c - i);
+      if (s === o) {
+        let u = g(t);
+        for (; o <= c - i; i += o) this.process(u, i);
+        continue;
+      }
+      r.set(t.subarray(i, i + s), this.pos), this.pos += s, i += s, this.pos === o && (this.process(n, 0), this.pos = 0);
+    }
+    return this.length += t.length, this.roundClean(), this;
+  }
+  digestInto(t) {
+    U(this), S(t, this), this.finished = true;
+    let { buffer: n, view: r, blockLen: o, isLE: c } = this, { pos: i } = this;
+    n[i++] = 128, this.buffer.subarray(i).fill(0), this.padOffset > o - i && (this.process(r, 0), i = 0);
+    for (let f = i; f < o; f++) n[f] = 0;
+    M(r, o - 8, BigInt(this.length * 8), c), this.process(r, 0);
+    let s = g(t), u = this.outputLen;
+    if (u % 4) throw new Error("_sha2: outputLen should be aligned to 32bit");
+    let a = u / 4, p = this.get();
+    if (a > p.length) throw new Error("_sha2: outputLen bigger than state");
+    for (let f = 0; f < a; f++) s.setUint32(4 * f, p[f], c);
+  }
+  digest() {
+    let { buffer: t, outputLen: n } = this;
+    this.digestInto(t);
+    let r = t.slice(0, n);
+    return this.destroy(), r;
+  }
+  _cloneInto(t) {
+    t || (t = new this.constructor()), t.set(...this.get());
+    let { blockLen: n, buffer: r, length: o, finished: c, destroyed: i, pos: s } = this;
+    return t.length = o, t.pos = s, t.finished = c, t.destroyed = i, o % n && t.buffer.set(r), t;
+  }
+};
+var P = new Uint32Array([1116352408, 1899447441, 3049323471, 3921009573, 961987163, 1508970993, 2453635748, 2870763221, 3624381080, 310598401, 607225278, 1426881987, 1925078388, 2162078206, 2614888103, 3248222580, 3835390401, 4022224774, 264347078, 604807628, 770255983, 1249150122, 1555081692, 1996064986, 2554220882, 2821834349, 2952996808, 3210313671, 3336571891, 3584528711, 113926993, 338241895, 666307205, 773529912, 1294757372, 1396182291, 1695183700, 1986661051, 2177026350, 2456956037, 2730485921, 2820302411, 3259730800, 3345764771, 3516065817, 3600352804, 4094571909, 275423344, 430227734, 506948616, 659060556, 883997877, 958139571, 1322822218, 1537002063, 1747873779, 1955562222, 2024104815, 2227730452, 2361852424, 2428436474, 2756734187, 3204031479, 3329325298]), x = new Uint32Array([1779033703, 3144134277, 1013904242, 2773480762, 1359893119, 2600822924, 528734635, 1541459225]), b = new Uint32Array(64), E = class extends w {
+  constructor() {
+    super(64, 32, 8, false), this.A = x[0] | 0, this.B = x[1] | 0, this.C = x[2] | 0, this.D = x[3] | 0, this.E = x[4] | 0, this.F = x[5] | 0, this.G = x[6] | 0, this.H = x[7] | 0;
+  }
+  get() {
+    let { A: t, B: n, C: r, D: o, E: c, F: i, G: s, H: u } = this;
+    return [t, n, r, o, c, i, s, u];
+  }
+  set(t, n, r, o, c, i, s, u) {
+    this.A = t | 0, this.B = n | 0, this.C = r | 0, this.D = o | 0, this.E = c | 0, this.F = i | 0, this.G = s | 0, this.H = u | 0;
+  }
+  process(t, n) {
+    for (let f = 0; f < 16; f++, n += 4) b[f] = t.getUint32(n, false);
+    for (let f = 16; f < 64; f++) {
+      let y = b[f - 15], l = b[f - 2], I = h(y, 7) ^ h(y, 18) ^ y >>> 3, m = h(l, 17) ^ h(l, 19) ^ l >>> 10;
+      b[f] = m + b[f - 7] + I + b[f - 16] | 0;
+    }
+    let { A: r, B: o, C: c, D: i, E: s, F: u, G: a, H: p } = this;
+    for (let f = 0; f < 64; f++) {
+      let y = h(s, 6) ^ h(s, 11) ^ h(s, 25), l = p + y + C(s, u, a) + P[f] + b[f] | 0, m = (h(r, 2) ^ h(r, 13) ^ h(r, 22)) + k(r, o, c) | 0;
+      p = a, a = u, u = s, s = i + l | 0, i = c, c = o, o = r, r = l + m | 0;
+    }
+    r = r + this.A | 0, o = o + this.B | 0, c = c + this.C | 0, i = i + this.D | 0, s = s + this.E | 0, u = u + this.F | 0, a = a + this.G | 0, p = p + this.H | 0, this.set(r, o, c, i, s, u, a, p);
+  }
+  roundClean() {
+    b.fill(0);
+  }
+  destroy() {
+    this.set(0, 0, 0, 0, 0, 0, 0, 0), this.buffer.fill(0);
+  }
+}, L = class extends E {
+  constructor() {
+    super(), this.A = -1056596264, this.B = 914150663, this.C = 812702999, this.D = -150054599, this.E = -4191439, this.F = 1750603025, this.G = 1694076839, this.H = -1090891868, this.outputLen = 28;
+  }
+};
+var O = T(() => new L());
+var D = class e {
+  constructor(t) {
+    this.bytes = t;
+  }
+  static fromHex(t) {
+    return new e(Uint8Array.from(Buffer.from(t, "hex")));
+  }
+  static fromPrincipal({ principal: t, subAccount: n = _.fromID(0) }) {
+    let r = asciiStringToByteArray(`
+account-id`), o = O.create();
+    o.update(arrayOfNumberToUint8Array([...r, ...t.toUint8Array(), ...n.toUint8Array()]));
+    let c = o.digest(), i = bigEndianCrc32(c), s = new Uint8Array([...i, ...c]);
+    return new e(s);
+  }
+  toHex() {
+    return uint8ArrayToHexString(this.bytes);
+  }
+  toUint8Array() {
+    return this.bytes;
+  }
+  toNumbers() {
+    return Array.from(this.bytes);
+  }
+  toAccountIdentifierHash() {
+    return { hash: this.toUint8Array() };
+  }
+}, _ = class e2 {
+  constructor(t) {
+    this.bytes = t;
+  }
+  static fromBytes(t) {
+    return t.length != 32 ? Error("Subaccount length must be 32-bytes") : new e2(t);
+  }
+  static fromPrincipal(t) {
+    let n = new Uint8Array(32).fill(0), r = t.toUint8Array();
+    n[0] = r.length;
+    for (let o = 0; o < r.length; o++) n[1 + o] = r[o];
+    return new e2(n);
+  }
+  static fromID(t) {
+    if (t < 0) throw new Error("Number cannot be negative");
+    if (t > Number.MAX_SAFE_INTEGER) throw new Error("Number is too large to fit in 32 bytes.");
+    let n = new DataView(new ArrayBuffer(32));
+    if (typeof n.setBigUint64 == "function") n.setBigUint64(24, BigInt(t));
+    else {
+      let o = BigInt(1) << BigInt(32);
+      n.setUint32(24, Number(BigInt(t) >> BigInt(32))), n.setUint32(28, Number(BigInt(t) % o));
+    }
+    let r = new Uint8Array(n.buffer);
+    return new e2(r);
+  }
+  toUint8Array() {
+    return this.bytes;
+  }
+};
+/*! Bundled license information:
+
+@noble/hashes/esm/utils.js:
+  (*! noble-hashes - MIT License (c) 2022 Paul Miller (paulmillr.com) *)
+*/
+Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
+Principal.fromText("qhbym-qaaaa-aaaaa-aaafq-cai");
+BigInt(1095062083);
+BigInt(1347768404);
+BigInt(1e4);
+BigInt(1e8);
+var J = z((S2) => {
+  S2.byteLength = gr;
+  S2.toByteArray = Ar;
+  S2.fromByteArray = Tr;
+  var B2 = [], x2 = [], Er = typeof Uint8Array < "u" ? Uint8Array : Array, M2 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  for (g2 = 0, X = M2.length; g2 < X; ++g2) B2[g2] = M2[g2], x2[M2.charCodeAt(g2)] = g2;
+  var g2, X;
+  x2[45] = 62;
+  x2[95] = 63;
+  function z2(i) {
+    var r = i.length;
+    if (r % 4 > 0) throw new Error("Invalid string. Length must be a multiple of 4");
+    var t = i.indexOf("=");
+    t === -1 && (t = r);
+    var e3 = t === r ? 0 : 4 - t % 4;
+    return [t, e3];
+  }
+  function gr(i) {
+    var r = z2(i), t = r[0], e3 = r[1];
+    return (t + e3) * 3 / 4 - e3;
+  }
+  function Ir(i, r, t) {
+    return (r + t) * 3 / 4 - t;
+  }
+  function Ar(i) {
+    var r, t = z2(i), e3 = t[0], n = t[1], o = new Er(Ir(i, e3, n)), u = 0, h2 = n > 0 ? e3 - 4 : e3, f;
+    for (f = 0; f < h2; f += 4) r = x2[i.charCodeAt(f)] << 18 | x2[i.charCodeAt(f + 1)] << 12 | x2[i.charCodeAt(f + 2)] << 6 | x2[i.charCodeAt(f + 3)], o[u++] = r >> 16 & 255, o[u++] = r >> 8 & 255, o[u++] = r & 255;
+    return n === 2 && (r = x2[i.charCodeAt(f)] << 2 | x2[i.charCodeAt(f + 1)] >> 4, o[u++] = r & 255), n === 1 && (r = x2[i.charCodeAt(f)] << 10 | x2[i.charCodeAt(f + 1)] << 4 | x2[i.charCodeAt(f + 2)] >> 2, o[u++] = r >> 8 & 255, o[u++] = r & 255), o;
+  }
+  function Fr(i) {
+    return B2[i >> 18 & 63] + B2[i >> 12 & 63] + B2[i >> 6 & 63] + B2[i & 63];
+  }
+  function Ur(i, r, t) {
+    for (var e3, n = [], o = r; o < t; o += 3) e3 = (i[o] << 16 & 16711680) + (i[o + 1] << 8 & 65280) + (i[o + 2] & 255), n.push(Fr(e3));
+    return n.join("");
+  }
+  function Tr(i) {
+    for (var r, t = i.length, e3 = t % 3, n = [], o = 16383, u = 0, h2 = t - e3; u < h2; u += o) n.push(Ur(i, u, u + o > h2 ? h2 : u + o));
+    return e3 === 1 ? (r = i[t - 1], n.push(B2[r >> 2] + B2[r << 4 & 63] + "==")) : e3 === 2 && (r = (i[t - 2] << 8) + i[t - 1], n.push(B2[r >> 10] + B2[r >> 4 & 63] + B2[r << 2 & 63] + "=")), n.join("");
+  }
+});
+var K = z(($2) => {
+  $2.read = function(i, r, t, e3, n) {
+    var o, u, h2 = n * 8 - e3 - 1, f = (1 << h2) - 1, a = f >> 1, s = -7, p = t ? n - 1 : 0, A2 = t ? -1 : 1, w2 = i[r + p];
+    for (p += A2, o = w2 & (1 << -s) - 1, w2 >>= -s, s += h2; s > 0; o = o * 256 + i[r + p], p += A2, s -= 8) ;
+    for (u = o & (1 << -s) - 1, o >>= -s, s += e3; s > 0; u = u * 256 + i[r + p], p += A2, s -= 8) ;
+    if (o === 0) o = 1 - a;
+    else {
+      if (o === f) return u ? NaN : (w2 ? -1 : 1) * (1 / 0);
+      u = u + Math.pow(2, e3), o = o - a;
+    }
+    return (w2 ? -1 : 1) * u * Math.pow(2, o - e3);
+  };
+  $2.write = function(i, r, t, e3, n, o) {
+    var u, h2, f, a = o * 8 - n - 1, s = (1 << a) - 1, p = s >> 1, A2 = n === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0, w2 = e3 ? 0 : o - 1, L2 = e3 ? 1 : -1, yr = r < 0 || r === 0 && 1 / r < 0 ? 1 : 0;
+    for (r = Math.abs(r), isNaN(r) || r === 1 / 0 ? (h2 = isNaN(r) ? 1 : 0, u = s) : (u = Math.floor(Math.log(r) / Math.LN2), r * (f = Math.pow(2, -u)) < 1 && (u--, f *= 2), u + p >= 1 ? r += A2 / f : r += A2 * Math.pow(2, 1 - p), r * f >= 2 && (u++, f /= 2), u + p >= s ? (h2 = 0, u = s) : u + p >= 1 ? (h2 = (r * f - 1) * Math.pow(2, n), u = u + p) : (h2 = r * Math.pow(2, p - 1) * Math.pow(2, n), u = 0)); n >= 8; i[t + w2] = h2 & 255, w2 += L2, h2 /= 256, n -= 8) ;
+    for (u = u << n | h2, a += n; a > 0; i[t + w2] = u & 255, w2 += L2, u /= 256, a -= 8) ;
+    i[t + w2 - L2] |= yr * 128;
+  };
+});
+var lr = z((R) => {
+  var D2 = J(), U2 = K(), Z = typeof Symbol == "function" && typeof Symbol.for == "function" ? Symbol.for("nodejs.util.inspect.custom") : null;
+  R.Buffer = c;
+  R.SlowBuffer = Lr;
+  R.INSPECT_MAX_BYTES = 50;
+  var _2 = 2147483647;
+  R.kMaxLength = _2;
+  c.TYPED_ARRAY_SUPPORT = Rr();
+  !c.TYPED_ARRAY_SUPPORT && typeof console < "u" && typeof console.error == "function" && console.error("This browser lacks typed array (Uint8Array) support which is required by `buffer` v5.x. Use `buffer` v4.x if you require old browser support.");
+  function Rr() {
+    try {
+      let i = new Uint8Array(1), r = { foo: function() {
+        return 42;
+      } };
+      return Object.setPrototypeOf(r, Uint8Array.prototype), Object.setPrototypeOf(i, r), i.foo() === 42;
+    } catch {
+      return false;
+    }
+  }
+  Object.defineProperty(c.prototype, "parent", { enumerable: true, get: function() {
+    if (c.isBuffer(this)) return this.buffer;
+  } });
+  Object.defineProperty(c.prototype, "offset", { enumerable: true, get: function() {
+    if (c.isBuffer(this)) return this.byteOffset;
+  } });
+  function d2(i) {
+    if (i > _2) throw new RangeError('The value "' + i + '" is invalid for option "size"');
+    let r = new Uint8Array(i);
+    return Object.setPrototypeOf(r, c.prototype), r;
+  }
+  function c(i, r, t) {
+    if (typeof i == "number") {
+      if (typeof r == "string") throw new TypeError('The "string" argument must be of type string. Received type number');
+      return G2(i);
+    }
+    return tr(i, r, t);
+  }
+  c.poolSize = 8192;
+  function tr(i, r, t) {
+    if (typeof i == "string") return Sr(i, r);
+    if (ArrayBuffer.isView(i)) return _r(i);
+    if (i == null) throw new TypeError("The first argument must be one of type string, Buffer, ArrayBuffer, Array, or Array-like Object. Received type " + typeof i);
+    if (m(i, ArrayBuffer) || i && m(i.buffer, ArrayBuffer) || typeof SharedArrayBuffer < "u" && (m(i, SharedArrayBuffer) || i && m(i.buffer, SharedArrayBuffer))) return O2(i, r, t);
+    if (typeof i == "number") throw new TypeError('The "value" argument must not be of type number. Received type number');
+    let e3 = i.valueOf && i.valueOf();
+    if (e3 != null && e3 !== i) return c.from(e3, r, t);
+    let n = kr(i);
+    if (n) return n;
+    if (typeof Symbol < "u" && Symbol.toPrimitive != null && typeof i[Symbol.toPrimitive] == "function") return c.from(i[Symbol.toPrimitive]("string"), r, t);
+    throw new TypeError("The first argument must be one of type string, Buffer, ArrayBuffer, Array, or Array-like Object. Received type " + typeof i);
+  }
+  c.from = function(i, r, t) {
+    return tr(i, r, t);
+  };
+  Object.setPrototypeOf(c.prototype, Uint8Array.prototype);
+  Object.setPrototypeOf(c, Uint8Array);
+  function ir(i) {
+    if (typeof i != "number") throw new TypeError('"size" argument must be of type number');
+    if (i < 0) throw new RangeError('The value "' + i + '" is invalid for option "size"');
+  }
+  function Cr(i, r, t) {
+    return ir(i), i <= 0 ? d2(i) : r !== void 0 ? typeof t == "string" ? d2(i).fill(r, t) : d2(i).fill(r) : d2(i);
+  }
+  c.alloc = function(i, r, t) {
+    return Cr(i, r, t);
+  };
+  function G2(i) {
+    return ir(i), d2(i < 0 ? 0 : H2(i) | 0);
+  }
+  c.allocUnsafe = function(i) {
+    return G2(i);
+  };
+  c.allocUnsafeSlow = function(i) {
+    return G2(i);
+  };
+  function Sr(i, r) {
+    if ((typeof r != "string" || r === "") && (r = "utf8"), !c.isEncoding(r)) throw new TypeError("Unknown encoding: " + r);
+    let t = er(i, r) | 0, e3 = d2(t), n = e3.write(i, r);
+    return n !== t && (e3 = e3.slice(0, n)), e3;
+  }
+  function P2(i) {
+    let r = i.length < 0 ? 0 : H2(i.length) | 0, t = d2(r);
+    for (let e3 = 0; e3 < r; e3 += 1) t[e3] = i[e3] & 255;
+    return t;
+  }
+  function _r(i) {
+    if (m(i, Uint8Array)) {
+      let r = new Uint8Array(i);
+      return O2(r.buffer, r.byteOffset, r.byteLength);
+    }
+    return P2(i);
+  }
+  function O2(i, r, t) {
+    if (r < 0 || i.byteLength < r) throw new RangeError('"offset" is outside of buffer bounds');
+    if (i.byteLength < r + (t || 0)) throw new RangeError('"length" is outside of buffer bounds');
+    let e3;
+    return r === void 0 && t === void 0 ? e3 = new Uint8Array(i) : t === void 0 ? e3 = new Uint8Array(i, r) : e3 = new Uint8Array(i, r, t), Object.setPrototypeOf(e3, c.prototype), e3;
+  }
+  function kr(i) {
+    if (c.isBuffer(i)) {
+      let r = H2(i.length) | 0, t = d2(r);
+      return t.length === 0 || i.copy(t, 0, 0, r), t;
+    }
+    if (i.length !== void 0) return typeof i.length != "number" || W2(i.length) ? d2(0) : P2(i);
+    if (i.type === "Buffer" && Array.isArray(i.data)) return P2(i.data);
+  }
+  function H2(i) {
+    if (i >= _2) throw new RangeError("Attempt to allocate Buffer larger than maximum size: 0x" + _2.toString(16) + " bytes");
+    return i | 0;
+  }
+  function Lr(i) {
+    return +i != i && (i = 0), c.alloc(+i);
+  }
+  c.isBuffer = function(r) {
+    return r != null && r._isBuffer === true && r !== c.prototype;
+  };
+  c.compare = function(r, t) {
+    if (m(r, Uint8Array) && (r = c.from(r, r.offset, r.byteLength)), m(t, Uint8Array) && (t = c.from(t, t.offset, t.byteLength)), !c.isBuffer(r) || !c.isBuffer(t)) throw new TypeError('The "buf1", "buf2" arguments must be one of type Buffer or Uint8Array');
+    if (r === t) return 0;
+    let e3 = r.length, n = t.length;
+    for (let o = 0, u = Math.min(e3, n); o < u; ++o) if (r[o] !== t[o]) {
+      e3 = r[o], n = t[o];
+      break;
+    }
+    return e3 < n ? -1 : n < e3 ? 1 : 0;
+  };
+  c.isEncoding = function(r) {
+    switch (String(r).toLowerCase()) {
+      case "hex":
+      case "utf8":
+      case "utf-8":
+      case "ascii":
+      case "latin1":
+      case "binary":
+      case "base64":
+      case "ucs2":
+      case "ucs-2":
+      case "utf16le":
+      case "utf-16le":
+        return true;
+      default:
+        return false;
+    }
+  };
+  c.concat = function(r, t) {
+    if (!Array.isArray(r)) throw new TypeError('"list" argument must be an Array of Buffers');
+    if (r.length === 0) return c.alloc(0);
+    let e3;
+    if (t === void 0) for (t = 0, e3 = 0; e3 < r.length; ++e3) t += r[e3].length;
+    let n = c.allocUnsafe(t), o = 0;
+    for (e3 = 0; e3 < r.length; ++e3) {
+      let u = r[e3];
+      if (m(u, Uint8Array)) o + u.length > n.length ? (c.isBuffer(u) || (u = c.from(u)), u.copy(n, o)) : Uint8Array.prototype.set.call(n, u, o);
+      else if (c.isBuffer(u)) u.copy(n, o);
+      else throw new TypeError('"list" argument must be an Array of Buffers');
+      o += u.length;
+    }
+    return n;
+  };
+  function er(i, r) {
+    if (c.isBuffer(i)) return i.length;
+    if (ArrayBuffer.isView(i) || m(i, ArrayBuffer)) return i.byteLength;
+    if (typeof i != "string") throw new TypeError('The "string" argument must be one of type string, Buffer, or ArrayBuffer. Received type ' + typeof i);
+    let t = i.length, e3 = arguments.length > 2 && arguments[2] === true;
+    if (!e3 && t === 0) return 0;
+    let n = false;
+    for (; ; ) switch (r) {
+      case "ascii":
+      case "latin1":
+      case "binary":
+        return t;
+      case "utf8":
+      case "utf-8":
+        return q(i).length;
+      case "ucs2":
+      case "ucs-2":
+      case "utf16le":
+      case "utf-16le":
+        return t * 2;
+      case "hex":
+        return t >>> 1;
+      case "base64":
+        return ar(i).length;
+      default:
+        if (n) return e3 ? -1 : q(i).length;
+        r = ("" + r).toLowerCase(), n = true;
+    }
+  }
+  c.byteLength = er;
+  function br(i, r, t) {
+    let e3 = false;
+    if ((r === void 0 || r < 0) && (r = 0), r > this.length || ((t === void 0 || t > this.length) && (t = this.length), t <= 0) || (t >>>= 0, r >>>= 0, t <= r)) return "";
+    for (i || (i = "utf8"); ; ) switch (i) {
+      case "hex":
+        return Yr(this, r, t);
+      case "utf8":
+      case "utf-8":
+        return or(this, r, t);
+      case "ascii":
+        return Gr(this, r, t);
+      case "latin1":
+      case "binary":
+        return Hr(this, r, t);
+      case "base64":
+        return Or(this, r, t);
+      case "ucs2":
+      case "ucs-2":
+      case "utf16le":
+      case "utf-16le":
+        return Wr(this, r, t);
+      default:
+        if (e3) throw new TypeError("Unknown encoding: " + i);
+        i = (i + "").toLowerCase(), e3 = true;
+    }
+  }
+  c.prototype._isBuffer = true;
+  function I(i, r, t) {
+    let e3 = i[r];
+    i[r] = i[t], i[t] = e3;
+  }
+  c.prototype.swap16 = function() {
+    let r = this.length;
+    if (r % 2 !== 0) throw new RangeError("Buffer size must be a multiple of 16-bits");
+    for (let t = 0; t < r; t += 2) I(this, t, t + 1);
+    return this;
+  };
+  c.prototype.swap32 = function() {
+    let r = this.length;
+    if (r % 4 !== 0) throw new RangeError("Buffer size must be a multiple of 32-bits");
+    for (let t = 0; t < r; t += 4) I(this, t, t + 3), I(this, t + 1, t + 2);
+    return this;
+  };
+  c.prototype.swap64 = function() {
+    let r = this.length;
+    if (r % 8 !== 0) throw new RangeError("Buffer size must be a multiple of 64-bits");
+    for (let t = 0; t < r; t += 8) I(this, t, t + 7), I(this, t + 1, t + 6), I(this, t + 2, t + 5), I(this, t + 3, t + 4);
+    return this;
+  };
+  c.prototype.toString = function() {
+    let r = this.length;
+    return r === 0 ? "" : arguments.length === 0 ? or(this, 0, r) : br.apply(this, arguments);
+  };
+  c.prototype.toLocaleString = c.prototype.toString;
+  c.prototype.equals = function(r) {
+    if (!c.isBuffer(r)) throw new TypeError("Argument must be a Buffer");
+    return this === r ? true : c.compare(this, r) === 0;
+  };
+  c.prototype.inspect = function() {
+    let r = "", t = R.INSPECT_MAX_BYTES;
+    return r = this.toString("hex", 0, t).replace(/(.{2})/g, "$1 ").trim(), this.length > t && (r += " ... "), "<Buffer " + r + ">";
+  };
+  Z && (c.prototype[Z] = c.prototype.inspect);
+  c.prototype.compare = function(r, t, e3, n, o) {
+    if (m(r, Uint8Array) && (r = c.from(r, r.offset, r.byteLength)), !c.isBuffer(r)) throw new TypeError('The "target" argument must be one of type Buffer or Uint8Array. Received type ' + typeof r);
+    if (t === void 0 && (t = 0), e3 === void 0 && (e3 = r ? r.length : 0), n === void 0 && (n = 0), o === void 0 && (o = this.length), t < 0 || e3 > r.length || n < 0 || o > this.length) throw new RangeError("out of range index");
+    if (n >= o && t >= e3) return 0;
+    if (n >= o) return -1;
+    if (t >= e3) return 1;
+    if (t >>>= 0, e3 >>>= 0, n >>>= 0, o >>>= 0, this === r) return 0;
+    let u = o - n, h2 = e3 - t, f = Math.min(u, h2), a = this.slice(n, o), s = r.slice(t, e3);
+    for (let p = 0; p < f; ++p) if (a[p] !== s[p]) {
+      u = a[p], h2 = s[p];
+      break;
+    }
+    return u < h2 ? -1 : h2 < u ? 1 : 0;
+  };
+  function nr(i, r, t, e3, n) {
+    if (i.length === 0) return -1;
+    if (typeof t == "string" ? (e3 = t, t = 0) : t > 2147483647 ? t = 2147483647 : t < -2147483648 && (t = -2147483648), t = +t, W2(t) && (t = n ? 0 : i.length - 1), t < 0 && (t = i.length + t), t >= i.length) {
+      if (n) return -1;
+      t = i.length - 1;
+    } else if (t < 0) if (n) t = 0;
+    else return -1;
+    if (typeof r == "string" && (r = c.from(r, e3)), c.isBuffer(r)) return r.length === 0 ? -1 : Q(i, r, t, e3, n);
+    if (typeof r == "number") return r = r & 255, typeof Uint8Array.prototype.indexOf == "function" ? n ? Uint8Array.prototype.indexOf.call(i, r, t) : Uint8Array.prototype.lastIndexOf.call(i, r, t) : Q(i, [r], t, e3, n);
+    throw new TypeError("val must be string, number or Buffer");
+  }
+  function Q(i, r, t, e3, n) {
+    let o = 1, u = i.length, h2 = r.length;
+    if (e3 !== void 0 && (e3 = String(e3).toLowerCase(), e3 === "ucs2" || e3 === "ucs-2" || e3 === "utf16le" || e3 === "utf-16le")) {
+      if (i.length < 2 || r.length < 2) return -1;
+      o = 2, u /= 2, h2 /= 2, t /= 2;
+    }
+    function f(s, p) {
+      return o === 1 ? s[p] : s.readUInt16BE(p * o);
+    }
+    let a;
+    if (n) {
+      let s = -1;
+      for (a = t; a < u; a++) if (f(i, a) === f(r, s === -1 ? 0 : a - s)) {
+        if (s === -1 && (s = a), a - s + 1 === h2) return s * o;
+      } else s !== -1 && (a -= a - s), s = -1;
+    } else for (t + h2 > u && (t = u - h2), a = t; a >= 0; a--) {
+      let s = true;
+      for (let p = 0; p < h2; p++) if (f(i, a + p) !== f(r, p)) {
+        s = false;
+        break;
+      }
+      if (s) return a;
+    }
+    return -1;
+  }
+  c.prototype.includes = function(r, t, e3) {
+    return this.indexOf(r, t, e3) !== -1;
+  };
+  c.prototype.indexOf = function(r, t, e3) {
+    return nr(this, r, t, e3, true);
+  };
+  c.prototype.lastIndexOf = function(r, t, e3) {
+    return nr(this, r, t, e3, false);
+  };
+  function Nr(i, r, t, e3) {
+    t = Number(t) || 0;
+    let n = i.length - t;
+    e3 ? (e3 = Number(e3), e3 > n && (e3 = n)) : e3 = n;
+    let o = r.length;
+    e3 > o / 2 && (e3 = o / 2);
+    let u;
+    for (u = 0; u < e3; ++u) {
+      let h2 = parseInt(r.substr(u * 2, 2), 16);
+      if (W2(h2)) return u;
+      i[t + u] = h2;
+    }
+    return u;
+  }
+  function Mr(i, r, t, e3) {
+    return k2(q(r, i.length - t), i, t, e3);
+  }
+  function $r(i, r, t, e3) {
+    return k2(zr(r), i, t, e3);
+  }
+  function Dr(i, r, t, e3) {
+    return k2(ar(r), i, t, e3);
+  }
+  function Pr(i, r, t, e3) {
+    return k2(Jr(r, i.length - t), i, t, e3);
+  }
+  c.prototype.write = function(r, t, e3, n) {
+    if (t === void 0) n = "utf8", e3 = this.length, t = 0;
+    else if (e3 === void 0 && typeof t == "string") n = t, e3 = this.length, t = 0;
+    else if (isFinite(t)) t = t >>> 0, isFinite(e3) ? (e3 = e3 >>> 0, n === void 0 && (n = "utf8")) : (n = e3, e3 = void 0);
+    else throw new Error("Buffer.write(string, encoding, offset[, length]) is no longer supported");
+    let o = this.length - t;
+    if ((e3 === void 0 || e3 > o) && (e3 = o), r.length > 0 && (e3 < 0 || t < 0) || t > this.length) throw new RangeError("Attempt to write outside buffer bounds");
+    n || (n = "utf8");
+    let u = false;
+    for (; ; ) switch (n) {
+      case "hex":
+        return Nr(this, r, t, e3);
+      case "utf8":
+      case "utf-8":
+        return Mr(this, r, t, e3);
+      case "ascii":
+      case "latin1":
+      case "binary":
+        return $r(this, r, t, e3);
+      case "base64":
+        return Dr(this, r, t, e3);
+      case "ucs2":
+      case "ucs-2":
+      case "utf16le":
+      case "utf-16le":
+        return Pr(this, r, t, e3);
+      default:
+        if (u) throw new TypeError("Unknown encoding: " + n);
+        n = ("" + n).toLowerCase(), u = true;
+    }
+  };
+  c.prototype.toJSON = function() {
+    return { type: "Buffer", data: Array.prototype.slice.call(this._arr || this, 0) };
+  };
+  function Or(i, r, t) {
+    return r === 0 && t === i.length ? D2.fromByteArray(i) : D2.fromByteArray(i.slice(r, t));
+  }
+  function or(i, r, t) {
+    t = Math.min(i.length, t);
+    let e3 = [], n = r;
+    for (; n < t; ) {
+      let o = i[n], u = null, h2 = o > 239 ? 4 : o > 223 ? 3 : o > 191 ? 2 : 1;
+      if (n + h2 <= t) {
+        let f, a, s, p;
+        switch (h2) {
+          case 1:
+            o < 128 && (u = o);
+            break;
+          case 2:
+            f = i[n + 1], (f & 192) === 128 && (p = (o & 31) << 6 | f & 63, p > 127 && (u = p));
+            break;
+          case 3:
+            f = i[n + 1], a = i[n + 2], (f & 192) === 128 && (a & 192) === 128 && (p = (o & 15) << 12 | (f & 63) << 6 | a & 63, p > 2047 && (p < 55296 || p > 57343) && (u = p));
+            break;
+          case 4:
+            f = i[n + 1], a = i[n + 2], s = i[n + 3], (f & 192) === 128 && (a & 192) === 128 && (s & 192) === 128 && (p = (o & 15) << 18 | (f & 63) << 12 | (a & 63) << 6 | s & 63, p > 65535 && p < 1114112 && (u = p));
+        }
+      }
+      u === null ? (u = 65533, h2 = 1) : u > 65535 && (u -= 65536, e3.push(u >>> 10 & 1023 | 55296), u = 56320 | u & 1023), e3.push(u), n += h2;
+    }
+    return qr(e3);
+  }
+  var v2 = 4096;
+  function qr(i) {
+    let r = i.length;
+    if (r <= v2) return String.fromCharCode.apply(String, i);
+    let t = "", e3 = 0;
+    for (; e3 < r; ) t += String.fromCharCode.apply(String, i.slice(e3, e3 += v2));
+    return t;
+  }
+  function Gr(i, r, t) {
+    let e3 = "";
+    t = Math.min(i.length, t);
+    for (let n = r; n < t; ++n) e3 += String.fromCharCode(i[n] & 127);
+    return e3;
+  }
+  function Hr(i, r, t) {
+    let e3 = "";
+    t = Math.min(i.length, t);
+    for (let n = r; n < t; ++n) e3 += String.fromCharCode(i[n]);
+    return e3;
+  }
+  function Yr(i, r, t) {
+    let e3 = i.length;
+    (!r || r < 0) && (r = 0), (!t || t < 0 || t > e3) && (t = e3);
+    let n = "";
+    for (let o = r; o < t; ++o) n += Kr[i[o]];
+    return n;
+  }
+  function Wr(i, r, t) {
+    let e3 = i.slice(r, t), n = "";
+    for (let o = 0; o < e3.length - 1; o += 2) n += String.fromCharCode(e3[o] + e3[o + 1] * 256);
+    return n;
+  }
+  c.prototype.slice = function(r, t) {
+    let e3 = this.length;
+    r = ~~r, t = t === void 0 ? e3 : ~~t, r < 0 ? (r += e3, r < 0 && (r = 0)) : r > e3 && (r = e3), t < 0 ? (t += e3, t < 0 && (t = 0)) : t > e3 && (t = e3), t < r && (t = r);
+    let n = this.subarray(r, t);
+    return Object.setPrototypeOf(n, c.prototype), n;
+  };
+  function l(i, r, t) {
+    if (i % 1 !== 0 || i < 0) throw new RangeError("offset is not uint");
+    if (i + r > t) throw new RangeError("Trying to access beyond buffer length");
+  }
+  c.prototype.readUintLE = c.prototype.readUIntLE = function(r, t, e3) {
+    r = r >>> 0, t = t >>> 0, e3 || l(r, t, this.length);
+    let n = this[r], o = 1, u = 0;
+    for (; ++u < t && (o *= 256); ) n += this[r + u] * o;
+    return n;
+  };
+  c.prototype.readUintBE = c.prototype.readUIntBE = function(r, t, e3) {
+    r = r >>> 0, t = t >>> 0, e3 || l(r, t, this.length);
+    let n = this[r + --t], o = 1;
+    for (; t > 0 && (o *= 256); ) n += this[r + --t] * o;
+    return n;
+  };
+  c.prototype.readUint8 = c.prototype.readUInt8 = function(r, t) {
+    return r = r >>> 0, t || l(r, 1, this.length), this[r];
+  };
+  c.prototype.readUint16LE = c.prototype.readUInt16LE = function(r, t) {
+    return r = r >>> 0, t || l(r, 2, this.length), this[r] | this[r + 1] << 8;
+  };
+  c.prototype.readUint16BE = c.prototype.readUInt16BE = function(r, t) {
+    return r = r >>> 0, t || l(r, 2, this.length), this[r] << 8 | this[r + 1];
+  };
+  c.prototype.readUint32LE = c.prototype.readUInt32LE = function(r, t) {
+    return r = r >>> 0, t || l(r, 4, this.length), (this[r] | this[r + 1] << 8 | this[r + 2] << 16) + this[r + 3] * 16777216;
+  };
+  c.prototype.readUint32BE = c.prototype.readUInt32BE = function(r, t) {
+    return r = r >>> 0, t || l(r, 4, this.length), this[r] * 16777216 + (this[r + 1] << 16 | this[r + 2] << 8 | this[r + 3]);
+  };
+  c.prototype.readBigUInt64LE = E2(function(r) {
+    r = r >>> 0, T2(r, "offset");
+    let t = this[r], e3 = this[r + 7];
+    (t === void 0 || e3 === void 0) && C2(r, this.length - 8);
+    let n = t + this[++r] * 2 ** 8 + this[++r] * 2 ** 16 + this[++r] * 2 ** 24, o = this[++r] + this[++r] * 2 ** 8 + this[++r] * 2 ** 16 + e3 * 2 ** 24;
+    return BigInt(n) + (BigInt(o) << BigInt(32));
+  });
+  c.prototype.readBigUInt64BE = E2(function(r) {
+    r = r >>> 0, T2(r, "offset");
+    let t = this[r], e3 = this[r + 7];
+    (t === void 0 || e3 === void 0) && C2(r, this.length - 8);
+    let n = t * 2 ** 24 + this[++r] * 2 ** 16 + this[++r] * 2 ** 8 + this[++r], o = this[++r] * 2 ** 24 + this[++r] * 2 ** 16 + this[++r] * 2 ** 8 + e3;
+    return (BigInt(n) << BigInt(32)) + BigInt(o);
+  });
+  c.prototype.readIntLE = function(r, t, e3) {
+    r = r >>> 0, t = t >>> 0, e3 || l(r, t, this.length);
+    let n = this[r], o = 1, u = 0;
+    for (; ++u < t && (o *= 256); ) n += this[r + u] * o;
+    return o *= 128, n >= o && (n -= Math.pow(2, 8 * t)), n;
+  };
+  c.prototype.readIntBE = function(r, t, e3) {
+    r = r >>> 0, t = t >>> 0, e3 || l(r, t, this.length);
+    let n = t, o = 1, u = this[r + --n];
+    for (; n > 0 && (o *= 256); ) u += this[r + --n] * o;
+    return o *= 128, u >= o && (u -= Math.pow(2, 8 * t)), u;
+  };
+  c.prototype.readInt8 = function(r, t) {
+    return r = r >>> 0, t || l(r, 1, this.length), this[r] & 128 ? (255 - this[r] + 1) * -1 : this[r];
+  };
+  c.prototype.readInt16LE = function(r, t) {
+    r = r >>> 0, t || l(r, 2, this.length);
+    let e3 = this[r] | this[r + 1] << 8;
+    return e3 & 32768 ? e3 | 4294901760 : e3;
+  };
+  c.prototype.readInt16BE = function(r, t) {
+    r = r >>> 0, t || l(r, 2, this.length);
+    let e3 = this[r + 1] | this[r] << 8;
+    return e3 & 32768 ? e3 | 4294901760 : e3;
+  };
+  c.prototype.readInt32LE = function(r, t) {
+    return r = r >>> 0, t || l(r, 4, this.length), this[r] | this[r + 1] << 8 | this[r + 2] << 16 | this[r + 3] << 24;
+  };
+  c.prototype.readInt32BE = function(r, t) {
+    return r = r >>> 0, t || l(r, 4, this.length), this[r] << 24 | this[r + 1] << 16 | this[r + 2] << 8 | this[r + 3];
+  };
+  c.prototype.readBigInt64LE = E2(function(r) {
+    r = r >>> 0, T2(r, "offset");
+    let t = this[r], e3 = this[r + 7];
+    (t === void 0 || e3 === void 0) && C2(r, this.length - 8);
+    let n = this[r + 4] + this[r + 5] * 2 ** 8 + this[r + 6] * 2 ** 16 + (e3 << 24);
+    return (BigInt(n) << BigInt(32)) + BigInt(t + this[++r] * 2 ** 8 + this[++r] * 2 ** 16 + this[++r] * 2 ** 24);
+  });
+  c.prototype.readBigInt64BE = E2(function(r) {
+    r = r >>> 0, T2(r, "offset");
+    let t = this[r], e3 = this[r + 7];
+    (t === void 0 || e3 === void 0) && C2(r, this.length - 8);
+    let n = (t << 24) + this[++r] * 2 ** 16 + this[++r] * 2 ** 8 + this[++r];
+    return (BigInt(n) << BigInt(32)) + BigInt(this[++r] * 2 ** 24 + this[++r] * 2 ** 16 + this[++r] * 2 ** 8 + e3);
+  });
+  c.prototype.readFloatLE = function(r, t) {
+    return r = r >>> 0, t || l(r, 4, this.length), U2.read(this, r, true, 23, 4);
+  };
+  c.prototype.readFloatBE = function(r, t) {
+    return r = r >>> 0, t || l(r, 4, this.length), U2.read(this, r, false, 23, 4);
+  };
+  c.prototype.readDoubleLE = function(r, t) {
+    return r = r >>> 0, t || l(r, 8, this.length), U2.read(this, r, true, 52, 8);
+  };
+  c.prototype.readDoubleBE = function(r, t) {
+    return r = r >>> 0, t || l(r, 8, this.length), U2.read(this, r, false, 52, 8);
+  };
+  function y(i, r, t, e3, n, o) {
+    if (!c.isBuffer(i)) throw new TypeError('"buffer" argument must be a Buffer instance');
+    if (r > n || r < o) throw new RangeError('"value" argument is out of bounds');
+    if (t + e3 > i.length) throw new RangeError("Index out of range");
+  }
+  c.prototype.writeUintLE = c.prototype.writeUIntLE = function(r, t, e3, n) {
+    if (r = +r, t = t >>> 0, e3 = e3 >>> 0, !n) {
+      let h2 = Math.pow(2, 8 * e3) - 1;
+      y(this, r, t, e3, h2, 0);
+    }
+    let o = 1, u = 0;
+    for (this[t] = r & 255; ++u < e3 && (o *= 256); ) this[t + u] = r / o & 255;
+    return t + e3;
+  };
+  c.prototype.writeUintBE = c.prototype.writeUIntBE = function(r, t, e3, n) {
+    if (r = +r, t = t >>> 0, e3 = e3 >>> 0, !n) {
+      let h2 = Math.pow(2, 8 * e3) - 1;
+      y(this, r, t, e3, h2, 0);
+    }
+    let o = e3 - 1, u = 1;
+    for (this[t + o] = r & 255; --o >= 0 && (u *= 256); ) this[t + o] = r / u & 255;
+    return t + e3;
+  };
+  c.prototype.writeUint8 = c.prototype.writeUInt8 = function(r, t, e3) {
+    return r = +r, t = t >>> 0, e3 || y(this, r, t, 1, 255, 0), this[t] = r & 255, t + 1;
+  };
+  c.prototype.writeUint16LE = c.prototype.writeUInt16LE = function(r, t, e3) {
+    return r = +r, t = t >>> 0, e3 || y(this, r, t, 2, 65535, 0), this[t] = r & 255, this[t + 1] = r >>> 8, t + 2;
+  };
+  c.prototype.writeUint16BE = c.prototype.writeUInt16BE = function(r, t, e3) {
+    return r = +r, t = t >>> 0, e3 || y(this, r, t, 2, 65535, 0), this[t] = r >>> 8, this[t + 1] = r & 255, t + 2;
+  };
+  c.prototype.writeUint32LE = c.prototype.writeUInt32LE = function(r, t, e3) {
+    return r = +r, t = t >>> 0, e3 || y(this, r, t, 4, 4294967295, 0), this[t + 3] = r >>> 24, this[t + 2] = r >>> 16, this[t + 1] = r >>> 8, this[t] = r & 255, t + 4;
+  };
+  c.prototype.writeUint32BE = c.prototype.writeUInt32BE = function(r, t, e3) {
+    return r = +r, t = t >>> 0, e3 || y(this, r, t, 4, 4294967295, 0), this[t] = r >>> 24, this[t + 1] = r >>> 16, this[t + 2] = r >>> 8, this[t + 3] = r & 255, t + 4;
+  };
+  function ur(i, r, t, e3, n) {
+    sr(r, e3, n, i, t, 7);
+    let o = Number(r & BigInt(4294967295));
+    i[t++] = o, o = o >> 8, i[t++] = o, o = o >> 8, i[t++] = o, o = o >> 8, i[t++] = o;
+    let u = Number(r >> BigInt(32) & BigInt(4294967295));
+    return i[t++] = u, u = u >> 8, i[t++] = u, u = u >> 8, i[t++] = u, u = u >> 8, i[t++] = u, t;
+  }
+  function cr(i, r, t, e3, n) {
+    sr(r, e3, n, i, t, 7);
+    let o = Number(r & BigInt(4294967295));
+    i[t + 7] = o, o = o >> 8, i[t + 6] = o, o = o >> 8, i[t + 5] = o, o = o >> 8, i[t + 4] = o;
+    let u = Number(r >> BigInt(32) & BigInt(4294967295));
+    return i[t + 3] = u, u = u >> 8, i[t + 2] = u, u = u >> 8, i[t + 1] = u, u = u >> 8, i[t] = u, t + 8;
+  }
+  c.prototype.writeBigUInt64LE = E2(function(r, t = 0) {
+    return ur(this, r, t, BigInt(0), BigInt("0xffffffffffffffff"));
+  });
+  c.prototype.writeBigUInt64BE = E2(function(r, t = 0) {
+    return cr(this, r, t, BigInt(0), BigInt("0xffffffffffffffff"));
+  });
+  c.prototype.writeIntLE = function(r, t, e3, n) {
+    if (r = +r, t = t >>> 0, !n) {
+      let f = Math.pow(2, 8 * e3 - 1);
+      y(this, r, t, e3, f - 1, -f);
+    }
+    let o = 0, u = 1, h2 = 0;
+    for (this[t] = r & 255; ++o < e3 && (u *= 256); ) r < 0 && h2 === 0 && this[t + o - 1] !== 0 && (h2 = 1), this[t + o] = (r / u >> 0) - h2 & 255;
+    return t + e3;
+  };
+  c.prototype.writeIntBE = function(r, t, e3, n) {
+    if (r = +r, t = t >>> 0, !n) {
+      let f = Math.pow(2, 8 * e3 - 1);
+      y(this, r, t, e3, f - 1, -f);
+    }
+    let o = e3 - 1, u = 1, h2 = 0;
+    for (this[t + o] = r & 255; --o >= 0 && (u *= 256); ) r < 0 && h2 === 0 && this[t + o + 1] !== 0 && (h2 = 1), this[t + o] = (r / u >> 0) - h2 & 255;
+    return t + e3;
+  };
+  c.prototype.writeInt8 = function(r, t, e3) {
+    return r = +r, t = t >>> 0, e3 || y(this, r, t, 1, 127, -128), r < 0 && (r = 255 + r + 1), this[t] = r & 255, t + 1;
+  };
+  c.prototype.writeInt16LE = function(r, t, e3) {
+    return r = +r, t = t >>> 0, e3 || y(this, r, t, 2, 32767, -32768), this[t] = r & 255, this[t + 1] = r >>> 8, t + 2;
+  };
+  c.prototype.writeInt16BE = function(r, t, e3) {
+    return r = +r, t = t >>> 0, e3 || y(this, r, t, 2, 32767, -32768), this[t] = r >>> 8, this[t + 1] = r & 255, t + 2;
+  };
+  c.prototype.writeInt32LE = function(r, t, e3) {
+    return r = +r, t = t >>> 0, e3 || y(this, r, t, 4, 2147483647, -2147483648), this[t] = r & 255, this[t + 1] = r >>> 8, this[t + 2] = r >>> 16, this[t + 3] = r >>> 24, t + 4;
+  };
+  c.prototype.writeInt32BE = function(r, t, e3) {
+    return r = +r, t = t >>> 0, e3 || y(this, r, t, 4, 2147483647, -2147483648), r < 0 && (r = 4294967295 + r + 1), this[t] = r >>> 24, this[t + 1] = r >>> 16, this[t + 2] = r >>> 8, this[t + 3] = r & 255, t + 4;
+  };
+  c.prototype.writeBigInt64LE = E2(function(r, t = 0) {
+    return ur(this, r, t, -BigInt("0x8000000000000000"), BigInt("0x7fffffffffffffff"));
+  });
+  c.prototype.writeBigInt64BE = E2(function(r, t = 0) {
+    return cr(this, r, t, -BigInt("0x8000000000000000"), BigInt("0x7fffffffffffffff"));
+  });
+  function hr(i, r, t, e3, n, o) {
+    if (t + e3 > i.length) throw new RangeError("Index out of range");
+    if (t < 0) throw new RangeError("Index out of range");
+  }
+  function fr(i, r, t, e3, n) {
+    return r = +r, t = t >>> 0, n || hr(i, r, t, 4), U2.write(i, r, t, e3, 23, 4), t + 4;
+  }
+  c.prototype.writeFloatLE = function(r, t, e3) {
+    return fr(this, r, t, true, e3);
+  };
+  c.prototype.writeFloatBE = function(r, t, e3) {
+    return fr(this, r, t, false, e3);
+  };
+  function pr(i, r, t, e3, n) {
+    return r = +r, t = t >>> 0, n || hr(i, r, t, 8), U2.write(i, r, t, e3, 52, 8), t + 8;
+  }
+  c.prototype.writeDoubleLE = function(r, t, e3) {
+    return pr(this, r, t, true, e3);
+  };
+  c.prototype.writeDoubleBE = function(r, t, e3) {
+    return pr(this, r, t, false, e3);
+  };
+  c.prototype.copy = function(r, t, e3, n) {
+    if (!c.isBuffer(r)) throw new TypeError("argument should be a Buffer");
+    if (e3 || (e3 = 0), !n && n !== 0 && (n = this.length), t >= r.length && (t = r.length), t || (t = 0), n > 0 && n < e3 && (n = e3), n === e3 || r.length === 0 || this.length === 0) return 0;
+    if (t < 0) throw new RangeError("targetStart out of bounds");
+    if (e3 < 0 || e3 >= this.length) throw new RangeError("Index out of range");
+    if (n < 0) throw new RangeError("sourceEnd out of bounds");
+    n > this.length && (n = this.length), r.length - t < n - e3 && (n = r.length - t + e3);
+    let o = n - e3;
+    return this === r && typeof Uint8Array.prototype.copyWithin == "function" ? this.copyWithin(t, e3, n) : Uint8Array.prototype.set.call(r, this.subarray(e3, n), t), o;
+  };
+  c.prototype.fill = function(r, t, e3, n) {
+    if (typeof r == "string") {
+      if (typeof t == "string" ? (n = t, t = 0, e3 = this.length) : typeof e3 == "string" && (n = e3, e3 = this.length), n !== void 0 && typeof n != "string") throw new TypeError("encoding must be a string");
+      if (typeof n == "string" && !c.isEncoding(n)) throw new TypeError("Unknown encoding: " + n);
+      if (r.length === 1) {
+        let u = r.charCodeAt(0);
+        (n === "utf8" && u < 128 || n === "latin1") && (r = u);
+      }
+    } else typeof r == "number" ? r = r & 255 : typeof r == "boolean" && (r = Number(r));
+    if (t < 0 || this.length < t || this.length < e3) throw new RangeError("Out of range index");
+    if (e3 <= t) return this;
+    t = t >>> 0, e3 = e3 === void 0 ? this.length : e3 >>> 0, r || (r = 0);
+    let o;
+    if (typeof r == "number") for (o = t; o < e3; ++o) this[o] = r;
+    else {
+      let u = c.isBuffer(r) ? r : c.from(r, n), h2 = u.length;
+      if (h2 === 0) throw new TypeError('The value "' + r + '" is invalid for argument "value"');
+      for (o = 0; o < e3 - t; ++o) this[o + t] = u[o % h2];
+    }
+    return this;
+  };
+  var F2 = {};
+  function Y(i, r, t) {
+    F2[i] = class extends t {
+      constructor() {
+        super(), Object.defineProperty(this, "message", { value: r.apply(this, arguments), writable: true, configurable: true }), this.name = `${this.name} [${i}]`, this.stack, delete this.name;
+      }
+      get code() {
+        return i;
+      }
+      set code(n) {
+        Object.defineProperty(this, "code", { configurable: true, enumerable: true, value: n, writable: true });
+      }
+      toString() {
+        return `${this.name} [${i}]: ${this.message}`;
+      }
+    };
+  }
+  Y("ERR_BUFFER_OUT_OF_BOUNDS", function(i) {
+    return i ? `${i} is outside of buffer bounds` : "Attempt to access memory outside buffer bounds";
+  }, RangeError);
+  Y("ERR_INVALID_ARG_TYPE", function(i, r) {
+    return `The "${i}" argument must be of type number. Received type ${typeof r}`;
+  }, TypeError);
+  Y("ERR_OUT_OF_RANGE", function(i, r, t) {
+    let e3 = `The value of "${i}" is out of range.`, n = t;
+    return Number.isInteger(t) && Math.abs(t) > 2 ** 32 ? n = rr(String(t)) : typeof t == "bigint" && (n = String(t), (t > BigInt(2) ** BigInt(32) || t < -(BigInt(2) ** BigInt(32))) && (n = rr(n)), n += "n"), e3 += ` It must be ${r}. Received ${n}`, e3;
+  }, RangeError);
+  function rr(i) {
+    let r = "", t = i.length, e3 = i[0] === "-" ? 1 : 0;
+    for (; t >= e3 + 4; t -= 3) r = `_${i.slice(t - 3, t)}${r}`;
+    return `${i.slice(0, t)}${r}`;
+  }
+  function jr(i, r, t) {
+    T2(r, "offset"), (i[r] === void 0 || i[r + t] === void 0) && C2(r, i.length - (t + 1));
+  }
+  function sr(i, r, t, e3, n, o) {
+    if (i > t || i < r) {
+      let u = typeof r == "bigint" ? "n" : "", h2;
+      throw r === 0 || r === BigInt(0) ? h2 = `>= 0${u} and < 2${u} ** ${(o + 1) * 8}${u}` : h2 = `>= -(2${u} ** ${(o + 1) * 8 - 1}${u}) and < 2 ** ${(o + 1) * 8 - 1}${u}`, new F2.ERR_OUT_OF_RANGE("value", h2, i);
+    }
+    jr(e3, n, o);
+  }
+  function T2(i, r) {
+    if (typeof i != "number") throw new F2.ERR_INVALID_ARG_TYPE(r, "number", i);
+  }
+  function C2(i, r, t) {
+    throw Math.floor(i) !== i ? (T2(i, t), new F2.ERR_OUT_OF_RANGE("offset", "an integer", i)) : r < 0 ? new F2.ERR_BUFFER_OUT_OF_BOUNDS() : new F2.ERR_OUT_OF_RANGE("offset", `>= ${0} and <= ${r}`, i);
+  }
+  var Vr = /[^+/0-9A-Za-z-_]/g;
+  function Xr(i) {
+    if (i = i.split("=")[0], i = i.trim().replace(Vr, ""), i.length < 2) return "";
+    for (; i.length % 4 !== 0; ) i = i + "=";
+    return i;
+  }
+  function q(i, r) {
+    r = r || 1 / 0;
+    let t, e3 = i.length, n = null, o = [];
+    for (let u = 0; u < e3; ++u) {
+      if (t = i.charCodeAt(u), t > 55295 && t < 57344) {
+        if (!n) {
+          if (t > 56319) {
+            (r -= 3) > -1 && o.push(239, 191, 189);
+            continue;
+          } else if (u + 1 === e3) {
+            (r -= 3) > -1 && o.push(239, 191, 189);
+            continue;
+          }
+          n = t;
+          continue;
+        }
+        if (t < 56320) {
+          (r -= 3) > -1 && o.push(239, 191, 189), n = t;
+          continue;
+        }
+        t = (n - 55296 << 10 | t - 56320) + 65536;
+      } else n && (r -= 3) > -1 && o.push(239, 191, 189);
+      if (n = null, t < 128) {
+        if ((r -= 1) < 0) break;
+        o.push(t);
+      } else if (t < 2048) {
+        if ((r -= 2) < 0) break;
+        o.push(t >> 6 | 192, t & 63 | 128);
+      } else if (t < 65536) {
+        if ((r -= 3) < 0) break;
+        o.push(t >> 12 | 224, t >> 6 & 63 | 128, t & 63 | 128);
+      } else if (t < 1114112) {
+        if ((r -= 4) < 0) break;
+        o.push(t >> 18 | 240, t >> 12 & 63 | 128, t >> 6 & 63 | 128, t & 63 | 128);
+      } else throw new Error("Invalid code point");
+    }
+    return o;
+  }
+  function zr(i) {
+    let r = [];
+    for (let t = 0; t < i.length; ++t) r.push(i.charCodeAt(t) & 255);
+    return r;
+  }
+  function Jr(i, r) {
+    let t, e3, n, o = [];
+    for (let u = 0; u < i.length && !((r -= 2) < 0); ++u) t = i.charCodeAt(u), e3 = t >> 8, n = t % 256, o.push(n), o.push(e3);
+    return o;
+  }
+  function ar(i) {
+    return D2.toByteArray(Xr(i));
+  }
+  function k2(i, r, t, e3) {
+    let n;
+    for (n = 0; n < e3 && !(n + t >= r.length || n >= i.length); ++n) r[n + t] = i[n];
+    return n;
+  }
+  function m(i, r) {
+    return i instanceof r || i != null && i.constructor != null && i.constructor.name != null && i.constructor.name === r.name;
+  }
+  function W2(i) {
+    return i !== i;
+  }
+  var Kr = function() {
+    let i = "0123456789abcdef", r = new Array(256);
+    for (let t = 0; t < 16; ++t) {
+      let e3 = t * 16;
+      for (let n = 0; n < 16; ++n) r[e3 + n] = i[t] + i[n];
+    }
+    return r;
+  }();
+  function E2(i) {
+    return typeof BigInt > "u" ? Zr : i;
+  }
+  function Zr() {
+    throw new Error("BigInt not supported");
+  }
+});
+J$1(lr());
+/*! Bundled license information:
+
+ieee754/index.js:
+  (*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> *)
+
+buffer/index.js:
+  (*!
+   * The buffer module from node.js, for the browser.
+   *
+   * @author   Feross Aboukhadijeh <https://feross.org>
+   * @license  MIT
+   *)
+*/
+const _NNSAdapter = class _NNSAdapter {
+  constructor(config) {
+    this.name = "Internet Identity";
+    this.logo = _NNSAdapter.logo;
+    this.info = { id: "nns", icon: _NNSAdapter.logo, name: "Internet Identity", adapter: _NNSAdapter };
+    this.authClient = null;
+    this.agent = null;
+    this.state = "READY";
+    this.url = "https://identity.ic0.app";
+    this.config = {
+      verifyQuerySignatures: config == null ? void 0 : config.verifyQuerySignatures,
+      fetchRootKeys: config == null ? void 0 : config.fetchRootKeys,
+      identityProviderUrl: (config == null ? void 0 : config.isDev) ? "https://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943/#authorize" : "https://identity.ic0.app/authenticate",
+      derivationOrigin: (config == null ? void 0 : config.derivationOrigin) || "https://localhost:5173",
+      ...config
+    };
+    AuthClient.create({
+      idleOptions: {
+        idleTimeout: Number(1e3 * 60 * 60 * 24),
+        disableDefaultIdleCallback: true
+      }
+    }).then((client) => {
+      var _a2, _b;
+      this.authClient = client;
+      (_b = (_a2 = this.authClient.idleManager) == null ? void 0 : _a2.registerCallback) == null ? void 0 : _b.call(_a2, () => this.refreshLogin());
+    });
+  }
+  setState(newState) {
+    this.state = newState;
+  }
+  getState() {
+    return this.state;
+  }
+  // Helper method to initialize the HttpAgent
+  async initAgent(identity, host) {
+    this.agent = new HttpAgent({
+      identity,
+      host,
+      verifyQuerySignatures: this.config.verifyQuerySignatures
+    });
+    if (this.config.fetchRootKeys) {
+      try {
+        await this.agent.fetchRootKey();
+      } catch (e3) {
+        console.warn("Unable to fetch root key. Check to ensure that your local replica is running");
+        console.error(e3);
+      }
+    }
+  }
+  // Checks if the wallet is available
+  async isAvailable() {
+    return true;
+  }
+  getIdentityProvider(isDev) {
+    return isDev ? this.config.identityProvider : "https://identity.ic0.app";
+  }
+  // Connects to the wallet using the provided configuration
+  async connect(config) {
+    try {
+      this.setState(
+        "LOADING"
+        /* LOADING */
+      );
+      this.config = config;
+      while (!this.authClient) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+      const isAuthenticated = await this.authClient.isAuthenticated();
+      if (!isAuthenticated) {
+        return new Promise((resolve, reject) => {
+          this.authClient.login({
+            derivationOrigin: this.config.derivationOrigin,
+            identityProvider: this.getIdentityProvider(config.isDev || true),
+            maxTimeToLive: BigInt(Number(config.delegationTimeout || 24 * 60 * 60 * 1e3 * 1e3 * 1e3)),
+            onSuccess: () => {
+              this._continueLogin(config.hostUrl || this.url).then((account2) => {
+                this.setState(
+                  "READY"
+                  /* READY */
+                );
+                resolve(account2);
+              }).catch(reject);
+            },
+            onError: (error) => {
+              this.disconnect();
+              reject(new Error("Authentication failed: " + error));
+            }
+          });
+        });
+      }
+      const account = await this._continueLogin(config.hostUrl || this.url);
+      this.setState(
+        "READY"
+        /* READY */
+      );
+      return account;
+    } catch (error) {
+      this.setState(
+        "READY"
+        /* READY */
+      );
+      throw error;
+    }
+  }
+  async _continueLogin(host) {
+    try {
+      const identity = this.authClient.getIdentity();
+      const principal = identity.getPrincipal();
+      await this.initAgent(identity, host);
+      return {
+        owner: principal,
+        subaccount: hexStringToUint8Array(getAccountIdentifier(principal.toText()) || "")
+      };
+    } catch (error) {
+      console.error("Error during _continueLogin:", error);
+      throw error;
+    }
+  }
+  // Check if the wallet is connected
+  async isConnected() {
+    return this.authClient ? this.authClient.isAuthenticated() : false;
+  }
+  // Create an actor for interacting with a canister
+  createActor(canisterId, idl) {
+    if (!this.agent) {
+      throw new Error("Agent is not initialized. Ensure the wallet is connected.");
+    }
+    return Actor.createActor(idl, {
+      agent: this.agent,
+      canisterId
+    });
+  }
+  createAnonymousActor(canisterId, idl) {
+    var _a2, _b;
+    return Actor.createActor(idl, {
+      agent: HttpAgent.createSync({
+        host: ((_a2 = this.config) == null ? void 0 : _a2.hostUrl) || "https://icp0.io",
+        verifyQuerySignatures: (_b = this.config) == null ? void 0 : _b.verifyQuerySignatures
+      }),
+      canisterId
+    });
+  }
+  // Get the principal associated with the wallet
+  async getPrincipal() {
+    if (!this.authClient) {
+      throw new Error("AuthClient is not initialized. Ensure the wallet is connected.");
+    }
+    return this.authClient.getIdentity().getPrincipal();
+  }
+  async getAccountId() {
+    return D.fromPrincipal({
+      principal: await this.getPrincipal(),
+      subAccount: void 0
+      // This will use the default subaccount
+    }).toHex();
+  }
+  // Refresh login when session is about to expire
+  async refreshLogin() {
+    try {
+      await this.connect(this.config);
+    } catch (error) {
+      console.error("Failed to refresh login:", error);
+      await this.disconnect();
+    }
+  }
+  undelegatedActor(canisterId, idlFactory) {
+    return this.createActor(canisterId, idlFactory);
+  }
+  // Disconnects from the wallet
+  async disconnect() {
+    try {
+      this.setState(
+        "LOADING"
+        /* LOADING */
+      );
+      await this.authClient.logout();
+      this.authClient = null;
+      this.agent = null;
+      localStorage.removeItem(this.config.localStorageKey);
+      this.setState(
+        "DISCONNECTED"
+        /* DISCONNECTED */
+      );
+    } catch (error) {
+      this.setState(
+        "DISCONNECTED"
+        /* DISCONNECTED */
+      );
+      throw error;
+    }
+  }
+};
+_NNSAdapter.logo = dfinityLogo;
+let NNSAdapter = _NNSAdapter;
+var Adapter;
+((Adapter2) => {
+  ((Status2) => {
+    Status2["INIT"] = "INIT";
+    Status2["READY"] = "READY";
+    Status2["CONNECTING"] = "CONNECTING";
+    Status2["CONNECTED"] = "CONNECTED";
+    Status2["DISCONNECTING"] = "DISCONNECTING";
+    Status2["DISCONNECTED"] = "DISCONNECTED";
+    Status2["ERROR"] = "ERROR";
+  })(Adapter2.Status || (Adapter2.Status = {}));
+})(Adapter || (Adapter = {}));
+const plugLogo = "data:image/webp;base64,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";
+const _PlugAdapter = class _PlugAdapter {
+  constructor() {
+    this.logo = _PlugAdapter.logo;
+    this.name = "Plug";
+    this.url = "https://plugwallet.ooo/";
+    this.info = { id: "plug", icon: _PlugAdapter.logo, name: "Plug", adapter: _PlugAdapter };
+    this.readyState = "NotDetected";
+    this._connectionState = false;
+    this._connectionStateTimestamp = 0;
+    this._connectionStateUpdateInterval = 2e3;
+    this.state = Adapter.Status.INIT;
+    this.initPlug();
+    this.updateConnectionState();
+  }
+  // Initialize Plug and set readyState accordingly
+  initPlug() {
+    if (typeof window !== "undefined" && window.ic && window.ic.plug) {
+      this.readyState = "Installed";
+      window.ic.plug.isConnected().then((connected) => {
+        this.readyState = connected ? "Connected" : "Installed";
+      });
+    } else {
+      this.readyState = "NotDetected";
+    }
+  }
+  // Check if the wallet is available
+  async isAvailable() {
+    return this.readyState !== "NotDetected";
+  }
+  // Connect to Plug wallet
+  async connect(config) {
+    this.state = Adapter.Status.CONNECTING;
+    const isConnected = await window.ic.plug.isConnected();
+    if (!isConnected) {
+      try {
+        console.log("Connecting to Plug wallet...", config);
+        const connected = await window.ic.plug.requestConnect({
+          whitelist: config.whitelist || [],
+          host: config.hostUrl || "https://mainnet.dfinity.network",
+          timeout: config.timeout || 1e3 * 60 * 60 * 24 * 7,
+          onConnectionUpdate: () => console.log("Plug connection updated")
+        });
+        if (!connected) {
+          this.state = Adapter.Status.READY;
+          throw new Error("User declined the connection request");
+        }
+        this.readyState = "Connected";
+      } catch (e3) {
+        this.state = Adapter.Status.READY;
+        console.error("Failed to connect to Plug wallet:", e3);
+        throw e3;
+      }
+    } else {
+      this.readyState = "Connected";
+    }
+    this._connectionState = true;
+    this._connectionStateTimestamp = Date.now();
+    this.state = Adapter.Status.CONNECTED;
+    const principal = await this.getPrincipal();
+    await this.getAccountId();
+    return {
+      owner: principal,
+      subaccount: null
+    };
+  }
+  // Disconnect from Plug wallet
+  async disconnect() {
+    this.state = Adapter.Status.DISCONNECTING;
+    try {
+      if (window.ic && window.ic.plug && window.ic.plug.disconnect) {
+        await window.ic.plug.disconnect();
+      } else {
+        console.warn("Plug wallet is not available for disconnect");
+      }
+    } catch (error) {
+      console.error("Error disconnecting from Plug wallet:", error);
+    } finally {
+      this.readyState = "Disconnected";
+      this._connectionState = false;
+      this._connectionStateTimestamp = Date.now();
+      this.state = Adapter.Status.DISCONNECTED;
+    }
+  }
+  // Get the user's principal ID
+  async getPrincipal() {
+    if (window.ic && window.ic.plug && window.ic.plug.principalId) {
+      return Principal.fromText(window.ic.plug.principalId);
+    } else {
+      throw new Error("Plug wallet is not available or principal ID is unavailable");
+    }
+  }
+  // Get the user's account ID
+  async getAccountId() {
+    if (window.ic && window.ic.plug && window.ic.plug.accountId) {
+      return window.ic.plug.accountId;
+    } else {
+      throw new Error("Plug wallet is not available or account ID is unavailable");
+    }
+  }
+  // Create an actor to interact with a canister
+  createActor(canisterId, idl, options) {
+    if (!canisterId || !idl) {
+      throw new Error("Canister ID and IDL factory are required");
+    }
+    if (window.ic && window.ic.plug && window.ic.plug.createActor) {
+      try {
+        const actorPromise = window.ic.plug.createActor({
+          canisterId,
+          interfaceFactory: idl
+        });
+        const proxy = new Proxy({}, {
+          get: (_2, prop) => {
+            if (prop === "then") {
+              return void 0;
+            }
+            return (...args) => {
+              return actorPromise.then((actor) => {
+                const value = actor[prop];
+                if (typeof value === "function") {
+                  return value.apply(actor, args);
+                }
+                return value;
+              });
+            };
+          }
+        });
+        return proxy;
+      } catch (e3) {
+        console.error("Failed to create actor through Plug:", e3);
+        throw e3;
+      }
+    } else {
+      throw new Error("Plug wallet is not available or not connected");
+    }
+  }
+  async updateConnectionState() {
+    if (window.ic && window.ic.plug && window.ic.plug.isConnected) {
+      this._connectionState = await window.ic.plug.isConnected();
+      this._connectionStateTimestamp = Date.now();
+    } else {
+      this._connectionState = false;
+    }
+  }
+  async isConnected() {
+    if (Date.now() - this._connectionStateTimestamp > this._connectionStateUpdateInterval) {
+      this.updateConnectionState().catch((err) => console.error("Failed to update connection state:", err));
+    }
+    return this._connectionState;
+  }
+  // Keep the async version for backward compatibility
+  async isConnectedAsync() {
+    if (window.ic && window.ic.plug && window.ic.plug.isConnected) {
+      return await window.ic.plug.isConnected();
+    } else {
+      return false;
+    }
+  }
+  // Handle connection updates (e.g., account switching)
+  handleConnectionUpdate() {
+    var _a2, _b, _c, _d, _e, _f, _g, _h;
+    if (((_b = (_a2 = window.ic) == null ? void 0 : _a2.plug) == null ? void 0 : _b.principalId) && ((_d = (_c = window.ic) == null ? void 0 : _c.plug) == null ? void 0 : _d.accountId)) {
+      const { principalId, accountId } = window.ic.plug;
+      this.readyState = "Connected";
+      const event = new CustomEvent("plug-connection-update", {
+        detail: {
+          principalId,
+          accountId,
+          readyState: this.readyState
+        }
+      });
+      window.dispatchEvent(event);
+    } else {
+      this.readyState = "Disconnected";
+      const event = new CustomEvent("plug-connection-update", {
+        detail: {
+          principalId: null,
+          accountId: null,
+          readyState: this.readyState
+        }
+      });
+      window.dispatchEvent(event);
+    }
+    console.log("Plug connection updated:", {
+      readyState: this.readyState,
+      principalId: (_f = (_e = window.ic) == null ? void 0 : _e.plug) == null ? void 0 : _f.principalId,
+      accountId: (_h = (_g = window.ic) == null ? void 0 : _g.plug) == null ? void 0 : _h.accountId
+    });
+  }
+  getState() {
+    return this.state;
+  }
+};
+_PlugAdapter.logo = plugLogo;
+let PlugAdapter = _PlugAdapter;
+const nfidLogo = "data:image/webp;base64,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";
+const NETWORK_ERROR = 4e3;
+const ENCODE_CHUNK_SIZE = 1e5;
+const fromBase64 = (base64) => {
+  if (typeof globalThis.Buffer !== "undefined") {
+    return globalThis.Buffer.from(base64, "base64").buffer;
+  }
+  if (typeof globalThis.atob !== "undefined") {
+    return Uint8Array.from(globalThis.atob(base64), (m) => m.charCodeAt(0)).buffer;
+  }
+  throw Error("Could not decode base64 string");
+};
+const toBase64 = (bytes) => {
+  if (typeof globalThis.Buffer !== "undefined") {
+    return globalThis.Buffer.from(bytes).toString("base64");
+  }
+  if (typeof globalThis.btoa !== "undefined") {
+    return btoa(Array.from({ length: Math.ceil(bytes.byteLength / ENCODE_CHUNK_SIZE) }).map((_2, index2) => String.fromCharCode(...new Uint8Array(bytes.slice(index2 * ENCODE_CHUNK_SIZE, (index2 + 1) * ENCODE_CHUNK_SIZE)))).join(""));
+  }
+  throw Error("Could not encode base64 string");
+};
+var __classPrivateFieldSet$5 = function(receiver, state, value, kind, f) {
+  if (typeof state === "function" ? receiver !== state || true : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+  return state.set(receiver, value), value;
+};
+var __classPrivateFieldGet$5 = function(receiver, state, kind, f) {
+  if (typeof state === "function" ? receiver !== state || true : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+  return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+};
+var _Signer_options, _Signer_channel, _Signer_establishingChannel, _Signer_scheduledChannelClosure;
+class SignerError extends Error {
+  constructor(error) {
+    super(error.message);
+    Object.setPrototypeOf(this, SignerError.prototype);
+    this.code = error.code;
+    this.data = error.data;
+  }
+}
+const wrapTransportError = (error) => new SignerError({
+  code: NETWORK_ERROR,
+  message: error instanceof Error ? error.message : "Network error"
+});
+const unwrapResponse = (response) => {
+  if ("error" in response) {
+    throw new SignerError(response.error);
+  }
+  if ("result" in response) {
+    return response.result;
+  }
+  throw new SignerError({
+    code: NETWORK_ERROR,
+    message: "Invalid response"
+  });
+};
+class Signer {
+  constructor(options) {
+    _Signer_options.set(this, void 0);
+    _Signer_channel.set(this, void 0);
+    _Signer_establishingChannel.set(this, void 0);
+    _Signer_scheduledChannelClosure.set(this, void 0);
+    __classPrivateFieldSet$5(this, _Signer_options, Object.assign({ autoCloseTransportChannel: true, closeTransportChannelAfter: 200, crypto: globalThis.crypto }, options));
+  }
+  get transport() {
+    return __classPrivateFieldGet$5(this, _Signer_options, "f").transport;
+  }
+  async openChannel() {
+    clearTimeout(__classPrivateFieldGet$5(this, _Signer_scheduledChannelClosure, "f"));
+    if (__classPrivateFieldGet$5(this, _Signer_establishingChannel, "f")) {
+      await __classPrivateFieldGet$5(this, _Signer_establishingChannel, "f");
+    }
+    if (__classPrivateFieldGet$5(this, _Signer_channel, "f") && !__classPrivateFieldGet$5(this, _Signer_channel, "f").closed) {
+      return __classPrivateFieldGet$5(this, _Signer_channel, "f");
+    }
+    const channel = __classPrivateFieldGet$5(this, _Signer_options, "f").transport.establishChannel();
+    __classPrivateFieldSet$5(this, _Signer_establishingChannel, channel.then(() => {
+    }).catch(() => {
+    }));
+    __classPrivateFieldSet$5(this, _Signer_channel, void 0);
+    __classPrivateFieldSet$5(this, _Signer_channel, await channel.catch((error) => {
+      throw wrapTransportError(error);
+    }));
+    __classPrivateFieldSet$5(this, _Signer_establishingChannel, void 0);
+    return __classPrivateFieldGet$5(this, _Signer_channel, "f");
+  }
+  async closeChannel() {
+    var _a2;
+    await ((_a2 = __classPrivateFieldGet$5(this, _Signer_channel, "f")) === null || _a2 === void 0 ? void 0 : _a2.close());
+  }
+  async transformRequest(request) {
+    if (__classPrivateFieldGet$5(this, _Signer_options, "f").derivationOrigin) {
+      return Object.assign(Object.assign({}, request), { params: Object.assign(Object.assign({}, request.params), { icrc95DerivationOrigin: __classPrivateFieldGet$5(this, _Signer_options, "f").derivationOrigin }) });
+    }
+    return request;
+  }
+  async sendRequest(request) {
+    const channel = await this.openChannel();
+    return new Promise(async (resolve, reject) => {
+      const responseListener = channel.addEventListener("response", async (response) => {
+        if (response.id !== request.id) {
+          return;
+        }
+        responseListener();
+        closeListener();
+        resolve(response);
+        if (__classPrivateFieldGet$5(this, _Signer_options, "f").autoCloseTransportChannel) {
+          __classPrivateFieldSet$5(this, _Signer_scheduledChannelClosure, setTimeout(() => {
+            if (!channel.closed) {
+              channel.close();
+            }
+          }, __classPrivateFieldGet$5(this, _Signer_options, "f").closeTransportChannelAfter));
+        }
+      });
+      const closeListener = channel.addEventListener("close", () => {
+        responseListener();
+        closeListener();
+        reject(new SignerError({
+          code: NETWORK_ERROR,
+          message: "Channel was closed before a response was received"
+        }));
+      });
+      try {
+        await channel.send(await this.transformRequest(request));
+      } catch (error) {
+        responseListener();
+        closeListener();
+        reject(wrapTransportError(error));
+      }
+    });
+  }
+  async supportedStandards() {
+    const response = await this.sendRequest({
+      id: __classPrivateFieldGet$5(this, _Signer_options, "f").crypto.randomUUID(),
+      jsonrpc: "2.0",
+      method: "icrc25_supported_standards"
+    });
+    const result = unwrapResponse(response);
+    return result.supportedStandards;
+  }
+  async requestPermissions(scopes) {
+    const response = await this.sendRequest({
+      id: __classPrivateFieldGet$5(this, _Signer_options, "f").crypto.randomUUID(),
+      jsonrpc: "2.0",
+      method: "icrc25_request_permissions",
+      params: { scopes }
+    });
+    const result = unwrapResponse(response);
+    return result.scopes;
+  }
+  async permissions() {
+    const response = await this.sendRequest({
+      id: __classPrivateFieldGet$5(this, _Signer_options, "f").crypto.randomUUID(),
+      jsonrpc: "2.0",
+      method: "icrc25_permissions"
+    });
+    const result = unwrapResponse(response);
+    return result.scopes;
+  }
+  async accounts() {
+    const response = await this.sendRequest({
+      id: __classPrivateFieldGet$5(this, _Signer_options, "f").crypto.randomUUID(),
+      jsonrpc: "2.0",
+      method: "icrc27_accounts"
+    });
+    const result = unwrapResponse(response);
+    return result.accounts.map(({ owner, subaccount }) => ({
+      owner: Principal.fromText(owner),
+      subaccount: subaccount === void 0 ? void 0 : fromBase64(subaccount)
+    }));
+  }
+  async delegation(params) {
+    var _a2;
+    const response = await this.sendRequest({
+      id: __classPrivateFieldGet$5(this, _Signer_options, "f").crypto.randomUUID(),
+      jsonrpc: "2.0",
+      method: "icrc34_delegation",
+      params: {
+        publicKey: toBase64(params.publicKey),
+        targets: (_a2 = params.targets) === null || _a2 === void 0 ? void 0 : _a2.map((p) => p.toText()),
+        maxTimeToLive: params.maxTimeToLive === void 0 ? void 0 : String(params.maxTimeToLive)
+      }
+    });
+    const result = unwrapResponse(response);
+    return DelegationChain.fromDelegations(result.signerDelegation.map((delegation) => {
+      var _a22;
+      return {
+        delegation: new Delegation(fromBase64(delegation.delegation.pubkey), BigInt(delegation.delegation.expiration), (_a22 = delegation.delegation.targets) === null || _a22 === void 0 ? void 0 : _a22.map((principal) => Principal.fromText(principal))),
+        signature: fromBase64(delegation.signature)
+      };
+    }), fromBase64(result.publicKey));
+  }
+  async callCanister(params) {
+    const response = await this.sendRequest({
+      id: __classPrivateFieldGet$5(this, _Signer_options, "f").crypto.randomUUID(),
+      jsonrpc: "2.0",
+      method: "icrc49_call_canister",
+      params: {
+        canisterId: params.canisterId.toText(),
+        sender: params.sender.toText(),
+        method: params.method,
+        arg: toBase64(params.arg)
+      }
+    });
+    const result = unwrapResponse(response);
+    const contentMap = fromBase64(result.contentMap);
+    const certificate = fromBase64(result.certificate);
+    return { contentMap, certificate };
+  }
+  async batchCallCanister(params) {
+    const response = await this.sendRequest({
+      id: __classPrivateFieldGet$5(this, _Signer_options, "f").crypto.randomUUID(),
+      jsonrpc: "2.0",
+      method: "icrc112_batch_call_canister",
+      params: {
+        sender: params.sender.toText(),
+        requests: params.requests.map((requests) => requests.map((request) => ({
+          canisterId: request.canisterId.toText(),
+          method: request.method,
+          arg: toBase64(request.arg)
+        }))),
+        validation: params.validation ? {
+          canisterId: params.validation.canisterId.toText(),
+          method: params.validation.method
+        } : void 0
+      }
+    });
+    const result = unwrapResponse(response);
+    if (params.requests.length !== result.responses.length || params.requests.some((entries, index2) => entries.length !== result.responses[index2].length)) {
+      throw new SignerError({
+        code: NETWORK_ERROR,
+        message: "Invalid batch call canister response, responses structure does not match request structure"
+      });
+    }
+    return result.responses.map((responses) => responses.map((response2) => {
+      if ("result" in response2) {
+        const contentMap = fromBase64(response2.result.contentMap);
+        const certificate = fromBase64(response2.result.certificate);
+        return { result: { contentMap, certificate } };
+      }
+      return response2;
+    }));
+  }
+}
+_Signer_options = /* @__PURE__ */ new WeakMap(), _Signer_channel = /* @__PURE__ */ new WeakMap(), _Signer_establishingChannel = /* @__PURE__ */ new WeakMap(), _Signer_scheduledChannelClosure = /* @__PURE__ */ new WeakMap();
+const isJsonRpcMessage = (message) => typeof message === "object" && !!message && "jsonrpc" in message && message.jsonrpc === "2.0";
+const isJsonRpcResponse = (message) => isJsonRpcMessage(message) && "id" in message && (typeof message.id === "string" || typeof message.id === "number");
+var __classPrivateFieldSet$4 = function(receiver, state, value, kind, f) {
+  if (typeof state === "function" ? receiver !== state || true : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+  return state.set(receiver, value), value;
+};
+var __classPrivateFieldGet$4 = function(receiver, state, kind, f) {
+  if (typeof state === "function" ? receiver !== state || true : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+  return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+};
+var _PostMessageChannel_closeListeners, _PostMessageChannel_options, _PostMessageChannel_closed;
+class PostMessageChannel {
+  constructor(options) {
+    _PostMessageChannel_closeListeners.set(this, /* @__PURE__ */ new Set());
+    _PostMessageChannel_options.set(this, void 0);
+    _PostMessageChannel_closed.set(this, false);
+    __classPrivateFieldSet$4(this, _PostMessageChannel_options, Object.assign({ window: globalThis.window, manageFocus: true }, options));
+  }
+  get closed() {
+    return __classPrivateFieldGet$4(this, _PostMessageChannel_closed, "f");
+  }
+  addEventListener(...[event, listener]) {
+    switch (event) {
+      case "close":
+        __classPrivateFieldGet$4(this, _PostMessageChannel_closeListeners, "f").add(listener);
+        return () => {
+          __classPrivateFieldGet$4(this, _PostMessageChannel_closeListeners, "f").delete(listener);
+        };
+      case "response":
+        const messageListener = async (event2) => {
+          if (event2.source !== __classPrivateFieldGet$4(this, _PostMessageChannel_options, "f").signerWindow || event2.origin !== __classPrivateFieldGet$4(this, _PostMessageChannel_options, "f").signerOrigin || !isJsonRpcResponse(event2.data)) {
+            return;
+          }
+          listener(event2.data);
+        };
+        __classPrivateFieldGet$4(this, _PostMessageChannel_options, "f").window.addEventListener("message", messageListener);
+        return () => {
+          __classPrivateFieldGet$4(this, _PostMessageChannel_options, "f").window.removeEventListener("message", messageListener);
+        };
+    }
+  }
+  async send(request) {
+    if (__classPrivateFieldGet$4(this, _PostMessageChannel_closed, "f")) {
+      throw new PostMessageTransportError("Communication channel is closed");
+    }
+    __classPrivateFieldGet$4(this, _PostMessageChannel_options, "f").signerWindow.postMessage(request, __classPrivateFieldGet$4(this, _PostMessageChannel_options, "f").signerOrigin);
+    if (__classPrivateFieldGet$4(this, _PostMessageChannel_options, "f").manageFocus) {
+      __classPrivateFieldGet$4(this, _PostMessageChannel_options, "f").signerWindow.focus();
+    }
+  }
+  async close() {
+    if (__classPrivateFieldGet$4(this, _PostMessageChannel_closed, "f")) {
+      return;
+    }
+    __classPrivateFieldSet$4(this, _PostMessageChannel_closed, true);
+    __classPrivateFieldGet$4(this, _PostMessageChannel_options, "f").signerWindow.close();
+    if (__classPrivateFieldGet$4(this, _PostMessageChannel_options, "f").manageFocus) {
+      __classPrivateFieldGet$4(this, _PostMessageChannel_options, "f").window.focus();
+    }
+    __classPrivateFieldGet$4(this, _PostMessageChannel_closeListeners, "f").forEach((listener) => listener());
+  }
+}
+_PostMessageChannel_closeListeners = /* @__PURE__ */ new WeakMap(), _PostMessageChannel_options = /* @__PURE__ */ new WeakMap(), _PostMessageChannel_closed = /* @__PURE__ */ new WeakMap();
+const urlIsSecureContext = (value) => {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.hostname === "127.0.0.1" || url.hostname.split(".").slice(-1)[0] === "localhost";
+  } catch (_a2) {
+    return false;
+  }
+};
+var __classPrivateFieldSet$3 = function(receiver, state, value, kind, f) {
+  if (typeof state === "function" ? receiver !== state || true : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+  return state.set(receiver, value), value;
+};
+var __classPrivateFieldGet$3 = function(receiver, state, kind, f) {
+  if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+  return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+};
+var _HeartbeatClient_instances, _HeartbeatClient_options, _HeartbeatClient_establish, _HeartbeatClient_maintain, _HeartbeatClient_receiveReadyResponse, _HeartbeatClient_sendStatusRequest;
+class HeartbeatClient {
+  constructor(options) {
+    _HeartbeatClient_instances.add(this);
+    _HeartbeatClient_options.set(this, void 0);
+    __classPrivateFieldSet$3(this, _HeartbeatClient_options, Object.assign({ establishTimeout: 1e4, disconnectTimeout: 2e3, statusPollingRate: 300, window: globalThis.window, crypto: globalThis.crypto }, options));
+    __classPrivateFieldGet$3(this, _HeartbeatClient_instances, "m", _HeartbeatClient_establish).call(this);
+  }
+}
+_HeartbeatClient_options = /* @__PURE__ */ new WeakMap(), _HeartbeatClient_instances = /* @__PURE__ */ new WeakSet(), _HeartbeatClient_establish = function _HeartbeatClient_establish2() {
+  const pending = [];
+  const create = () => {
+    const id = __classPrivateFieldGet$3(this, _HeartbeatClient_options, "f").crypto.randomUUID();
+    pending.push(id);
+    return id;
+  };
+  const listener = __classPrivateFieldGet$3(this, _HeartbeatClient_instances, "m", _HeartbeatClient_receiveReadyResponse).call(this, (response) => {
+    if (pending.includes(response.data.id)) {
+      listener();
+      clearInterval(interval);
+      clearTimeout(timeout);
+      __classPrivateFieldGet$3(this, _HeartbeatClient_options, "f").onEstablish(response.origin);
+      __classPrivateFieldGet$3(this, _HeartbeatClient_instances, "m", _HeartbeatClient_maintain).call(this, response.origin);
+    }
+  });
+  const timeout = setTimeout(() => {
+    listener();
+    clearInterval(interval);
+    __classPrivateFieldGet$3(this, _HeartbeatClient_options, "f").onEstablishTimeout();
+  }, __classPrivateFieldGet$3(this, _HeartbeatClient_options, "f").establishTimeout);
+  const interval = setInterval(() => __classPrivateFieldGet$3(this, _HeartbeatClient_instances, "m", _HeartbeatClient_sendStatusRequest).call(this, create()), __classPrivateFieldGet$3(this, _HeartbeatClient_options, "f").statusPollingRate);
+}, _HeartbeatClient_maintain = function _HeartbeatClient_maintain2(origin) {
+  let interval;
+  let timeout;
+  let pending = [];
+  const consume = (id) => {
+    const index2 = pending.findIndex((entry) => entry.id === id);
+    if (index2 > -1) {
+      pending.splice(index2, 1);
+    }
+    return index2 > -1;
+  };
+  const create = () => {
+    const id = __classPrivateFieldGet$3(this, _HeartbeatClient_options, "f").crypto.randomUUID();
+    const time = (/* @__PURE__ */ new Date()).getTime();
+    pending = pending.filter((entry) => time - __classPrivateFieldGet$3(this, _HeartbeatClient_options, "f").disconnectTimeout > entry.time);
+    pending.push({ id, time });
+    return id;
+  };
+  const resetTimeout = () => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      listener();
+      clearInterval(interval);
+      __classPrivateFieldGet$3(this, _HeartbeatClient_options, "f").onDisconnect();
+    }, __classPrivateFieldGet$3(this, _HeartbeatClient_options, "f").disconnectTimeout);
+  };
+  const listener = __classPrivateFieldGet$3(this, _HeartbeatClient_instances, "m", _HeartbeatClient_receiveReadyResponse).call(this, (response) => {
+    if (response.origin === origin && consume(response.data.id)) {
+      resetTimeout();
+    }
+  });
+  resetTimeout();
+  interval = setInterval(() => __classPrivateFieldGet$3(this, _HeartbeatClient_instances, "m", _HeartbeatClient_sendStatusRequest).call(this, create()), __classPrivateFieldGet$3(this, _HeartbeatClient_options, "f").statusPollingRate);
+}, _HeartbeatClient_receiveReadyResponse = function _HeartbeatClient_receiveReadyResponse2(handler) {
+  const listener = (event) => {
+    if (event.source === __classPrivateFieldGet$3(this, _HeartbeatClient_options, "f").signerWindow && isJsonRpcResponse(event.data) && "result" in event.data && event.data.result === "ready") {
+      handler(event);
+    }
+  };
+  __classPrivateFieldGet$3(this, _HeartbeatClient_options, "f").window.addEventListener("message", listener);
+  return () => __classPrivateFieldGet$3(this, _HeartbeatClient_options, "f").window.removeEventListener("message", listener);
+}, _HeartbeatClient_sendStatusRequest = function _HeartbeatClient_sendStatusRequest2(id) {
+  __classPrivateFieldGet$3(this, _HeartbeatClient_options, "f").signerWindow.postMessage({ jsonrpc: "2.0", id, method: "icrc29_status" }, "*");
+};
+var __classPrivateFieldSet$2 = function(receiver, state, value, kind, f) {
+  if (typeof state === "function" ? receiver !== state || true : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+  return state.set(receiver, value), value;
+};
+var __classPrivateFieldGet$2 = function(receiver, state, kind, f) {
+  if (typeof state === "function" ? receiver !== state || true : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+  return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+};
+var _PostMessageTransport_options;
+const NON_CLICK_ESTABLISHMENT_LINK = "https://github.com/slide-computer/signer-js/blob/main/packages/signer-web/README.md#channels-must-be-established-in-a-click-handler";
+class PostMessageTransportError extends Error {
+  constructor(message) {
+    super(message);
+    Object.setPrototypeOf(this, PostMessageTransportError.prototype);
+  }
+}
+let withinClick = false;
+if (globalThis.window) {
+  globalThis.window.addEventListener("click", () => withinClick = true, true);
+  globalThis.window.addEventListener("click", () => withinClick = false);
+}
+class PostMessageTransport {
+  constructor(options) {
+    _PostMessageTransport_options.set(this, void 0);
+    if (!urlIsSecureContext(options.url)) {
+      throw new PostMessageTransportError("Invalid signer RPC url");
+    }
+    __classPrivateFieldSet$2(this, _PostMessageTransport_options, Object.assign({ windowOpenerFeatures: "", window: globalThis.window, establishTimeout: 12e4, disconnectTimeout: 2e3, statusPollingRate: 300, crypto: globalThis.crypto, manageFocus: true, closeOnEstablishTimeout: true, detectNonClickEstablishment: true }, options));
+  }
+  async establishChannel() {
+    if (__classPrivateFieldGet$2(this, _PostMessageTransport_options, "f").detectNonClickEstablishment && !withinClick) {
+      throw new PostMessageTransportError(`Signer window should not be opened outside of click handler, see: ${NON_CLICK_ESTABLISHMENT_LINK}`);
+    }
+    const signerWindow = __classPrivateFieldGet$2(this, _PostMessageTransport_options, "f").window.open(__classPrivateFieldGet$2(this, _PostMessageTransport_options, "f").url, "signerWindow", __classPrivateFieldGet$2(this, _PostMessageTransport_options, "f").windowOpenerFeatures);
+    if (!signerWindow) {
+      throw new PostMessageTransportError("Signer window could not be opened");
+    }
+    return new Promise((resolve, reject) => {
+      let channel;
+      new HeartbeatClient(Object.assign(Object.assign({}, __classPrivateFieldGet$2(this, _PostMessageTransport_options, "f")), { signerWindow, onEstablish: (origin) => {
+        channel = new PostMessageChannel(Object.assign(Object.assign({}, __classPrivateFieldGet$2(this, _PostMessageTransport_options, "f")), { signerOrigin: origin, signerWindow }));
+        resolve(channel);
+      }, onEstablishTimeout: () => {
+        if (__classPrivateFieldGet$2(this, _PostMessageTransport_options, "f").closeOnEstablishTimeout) {
+          signerWindow.close();
+        }
+        reject(new PostMessageTransportError("Communication channel could not be established within a reasonable time"));
+      }, onDisconnect: () => channel.close() }));
+    });
+  }
+}
+_PostMessageTransport_options = /* @__PURE__ */ new WeakMap();
+var isNumeric = /^-?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i, mathceil = Math.ceil, mathfloor = Math.floor, bignumberError = "[BigNumber Error] ", tooManyDigits = bignumberError + "Number primitive has more than 15 significant digits: ", BASE = 1e14, LOG_BASE = 14, MAX_SAFE_INTEGER = 9007199254740991, POWS_TEN = [1, 10, 100, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11, 1e12, 1e13], SQRT_BASE = 1e7, MAX = 1e9;
+function clone(configObject) {
+  var div, convertBase, parseNumeric, P2 = BigNumber.prototype = { constructor: BigNumber, toString: null, valueOf: null }, ONE = new BigNumber(1), DECIMAL_PLACES = 20, ROUNDING_MODE = 4, TO_EXP_NEG = -7, TO_EXP_POS = 21, MIN_EXP = -1e7, MAX_EXP = 1e7, CRYPTO = false, MODULO_MODE = 1, POW_PRECISION = 0, FORMAT = {
+    prefix: "",
+    groupSize: 3,
+    secondaryGroupSize: 0,
+    groupSeparator: ",",
+    decimalSeparator: ".",
+    fractionGroupSize: 0,
+    fractionGroupSeparator: " ",
+    // non-breaking space
+    suffix: ""
+  }, ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyz", alphabetHasNormalDecimalDigits = true;
+  function BigNumber(v2, b2) {
+    var alphabet, c, caseChanged, e3, i, isNum, len, str, x2 = this;
+    if (!(x2 instanceof BigNumber)) return new BigNumber(v2, b2);
+    if (b2 == null) {
+      if (v2 && v2._isBigNumber === true) {
+        x2.s = v2.s;
+        if (!v2.c || v2.e > MAX_EXP) {
+          x2.c = x2.e = null;
+        } else if (v2.e < MIN_EXP) {
+          x2.c = [x2.e = 0];
+        } else {
+          x2.e = v2.e;
+          x2.c = v2.c.slice();
+        }
+        return;
+      }
+      if ((isNum = typeof v2 == "number") && v2 * 0 == 0) {
+        x2.s = 1 / v2 < 0 ? (v2 = -v2, -1) : 1;
+        if (v2 === ~~v2) {
+          for (e3 = 0, i = v2; i >= 10; i /= 10, e3++) ;
+          if (e3 > MAX_EXP) {
+            x2.c = x2.e = null;
+          } else {
+            x2.e = e3;
+            x2.c = [v2];
+          }
+          return;
+        }
+        str = String(v2);
+      } else {
+        if (!isNumeric.test(str = String(v2))) return parseNumeric(x2, str, isNum);
+        x2.s = str.charCodeAt(0) == 45 ? (str = str.slice(1), -1) : 1;
+      }
+      if ((e3 = str.indexOf(".")) > -1) str = str.replace(".", "");
+      if ((i = str.search(/e/i)) > 0) {
+        if (e3 < 0) e3 = i;
+        e3 += +str.slice(i + 1);
+        str = str.substring(0, i);
+      } else if (e3 < 0) {
+        e3 = str.length;
+      }
+    } else {
+      intCheck(b2, 2, ALPHABET.length, "Base");
+      if (b2 == 10 && alphabetHasNormalDecimalDigits) {
+        x2 = new BigNumber(v2);
+        return round(x2, DECIMAL_PLACES + x2.e + 1, ROUNDING_MODE);
+      }
+      str = String(v2);
+      if (isNum = typeof v2 == "number") {
+        if (v2 * 0 != 0) return parseNumeric(x2, str, isNum, b2);
+        x2.s = 1 / v2 < 0 ? (str = str.slice(1), -1) : 1;
+        if (BigNumber.DEBUG && str.replace(/^0\.0*|\./, "").length > 15) {
+          throw Error(tooManyDigits + v2);
+        }
+      } else {
+        x2.s = str.charCodeAt(0) === 45 ? (str = str.slice(1), -1) : 1;
+      }
+      alphabet = ALPHABET.slice(0, b2);
+      e3 = i = 0;
+      for (len = str.length; i < len; i++) {
+        if (alphabet.indexOf(c = str.charAt(i)) < 0) {
+          if (c == ".") {
+            if (i > e3) {
+              e3 = len;
+              continue;
+            }
+          } else if (!caseChanged) {
+            if (str == str.toUpperCase() && (str = str.toLowerCase()) || str == str.toLowerCase() && (str = str.toUpperCase())) {
+              caseChanged = true;
+              i = -1;
+              e3 = 0;
+              continue;
+            }
+          }
+          return parseNumeric(x2, String(v2), isNum, b2);
+        }
+      }
+      isNum = false;
+      str = convertBase(str, b2, 10, x2.s);
+      if ((e3 = str.indexOf(".")) > -1) str = str.replace(".", "");
+      else e3 = str.length;
+    }
+    for (i = 0; str.charCodeAt(i) === 48; i++) ;
+    for (len = str.length; str.charCodeAt(--len) === 48; ) ;
+    if (str = str.slice(i, ++len)) {
+      len -= i;
+      if (isNum && BigNumber.DEBUG && len > 15 && (v2 > MAX_SAFE_INTEGER || v2 !== mathfloor(v2))) {
+        throw Error(tooManyDigits + x2.s * v2);
+      }
+      if ((e3 = e3 - i - 1) > MAX_EXP) {
+        x2.c = x2.e = null;
+      } else if (e3 < MIN_EXP) {
+        x2.c = [x2.e = 0];
+      } else {
+        x2.e = e3;
+        x2.c = [];
+        i = (e3 + 1) % LOG_BASE;
+        if (e3 < 0) i += LOG_BASE;
+        if (i < len) {
+          if (i) x2.c.push(+str.slice(0, i));
+          for (len -= LOG_BASE; i < len; ) {
+            x2.c.push(+str.slice(i, i += LOG_BASE));
+          }
+          i = LOG_BASE - (str = str.slice(i)).length;
+        } else {
+          i -= len;
+        }
+        for (; i--; str += "0") ;
+        x2.c.push(+str);
+      }
+    } else {
+      x2.c = [x2.e = 0];
+    }
+  }
+  BigNumber.clone = clone;
+  BigNumber.ROUND_UP = 0;
+  BigNumber.ROUND_DOWN = 1;
+  BigNumber.ROUND_CEIL = 2;
+  BigNumber.ROUND_FLOOR = 3;
+  BigNumber.ROUND_HALF_UP = 4;
+  BigNumber.ROUND_HALF_DOWN = 5;
+  BigNumber.ROUND_HALF_EVEN = 6;
+  BigNumber.ROUND_HALF_CEIL = 7;
+  BigNumber.ROUND_HALF_FLOOR = 8;
+  BigNumber.EUCLID = 9;
+  BigNumber.config = BigNumber.set = function(obj) {
+    var p, v2;
+    if (obj != null) {
+      if (typeof obj == "object") {
+        if (obj.hasOwnProperty(p = "DECIMAL_PLACES")) {
+          v2 = obj[p];
+          intCheck(v2, 0, MAX, p);
+          DECIMAL_PLACES = v2;
+        }
+        if (obj.hasOwnProperty(p = "ROUNDING_MODE")) {
+          v2 = obj[p];
+          intCheck(v2, 0, 8, p);
+          ROUNDING_MODE = v2;
+        }
+        if (obj.hasOwnProperty(p = "EXPONENTIAL_AT")) {
+          v2 = obj[p];
+          if (v2 && v2.pop) {
+            intCheck(v2[0], -1e9, 0, p);
+            intCheck(v2[1], 0, MAX, p);
+            TO_EXP_NEG = v2[0];
+            TO_EXP_POS = v2[1];
+          } else {
+            intCheck(v2, -1e9, MAX, p);
+            TO_EXP_NEG = -(TO_EXP_POS = v2 < 0 ? -v2 : v2);
+          }
+        }
+        if (obj.hasOwnProperty(p = "RANGE")) {
+          v2 = obj[p];
+          if (v2 && v2.pop) {
+            intCheck(v2[0], -1e9, -1, p);
+            intCheck(v2[1], 1, MAX, p);
+            MIN_EXP = v2[0];
+            MAX_EXP = v2[1];
+          } else {
+            intCheck(v2, -1e9, MAX, p);
+            if (v2) {
+              MIN_EXP = -(MAX_EXP = v2 < 0 ? -v2 : v2);
+            } else {
+              throw Error(bignumberError + p + " cannot be zero: " + v2);
+            }
+          }
+        }
+        if (obj.hasOwnProperty(p = "CRYPTO")) {
+          v2 = obj[p];
+          if (v2 === !!v2) {
+            if (v2) {
+              if (typeof crypto != "undefined" && crypto && (crypto.getRandomValues || crypto.randomBytes)) {
+                CRYPTO = v2;
+              } else {
+                CRYPTO = !v2;
+                throw Error(bignumberError + "crypto unavailable");
+              }
+            } else {
+              CRYPTO = v2;
+            }
+          } else {
+            throw Error(bignumberError + p + " not true or false: " + v2);
+          }
+        }
+        if (obj.hasOwnProperty(p = "MODULO_MODE")) {
+          v2 = obj[p];
+          intCheck(v2, 0, 9, p);
+          MODULO_MODE = v2;
+        }
+        if (obj.hasOwnProperty(p = "POW_PRECISION")) {
+          v2 = obj[p];
+          intCheck(v2, 0, MAX, p);
+          POW_PRECISION = v2;
+        }
+        if (obj.hasOwnProperty(p = "FORMAT")) {
+          v2 = obj[p];
+          if (typeof v2 == "object") FORMAT = v2;
+          else throw Error(bignumberError + p + " not an object: " + v2);
+        }
+        if (obj.hasOwnProperty(p = "ALPHABET")) {
+          v2 = obj[p];
+          if (typeof v2 == "string" && !/^.?$|[+\-.\s]|(.).*\1/.test(v2)) {
+            alphabetHasNormalDecimalDigits = v2.slice(0, 10) == "0123456789";
+            ALPHABET = v2;
+          } else {
+            throw Error(bignumberError + p + " invalid: " + v2);
+          }
+        }
+      } else {
+        throw Error(bignumberError + "Object expected: " + obj);
+      }
+    }
+    return {
+      DECIMAL_PLACES,
+      ROUNDING_MODE,
+      EXPONENTIAL_AT: [TO_EXP_NEG, TO_EXP_POS],
+      RANGE: [MIN_EXP, MAX_EXP],
+      CRYPTO,
+      MODULO_MODE,
+      POW_PRECISION,
+      FORMAT,
+      ALPHABET
+    };
+  };
+  BigNumber.isBigNumber = function(v2) {
+    if (!v2 || v2._isBigNumber !== true) return false;
+    if (!BigNumber.DEBUG) return true;
+    var i, n, c = v2.c, e3 = v2.e, s = v2.s;
+    out: if ({}.toString.call(c) == "[object Array]") {
+      if ((s === 1 || s === -1) && e3 >= -1e9 && e3 <= MAX && e3 === mathfloor(e3)) {
+        if (c[0] === 0) {
+          if (e3 === 0 && c.length === 1) return true;
+          break out;
+        }
+        i = (e3 + 1) % LOG_BASE;
+        if (i < 1) i += LOG_BASE;
+        if (String(c[0]).length == i) {
+          for (i = 0; i < c.length; i++) {
+            n = c[i];
+            if (n < 0 || n >= BASE || n !== mathfloor(n)) break out;
+          }
+          if (n !== 0) return true;
+        }
+      }
+    } else if (c === null && e3 === null && (s === null || s === 1 || s === -1)) {
+      return true;
+    }
+    throw Error(bignumberError + "Invalid BigNumber: " + v2);
+  };
+  BigNumber.maximum = BigNumber.max = function() {
+    return maxOrMin(arguments, -1);
+  };
+  BigNumber.minimum = BigNumber.min = function() {
+    return maxOrMin(arguments, 1);
+  };
+  BigNumber.random = function() {
+    var pow2_53 = 9007199254740992;
+    var random53bitInt = Math.random() * pow2_53 & 2097151 ? function() {
+      return mathfloor(Math.random() * pow2_53);
+    } : function() {
+      return (Math.random() * 1073741824 | 0) * 8388608 + (Math.random() * 8388608 | 0);
+    };
+    return function(dp) {
+      var a, b2, e3, k2, v2, i = 0, c = [], rand = new BigNumber(ONE);
+      if (dp == null) dp = DECIMAL_PLACES;
+      else intCheck(dp, 0, MAX);
+      k2 = mathceil(dp / LOG_BASE);
+      if (CRYPTO) {
+        if (crypto.getRandomValues) {
+          a = crypto.getRandomValues(new Uint32Array(k2 *= 2));
+          for (; i < k2; ) {
+            v2 = a[i] * 131072 + (a[i + 1] >>> 11);
+            if (v2 >= 9e15) {
+              b2 = crypto.getRandomValues(new Uint32Array(2));
+              a[i] = b2[0];
+              a[i + 1] = b2[1];
+            } else {
+              c.push(v2 % 1e14);
+              i += 2;
+            }
+          }
+          i = k2 / 2;
+        } else if (crypto.randomBytes) {
+          a = crypto.randomBytes(k2 *= 7);
+          for (; i < k2; ) {
+            v2 = (a[i] & 31) * 281474976710656 + a[i + 1] * 1099511627776 + a[i + 2] * 4294967296 + a[i + 3] * 16777216 + (a[i + 4] << 16) + (a[i + 5] << 8) + a[i + 6];
+            if (v2 >= 9e15) {
+              crypto.randomBytes(7).copy(a, i);
+            } else {
+              c.push(v2 % 1e14);
+              i += 7;
+            }
+          }
+          i = k2 / 7;
+        } else {
+          CRYPTO = false;
+          throw Error(bignumberError + "crypto unavailable");
+        }
+      }
+      if (!CRYPTO) {
+        for (; i < k2; ) {
+          v2 = random53bitInt();
+          if (v2 < 9e15) c[i++] = v2 % 1e14;
+        }
+      }
+      k2 = c[--i];
+      dp %= LOG_BASE;
+      if (k2 && dp) {
+        v2 = POWS_TEN[LOG_BASE - dp];
+        c[i] = mathfloor(k2 / v2) * v2;
+      }
+      for (; c[i] === 0; c.pop(), i--) ;
+      if (i < 0) {
+        c = [e3 = 0];
+      } else {
+        for (e3 = -1; c[0] === 0; c.splice(0, 1), e3 -= LOG_BASE) ;
+        for (i = 1, v2 = c[0]; v2 >= 10; v2 /= 10, i++) ;
+        if (i < LOG_BASE) e3 -= LOG_BASE - i;
+      }
+      rand.e = e3;
+      rand.c = c;
+      return rand;
+    };
+  }();
+  BigNumber.sum = function() {
+    var i = 1, args = arguments, sum = new BigNumber(args[0]);
+    for (; i < args.length; ) sum = sum.plus(args[i++]);
+    return sum;
+  };
+  convertBase = /* @__PURE__ */ function() {
+    var decimal = "0123456789";
+    function toBaseOut(str, baseIn, baseOut, alphabet) {
+      var j2, arr = [0], arrL, i = 0, len = str.length;
+      for (; i < len; ) {
+        for (arrL = arr.length; arrL--; arr[arrL] *= baseIn) ;
+        arr[0] += alphabet.indexOf(str.charAt(i++));
+        for (j2 = 0; j2 < arr.length; j2++) {
+          if (arr[j2] > baseOut - 1) {
+            if (arr[j2 + 1] == null) arr[j2 + 1] = 0;
+            arr[j2 + 1] += arr[j2] / baseOut | 0;
+            arr[j2] %= baseOut;
+          }
+        }
+      }
+      return arr.reverse();
+    }
+    return function(str, baseIn, baseOut, sign, callerIsToString) {
+      var alphabet, d2, e3, k2, r, x2, xc, y, i = str.indexOf("."), dp = DECIMAL_PLACES, rm = ROUNDING_MODE;
+      if (i >= 0) {
+        k2 = POW_PRECISION;
+        POW_PRECISION = 0;
+        str = str.replace(".", "");
+        y = new BigNumber(baseIn);
+        x2 = y.pow(str.length - i);
+        POW_PRECISION = k2;
+        y.c = toBaseOut(
+          toFixedPoint(coeffToString(x2.c), x2.e, "0"),
+          10,
+          baseOut,
+          decimal
+        );
+        y.e = y.c.length;
+      }
+      xc = toBaseOut(str, baseIn, baseOut, callerIsToString ? (alphabet = ALPHABET, decimal) : (alphabet = decimal, ALPHABET));
+      e3 = k2 = xc.length;
+      for (; xc[--k2] == 0; xc.pop()) ;
+      if (!xc[0]) return alphabet.charAt(0);
+      if (i < 0) {
+        --e3;
+      } else {
+        x2.c = xc;
+        x2.e = e3;
+        x2.s = sign;
+        x2 = div(x2, y, dp, rm, baseOut);
+        xc = x2.c;
+        r = x2.r;
+        e3 = x2.e;
+      }
+      d2 = e3 + dp + 1;
+      i = xc[d2];
+      k2 = baseOut / 2;
+      r = r || d2 < 0 || xc[d2 + 1] != null;
+      r = rm < 4 ? (i != null || r) && (rm == 0 || rm == (x2.s < 0 ? 3 : 2)) : i > k2 || i == k2 && (rm == 4 || r || rm == 6 && xc[d2 - 1] & 1 || rm == (x2.s < 0 ? 8 : 7));
+      if (d2 < 1 || !xc[0]) {
+        str = r ? toFixedPoint(alphabet.charAt(1), -dp, alphabet.charAt(0)) : alphabet.charAt(0);
+      } else {
+        xc.length = d2;
+        if (r) {
+          for (--baseOut; ++xc[--d2] > baseOut; ) {
+            xc[d2] = 0;
+            if (!d2) {
+              ++e3;
+              xc = [1].concat(xc);
+            }
+          }
+        }
+        for (k2 = xc.length; !xc[--k2]; ) ;
+        for (i = 0, str = ""; i <= k2; str += alphabet.charAt(xc[i++])) ;
+        str = toFixedPoint(str, e3, alphabet.charAt(0));
+      }
+      return str;
+    };
+  }();
+  div = /* @__PURE__ */ function() {
+    function multiply(x2, k2, base) {
+      var m, temp, xlo, xhi, carry = 0, i = x2.length, klo = k2 % SQRT_BASE, khi = k2 / SQRT_BASE | 0;
+      for (x2 = x2.slice(); i--; ) {
+        xlo = x2[i] % SQRT_BASE;
+        xhi = x2[i] / SQRT_BASE | 0;
+        m = khi * xlo + xhi * klo;
+        temp = klo * xlo + m % SQRT_BASE * SQRT_BASE + carry;
+        carry = (temp / base | 0) + (m / SQRT_BASE | 0) + khi * xhi;
+        x2[i] = temp % base;
+      }
+      if (carry) x2 = [carry].concat(x2);
+      return x2;
+    }
+    function compare2(a, b2, aL, bL) {
+      var i, cmp;
+      if (aL != bL) {
+        cmp = aL > bL ? 1 : -1;
+      } else {
+        for (i = cmp = 0; i < aL; i++) {
+          if (a[i] != b2[i]) {
+            cmp = a[i] > b2[i] ? 1 : -1;
+            break;
+          }
+        }
+      }
+      return cmp;
+    }
+    function subtract(a, b2, aL, base) {
+      var i = 0;
+      for (; aL--; ) {
+        a[aL] -= i;
+        i = a[aL] < b2[aL] ? 1 : 0;
+        a[aL] = i * base + a[aL] - b2[aL];
+      }
+      for (; !a[0] && a.length > 1; a.splice(0, 1)) ;
+    }
+    return function(x2, y, dp, rm, base) {
+      var cmp, e3, i, more, n, prod, prodL, q, qc, rem, remL, rem0, xi, xL, yc0, yL, yz, s = x2.s == y.s ? 1 : -1, xc = x2.c, yc = y.c;
+      if (!xc || !xc[0] || !yc || !yc[0]) {
+        return new BigNumber(
+          // Return NaN if either NaN, or both Infinity or 0.
+          !x2.s || !y.s || (xc ? yc && xc[0] == yc[0] : !yc) ? NaN : (
+            // Return ±0 if x is ±0 or y is ±Infinity, or return ±Infinity as y is ±0.
+            xc && xc[0] == 0 || !yc ? s * 0 : s / 0
+          )
+        );
+      }
+      q = new BigNumber(s);
+      qc = q.c = [];
+      e3 = x2.e - y.e;
+      s = dp + e3 + 1;
+      if (!base) {
+        base = BASE;
+        e3 = bitFloor(x2.e / LOG_BASE) - bitFloor(y.e / LOG_BASE);
+        s = s / LOG_BASE | 0;
+      }
+      for (i = 0; yc[i] == (xc[i] || 0); i++) ;
+      if (yc[i] > (xc[i] || 0)) e3--;
+      if (s < 0) {
+        qc.push(1);
+        more = true;
+      } else {
+        xL = xc.length;
+        yL = yc.length;
+        i = 0;
+        s += 2;
+        n = mathfloor(base / (yc[0] + 1));
+        if (n > 1) {
+          yc = multiply(yc, n, base);
+          xc = multiply(xc, n, base);
+          yL = yc.length;
+          xL = xc.length;
+        }
+        xi = yL;
+        rem = xc.slice(0, yL);
+        remL = rem.length;
+        for (; remL < yL; rem[remL++] = 0) ;
+        yz = yc.slice();
+        yz = [0].concat(yz);
+        yc0 = yc[0];
+        if (yc[1] >= base / 2) yc0++;
+        do {
+          n = 0;
+          cmp = compare2(yc, rem, yL, remL);
+          if (cmp < 0) {
+            rem0 = rem[0];
+            if (yL != remL) rem0 = rem0 * base + (rem[1] || 0);
+            n = mathfloor(rem0 / yc0);
+            if (n > 1) {
+              if (n >= base) n = base - 1;
+              prod = multiply(yc, n, base);
+              prodL = prod.length;
+              remL = rem.length;
+              while (compare2(prod, rem, prodL, remL) == 1) {
+                n--;
+                subtract(prod, yL < prodL ? yz : yc, prodL, base);
+                prodL = prod.length;
+                cmp = 1;
+              }
+            } else {
+              if (n == 0) {
+                cmp = n = 1;
+              }
+              prod = yc.slice();
+              prodL = prod.length;
+            }
+            if (prodL < remL) prod = [0].concat(prod);
+            subtract(rem, prod, remL, base);
+            remL = rem.length;
+            if (cmp == -1) {
+              while (compare2(yc, rem, yL, remL) < 1) {
+                n++;
+                subtract(rem, yL < remL ? yz : yc, remL, base);
+                remL = rem.length;
+              }
+            }
+          } else if (cmp === 0) {
+            n++;
+            rem = [0];
+          }
+          qc[i++] = n;
+          if (rem[0]) {
+            rem[remL++] = xc[xi] || 0;
+          } else {
+            rem = [xc[xi]];
+            remL = 1;
+          }
+        } while ((xi++ < xL || rem[0] != null) && s--);
+        more = rem[0] != null;
+        if (!qc[0]) qc.splice(0, 1);
+      }
+      if (base == BASE) {
+        for (i = 1, s = qc[0]; s >= 10; s /= 10, i++) ;
+        round(q, dp + (q.e = i + e3 * LOG_BASE - 1) + 1, rm, more);
+      } else {
+        q.e = e3;
+        q.r = +more;
+      }
+      return q;
+    };
+  }();
+  function format(n, i, rm, id) {
+    var c0, e3, ne, len, str;
+    if (rm == null) rm = ROUNDING_MODE;
+    else intCheck(rm, 0, 8);
+    if (!n.c) return n.toString();
+    c0 = n.c[0];
+    ne = n.e;
+    if (i == null) {
+      str = coeffToString(n.c);
+      str = id == 1 || id == 2 && (ne <= TO_EXP_NEG || ne >= TO_EXP_POS) ? toExponential(str, ne) : toFixedPoint(str, ne, "0");
+    } else {
+      n = round(new BigNumber(n), i, rm);
+      e3 = n.e;
+      str = coeffToString(n.c);
+      len = str.length;
+      if (id == 1 || id == 2 && (i <= e3 || e3 <= TO_EXP_NEG)) {
+        for (; len < i; str += "0", len++) ;
+        str = toExponential(str, e3);
+      } else {
+        i -= ne;
+        str = toFixedPoint(str, e3, "0");
+        if (e3 + 1 > len) {
+          if (--i > 0) for (str += "."; i--; str += "0") ;
+        } else {
+          i += e3 - len;
+          if (i > 0) {
+            if (e3 + 1 == len) str += ".";
+            for (; i--; str += "0") ;
+          }
+        }
+      }
+    }
+    return n.s < 0 && c0 ? "-" + str : str;
+  }
+  function maxOrMin(args, n) {
+    var k2, y, i = 1, x2 = new BigNumber(args[0]);
+    for (; i < args.length; i++) {
+      y = new BigNumber(args[i]);
+      if (!y.s || (k2 = compare(x2, y)) === n || k2 === 0 && x2.s === n) {
+        x2 = y;
+      }
+    }
+    return x2;
+  }
+  function normalise(n, c, e3) {
+    var i = 1, j2 = c.length;
+    for (; !c[--j2]; c.pop()) ;
+    for (j2 = c[0]; j2 >= 10; j2 /= 10, i++) ;
+    if ((e3 = i + e3 * LOG_BASE - 1) > MAX_EXP) {
+      n.c = n.e = null;
+    } else if (e3 < MIN_EXP) {
+      n.c = [n.e = 0];
+    } else {
+      n.e = e3;
+      n.c = c;
+    }
+    return n;
+  }
+  parseNumeric = /* @__PURE__ */ function() {
+    var basePrefix = /^(-?)0([xbo])(?=\w[\w.]*$)/i, dotAfter = /^([^.]+)\.$/, dotBefore = /^\.([^.]+)$/, isInfinityOrNaN = /^-?(Infinity|NaN)$/, whitespaceOrPlus = /^\s*\+(?=[\w.])|^\s+|\s+$/g;
+    return function(x2, str, isNum, b2) {
+      var base, s = isNum ? str : str.replace(whitespaceOrPlus, "");
+      if (isInfinityOrNaN.test(s)) {
+        x2.s = isNaN(s) ? null : s < 0 ? -1 : 1;
+      } else {
+        if (!isNum) {
+          s = s.replace(basePrefix, function(m, p1, p2) {
+            base = (p2 = p2.toLowerCase()) == "x" ? 16 : p2 == "b" ? 2 : 8;
+            return !b2 || b2 == base ? p1 : m;
+          });
+          if (b2) {
+            base = b2;
+            s = s.replace(dotAfter, "$1").replace(dotBefore, "0.$1");
+          }
+          if (str != s) return new BigNumber(s, base);
+        }
+        if (BigNumber.DEBUG) {
+          throw Error(bignumberError + "Not a" + (b2 ? " base " + b2 : "") + " number: " + str);
+        }
+        x2.s = null;
+      }
+      x2.c = x2.e = null;
+    };
+  }();
+  function round(x2, sd, rm, r) {
+    var d2, i, j2, k2, n, ni, rd, xc = x2.c, pows10 = POWS_TEN;
+    if (xc) {
+      out: {
+        for (d2 = 1, k2 = xc[0]; k2 >= 10; k2 /= 10, d2++) ;
+        i = sd - d2;
+        if (i < 0) {
+          i += LOG_BASE;
+          j2 = sd;
+          n = xc[ni = 0];
+          rd = mathfloor(n / pows10[d2 - j2 - 1] % 10);
+        } else {
+          ni = mathceil((i + 1) / LOG_BASE);
+          if (ni >= xc.length) {
+            if (r) {
+              for (; xc.length <= ni; xc.push(0)) ;
+              n = rd = 0;
+              d2 = 1;
+              i %= LOG_BASE;
+              j2 = i - LOG_BASE + 1;
+            } else {
+              break out;
+            }
+          } else {
+            n = k2 = xc[ni];
+            for (d2 = 1; k2 >= 10; k2 /= 10, d2++) ;
+            i %= LOG_BASE;
+            j2 = i - LOG_BASE + d2;
+            rd = j2 < 0 ? 0 : mathfloor(n / pows10[d2 - j2 - 1] % 10);
+          }
+        }
+        r = r || sd < 0 || // Are there any non-zero digits after the rounding digit?
+        // The expression  n % pows10[d - j - 1]  returns all digits of n to the right
+        // of the digit at j, e.g. if n is 908714 and j is 2, the expression gives 714.
+        xc[ni + 1] != null || (j2 < 0 ? n : n % pows10[d2 - j2 - 1]);
+        r = rm < 4 ? (rd || r) && (rm == 0 || rm == (x2.s < 0 ? 3 : 2)) : rd > 5 || rd == 5 && (rm == 4 || r || rm == 6 && // Check whether the digit to the left of the rounding digit is odd.
+        (i > 0 ? j2 > 0 ? n / pows10[d2 - j2] : 0 : xc[ni - 1]) % 10 & 1 || rm == (x2.s < 0 ? 8 : 7));
+        if (sd < 1 || !xc[0]) {
+          xc.length = 0;
+          if (r) {
+            sd -= x2.e + 1;
+            xc[0] = pows10[(LOG_BASE - sd % LOG_BASE) % LOG_BASE];
+            x2.e = -sd || 0;
+          } else {
+            xc[0] = x2.e = 0;
+          }
+          return x2;
+        }
+        if (i == 0) {
+          xc.length = ni;
+          k2 = 1;
+          ni--;
+        } else {
+          xc.length = ni + 1;
+          k2 = pows10[LOG_BASE - i];
+          xc[ni] = j2 > 0 ? mathfloor(n / pows10[d2 - j2] % pows10[j2]) * k2 : 0;
+        }
+        if (r) {
+          for (; ; ) {
+            if (ni == 0) {
+              for (i = 1, j2 = xc[0]; j2 >= 10; j2 /= 10, i++) ;
+              j2 = xc[0] += k2;
+              for (k2 = 1; j2 >= 10; j2 /= 10, k2++) ;
+              if (i != k2) {
+                x2.e++;
+                if (xc[0] == BASE) xc[0] = 1;
+              }
+              break;
+            } else {
+              xc[ni] += k2;
+              if (xc[ni] != BASE) break;
+              xc[ni--] = 0;
+              k2 = 1;
+            }
+          }
+        }
+        for (i = xc.length; xc[--i] === 0; xc.pop()) ;
+      }
+      if (x2.e > MAX_EXP) {
+        x2.c = x2.e = null;
+      } else if (x2.e < MIN_EXP) {
+        x2.c = [x2.e = 0];
+      }
+    }
+    return x2;
+  }
+  function valueOf(n) {
+    var str, e3 = n.e;
+    if (e3 === null) return n.toString();
+    str = coeffToString(n.c);
+    str = e3 <= TO_EXP_NEG || e3 >= TO_EXP_POS ? toExponential(str, e3) : toFixedPoint(str, e3, "0");
+    return n.s < 0 ? "-" + str : str;
+  }
+  P2.absoluteValue = P2.abs = function() {
+    var x2 = new BigNumber(this);
+    if (x2.s < 0) x2.s = 1;
+    return x2;
+  };
+  P2.comparedTo = function(y, b2) {
+    return compare(this, new BigNumber(y, b2));
+  };
+  P2.decimalPlaces = P2.dp = function(dp, rm) {
+    var c, n, v2, x2 = this;
+    if (dp != null) {
+      intCheck(dp, 0, MAX);
+      if (rm == null) rm = ROUNDING_MODE;
+      else intCheck(rm, 0, 8);
+      return round(new BigNumber(x2), dp + x2.e + 1, rm);
+    }
+    if (!(c = x2.c)) return null;
+    n = ((v2 = c.length - 1) - bitFloor(this.e / LOG_BASE)) * LOG_BASE;
+    if (v2 = c[v2]) for (; v2 % 10 == 0; v2 /= 10, n--) ;
+    if (n < 0) n = 0;
+    return n;
+  };
+  P2.dividedBy = P2.div = function(y, b2) {
+    return div(this, new BigNumber(y, b2), DECIMAL_PLACES, ROUNDING_MODE);
+  };
+  P2.dividedToIntegerBy = P2.idiv = function(y, b2) {
+    return div(this, new BigNumber(y, b2), 0, 1);
+  };
+  P2.exponentiatedBy = P2.pow = function(n, m) {
+    var half, isModExp, i, k2, more, nIsBig, nIsNeg, nIsOdd, y, x2 = this;
+    n = new BigNumber(n);
+    if (n.c && !n.isInteger()) {
+      throw Error(bignumberError + "Exponent not an integer: " + valueOf(n));
+    }
+    if (m != null) m = new BigNumber(m);
+    nIsBig = n.e > 14;
+    if (!x2.c || !x2.c[0] || x2.c[0] == 1 && !x2.e && x2.c.length == 1 || !n.c || !n.c[0]) {
+      y = new BigNumber(Math.pow(+valueOf(x2), nIsBig ? n.s * (2 - isOdd(n)) : +valueOf(n)));
+      return m ? y.mod(m) : y;
+    }
+    nIsNeg = n.s < 0;
+    if (m) {
+      if (m.c ? !m.c[0] : !m.s) return new BigNumber(NaN);
+      isModExp = !nIsNeg && x2.isInteger() && m.isInteger();
+      if (isModExp) x2 = x2.mod(m);
+    } else if (n.e > 9 && (x2.e > 0 || x2.e < -1 || (x2.e == 0 ? x2.c[0] > 1 || nIsBig && x2.c[1] >= 24e7 : x2.c[0] < 8e13 || nIsBig && x2.c[0] <= 9999975e7))) {
+      k2 = x2.s < 0 && isOdd(n) ? -0 : 0;
+      if (x2.e > -1) k2 = 1 / k2;
+      return new BigNumber(nIsNeg ? 1 / k2 : k2);
+    } else if (POW_PRECISION) {
+      k2 = mathceil(POW_PRECISION / LOG_BASE + 2);
+    }
+    if (nIsBig) {
+      half = new BigNumber(0.5);
+      if (nIsNeg) n.s = 1;
+      nIsOdd = isOdd(n);
+    } else {
+      i = Math.abs(+valueOf(n));
+      nIsOdd = i % 2;
+    }
+    y = new BigNumber(ONE);
+    for (; ; ) {
+      if (nIsOdd) {
+        y = y.times(x2);
+        if (!y.c) break;
+        if (k2) {
+          if (y.c.length > k2) y.c.length = k2;
+        } else if (isModExp) {
+          y = y.mod(m);
+        }
+      }
+      if (i) {
+        i = mathfloor(i / 2);
+        if (i === 0) break;
+        nIsOdd = i % 2;
+      } else {
+        n = n.times(half);
+        round(n, n.e + 1, 1);
+        if (n.e > 14) {
+          nIsOdd = isOdd(n);
+        } else {
+          i = +valueOf(n);
+          if (i === 0) break;
+          nIsOdd = i % 2;
+        }
+      }
+      x2 = x2.times(x2);
+      if (k2) {
+        if (x2.c && x2.c.length > k2) x2.c.length = k2;
+      } else if (isModExp) {
+        x2 = x2.mod(m);
+      }
+    }
+    if (isModExp) return y;
+    if (nIsNeg) y = ONE.div(y);
+    return m ? y.mod(m) : k2 ? round(y, POW_PRECISION, ROUNDING_MODE, more) : y;
+  };
+  P2.integerValue = function(rm) {
+    var n = new BigNumber(this);
+    if (rm == null) rm = ROUNDING_MODE;
+    else intCheck(rm, 0, 8);
+    return round(n, n.e + 1, rm);
+  };
+  P2.isEqualTo = P2.eq = function(y, b2) {
+    return compare(this, new BigNumber(y, b2)) === 0;
+  };
+  P2.isFinite = function() {
+    return !!this.c;
+  };
+  P2.isGreaterThan = P2.gt = function(y, b2) {
+    return compare(this, new BigNumber(y, b2)) > 0;
+  };
+  P2.isGreaterThanOrEqualTo = P2.gte = function(y, b2) {
+    return (b2 = compare(this, new BigNumber(y, b2))) === 1 || b2 === 0;
+  };
+  P2.isInteger = function() {
+    return !!this.c && bitFloor(this.e / LOG_BASE) > this.c.length - 2;
+  };
+  P2.isLessThan = P2.lt = function(y, b2) {
+    return compare(this, new BigNumber(y, b2)) < 0;
+  };
+  P2.isLessThanOrEqualTo = P2.lte = function(y, b2) {
+    return (b2 = compare(this, new BigNumber(y, b2))) === -1 || b2 === 0;
+  };
+  P2.isNaN = function() {
+    return !this.s;
+  };
+  P2.isNegative = function() {
+    return this.s < 0;
+  };
+  P2.isPositive = function() {
+    return this.s > 0;
+  };
+  P2.isZero = function() {
+    return !!this.c && this.c[0] == 0;
+  };
+  P2.minus = function(y, b2) {
+    var i, j2, t, xLTy, x2 = this, a = x2.s;
+    y = new BigNumber(y, b2);
+    b2 = y.s;
+    if (!a || !b2) return new BigNumber(NaN);
+    if (a != b2) {
+      y.s = -b2;
+      return x2.plus(y);
+    }
+    var xe = x2.e / LOG_BASE, ye = y.e / LOG_BASE, xc = x2.c, yc = y.c;
+    if (!xe || !ye) {
+      if (!xc || !yc) return xc ? (y.s = -b2, y) : new BigNumber(yc ? x2 : NaN);
+      if (!xc[0] || !yc[0]) {
+        return yc[0] ? (y.s = -b2, y) : new BigNumber(xc[0] ? x2 : (
+          // IEEE 754 (2008) 6.3: n - n = -0 when rounding to -Infinity
+          ROUNDING_MODE == 3 ? -0 : 0
+        ));
+      }
+    }
+    xe = bitFloor(xe);
+    ye = bitFloor(ye);
+    xc = xc.slice();
+    if (a = xe - ye) {
+      if (xLTy = a < 0) {
+        a = -a;
+        t = xc;
+      } else {
+        ye = xe;
+        t = yc;
+      }
+      t.reverse();
+      for (b2 = a; b2--; t.push(0)) ;
+      t.reverse();
+    } else {
+      j2 = (xLTy = (a = xc.length) < (b2 = yc.length)) ? a : b2;
+      for (a = b2 = 0; b2 < j2; b2++) {
+        if (xc[b2] != yc[b2]) {
+          xLTy = xc[b2] < yc[b2];
+          break;
+        }
+      }
+    }
+    if (xLTy) {
+      t = xc;
+      xc = yc;
+      yc = t;
+      y.s = -y.s;
+    }
+    b2 = (j2 = yc.length) - (i = xc.length);
+    if (b2 > 0) for (; b2--; xc[i++] = 0) ;
+    b2 = BASE - 1;
+    for (; j2 > a; ) {
+      if (xc[--j2] < yc[j2]) {
+        for (i = j2; i && !xc[--i]; xc[i] = b2) ;
+        --xc[i];
+        xc[j2] += BASE;
+      }
+      xc[j2] -= yc[j2];
+    }
+    for (; xc[0] == 0; xc.splice(0, 1), --ye) ;
+    if (!xc[0]) {
+      y.s = ROUNDING_MODE == 3 ? -1 : 1;
+      y.c = [y.e = 0];
+      return y;
+    }
+    return normalise(y, xc, ye);
+  };
+  P2.modulo = P2.mod = function(y, b2) {
+    var q, s, x2 = this;
+    y = new BigNumber(y, b2);
+    if (!x2.c || !y.s || y.c && !y.c[0]) {
+      return new BigNumber(NaN);
+    } else if (!y.c || x2.c && !x2.c[0]) {
+      return new BigNumber(x2);
+    }
+    if (MODULO_MODE == 9) {
+      s = y.s;
+      y.s = 1;
+      q = div(x2, y, 0, 3);
+      y.s = s;
+      q.s *= s;
+    } else {
+      q = div(x2, y, 0, MODULO_MODE);
+    }
+    y = x2.minus(q.times(y));
+    if (!y.c[0] && MODULO_MODE == 1) y.s = x2.s;
+    return y;
+  };
+  P2.multipliedBy = P2.times = function(y, b2) {
+    var c, e3, i, j2, k2, m, xcL, xlo, xhi, ycL, ylo, yhi, zc, base, sqrtBase, x2 = this, xc = x2.c, yc = (y = new BigNumber(y, b2)).c;
+    if (!xc || !yc || !xc[0] || !yc[0]) {
+      if (!x2.s || !y.s || xc && !xc[0] && !yc || yc && !yc[0] && !xc) {
+        y.c = y.e = y.s = null;
+      } else {
+        y.s *= x2.s;
+        if (!xc || !yc) {
+          y.c = y.e = null;
+        } else {
+          y.c = [0];
+          y.e = 0;
+        }
+      }
+      return y;
+    }
+    e3 = bitFloor(x2.e / LOG_BASE) + bitFloor(y.e / LOG_BASE);
+    y.s *= x2.s;
+    xcL = xc.length;
+    ycL = yc.length;
+    if (xcL < ycL) {
+      zc = xc;
+      xc = yc;
+      yc = zc;
+      i = xcL;
+      xcL = ycL;
+      ycL = i;
+    }
+    for (i = xcL + ycL, zc = []; i--; zc.push(0)) ;
+    base = BASE;
+    sqrtBase = SQRT_BASE;
+    for (i = ycL; --i >= 0; ) {
+      c = 0;
+      ylo = yc[i] % sqrtBase;
+      yhi = yc[i] / sqrtBase | 0;
+      for (k2 = xcL, j2 = i + k2; j2 > i; ) {
+        xlo = xc[--k2] % sqrtBase;
+        xhi = xc[k2] / sqrtBase | 0;
+        m = yhi * xlo + xhi * ylo;
+        xlo = ylo * xlo + m % sqrtBase * sqrtBase + zc[j2] + c;
+        c = (xlo / base | 0) + (m / sqrtBase | 0) + yhi * xhi;
+        zc[j2--] = xlo % base;
+      }
+      zc[j2] = c;
+    }
+    if (c) {
+      ++e3;
+    } else {
+      zc.splice(0, 1);
+    }
+    return normalise(y, zc, e3);
+  };
+  P2.negated = function() {
+    var x2 = new BigNumber(this);
+    x2.s = -x2.s || null;
+    return x2;
+  };
+  P2.plus = function(y, b2) {
+    var t, x2 = this, a = x2.s;
+    y = new BigNumber(y, b2);
+    b2 = y.s;
+    if (!a || !b2) return new BigNumber(NaN);
+    if (a != b2) {
+      y.s = -b2;
+      return x2.minus(y);
+    }
+    var xe = x2.e / LOG_BASE, ye = y.e / LOG_BASE, xc = x2.c, yc = y.c;
+    if (!xe || !ye) {
+      if (!xc || !yc) return new BigNumber(a / 0);
+      if (!xc[0] || !yc[0]) return yc[0] ? y : new BigNumber(xc[0] ? x2 : a * 0);
+    }
+    xe = bitFloor(xe);
+    ye = bitFloor(ye);
+    xc = xc.slice();
+    if (a = xe - ye) {
+      if (a > 0) {
+        ye = xe;
+        t = yc;
+      } else {
+        a = -a;
+        t = xc;
+      }
+      t.reverse();
+      for (; a--; t.push(0)) ;
+      t.reverse();
+    }
+    a = xc.length;
+    b2 = yc.length;
+    if (a - b2 < 0) {
+      t = yc;
+      yc = xc;
+      xc = t;
+      b2 = a;
+    }
+    for (a = 0; b2; ) {
+      a = (xc[--b2] = xc[b2] + yc[b2] + a) / BASE | 0;
+      xc[b2] = BASE === xc[b2] ? 0 : xc[b2] % BASE;
+    }
+    if (a) {
+      xc = [a].concat(xc);
+      ++ye;
+    }
+    return normalise(y, xc, ye);
+  };
+  P2.precision = P2.sd = function(sd, rm) {
+    var c, n, v2, x2 = this;
+    if (sd != null && sd !== !!sd) {
+      intCheck(sd, 1, MAX);
+      if (rm == null) rm = ROUNDING_MODE;
+      else intCheck(rm, 0, 8);
+      return round(new BigNumber(x2), sd, rm);
+    }
+    if (!(c = x2.c)) return null;
+    v2 = c.length - 1;
+    n = v2 * LOG_BASE + 1;
+    if (v2 = c[v2]) {
+      for (; v2 % 10 == 0; v2 /= 10, n--) ;
+      for (v2 = c[0]; v2 >= 10; v2 /= 10, n++) ;
+    }
+    if (sd && x2.e + 1 > n) n = x2.e + 1;
+    return n;
+  };
+  P2.shiftedBy = function(k2) {
+    intCheck(k2, -9007199254740991, MAX_SAFE_INTEGER);
+    return this.times("1e" + k2);
+  };
+  P2.squareRoot = P2.sqrt = function() {
+    var m, n, r, rep, t, x2 = this, c = x2.c, s = x2.s, e3 = x2.e, dp = DECIMAL_PLACES + 4, half = new BigNumber("0.5");
+    if (s !== 1 || !c || !c[0]) {
+      return new BigNumber(!s || s < 0 && (!c || c[0]) ? NaN : c ? x2 : 1 / 0);
+    }
+    s = Math.sqrt(+valueOf(x2));
+    if (s == 0 || s == 1 / 0) {
+      n = coeffToString(c);
+      if ((n.length + e3) % 2 == 0) n += "0";
+      s = Math.sqrt(+n);
+      e3 = bitFloor((e3 + 1) / 2) - (e3 < 0 || e3 % 2);
+      if (s == 1 / 0) {
+        n = "5e" + e3;
+      } else {
+        n = s.toExponential();
+        n = n.slice(0, n.indexOf("e") + 1) + e3;
+      }
+      r = new BigNumber(n);
+    } else {
+      r = new BigNumber(s + "");
+    }
+    if (r.c[0]) {
+      e3 = r.e;
+      s = e3 + dp;
+      if (s < 3) s = 0;
+      for (; ; ) {
+        t = r;
+        r = half.times(t.plus(div(x2, t, dp, 1)));
+        if (coeffToString(t.c).slice(0, s) === (n = coeffToString(r.c)).slice(0, s)) {
+          if (r.e < e3) --s;
+          n = n.slice(s - 3, s + 1);
+          if (n == "9999" || !rep && n == "4999") {
+            if (!rep) {
+              round(t, t.e + DECIMAL_PLACES + 2, 0);
+              if (t.times(t).eq(x2)) {
+                r = t;
+                break;
+              }
+            }
+            dp += 4;
+            s += 4;
+            rep = 1;
+          } else {
+            if (!+n || !+n.slice(1) && n.charAt(0) == "5") {
+              round(r, r.e + DECIMAL_PLACES + 2, 1);
+              m = !r.times(r).eq(x2);
+            }
+            break;
+          }
+        }
+      }
+    }
+    return round(r, r.e + DECIMAL_PLACES + 1, ROUNDING_MODE, m);
+  };
+  P2.toExponential = function(dp, rm) {
+    if (dp != null) {
+      intCheck(dp, 0, MAX);
+      dp++;
+    }
+    return format(this, dp, rm, 1);
+  };
+  P2.toFixed = function(dp, rm) {
+    if (dp != null) {
+      intCheck(dp, 0, MAX);
+      dp = dp + this.e + 1;
+    }
+    return format(this, dp, rm);
+  };
+  P2.toFormat = function(dp, rm, format2) {
+    var str, x2 = this;
+    if (format2 == null) {
+      if (dp != null && rm && typeof rm == "object") {
+        format2 = rm;
+        rm = null;
+      } else if (dp && typeof dp == "object") {
+        format2 = dp;
+        dp = rm = null;
+      } else {
+        format2 = FORMAT;
+      }
+    } else if (typeof format2 != "object") {
+      throw Error(bignumberError + "Argument not an object: " + format2);
+    }
+    str = x2.toFixed(dp, rm);
+    if (x2.c) {
+      var i, arr = str.split("."), g1 = +format2.groupSize, g2 = +format2.secondaryGroupSize, groupSeparator = format2.groupSeparator || "", intPart = arr[0], fractionPart = arr[1], isNeg = x2.s < 0, intDigits = isNeg ? intPart.slice(1) : intPart, len = intDigits.length;
+      if (g2) {
+        i = g1;
+        g1 = g2;
+        g2 = i;
+        len -= i;
+      }
+      if (g1 > 0 && len > 0) {
+        i = len % g1 || g1;
+        intPart = intDigits.substr(0, i);
+        for (; i < len; i += g1) intPart += groupSeparator + intDigits.substr(i, g1);
+        if (g2 > 0) intPart += groupSeparator + intDigits.slice(i);
+        if (isNeg) intPart = "-" + intPart;
+      }
+      str = fractionPart ? intPart + (format2.decimalSeparator || "") + ((g2 = +format2.fractionGroupSize) ? fractionPart.replace(
+        new RegExp("\\d{" + g2 + "}\\B", "g"),
+        "$&" + (format2.fractionGroupSeparator || "")
+      ) : fractionPart) : intPart;
+    }
+    return (format2.prefix || "") + str + (format2.suffix || "");
+  };
+  P2.toFraction = function(md) {
+    var d2, d0, d1, d22, e3, exp, n, n0, n1, q, r, s, x2 = this, xc = x2.c;
+    if (md != null) {
+      n = new BigNumber(md);
+      if (!n.isInteger() && (n.c || n.s !== 1) || n.lt(ONE)) {
+        throw Error(bignumberError + "Argument " + (n.isInteger() ? "out of range: " : "not an integer: ") + valueOf(n));
+      }
+    }
+    if (!xc) return new BigNumber(x2);
+    d2 = new BigNumber(ONE);
+    n1 = d0 = new BigNumber(ONE);
+    d1 = n0 = new BigNumber(ONE);
+    s = coeffToString(xc);
+    e3 = d2.e = s.length - x2.e - 1;
+    d2.c[0] = POWS_TEN[(exp = e3 % LOG_BASE) < 0 ? LOG_BASE + exp : exp];
+    md = !md || n.comparedTo(d2) > 0 ? e3 > 0 ? d2 : n1 : n;
+    exp = MAX_EXP;
+    MAX_EXP = 1 / 0;
+    n = new BigNumber(s);
+    n0.c[0] = 0;
+    for (; ; ) {
+      q = div(n, d2, 0, 1);
+      d22 = d0.plus(q.times(d1));
+      if (d22.comparedTo(md) == 1) break;
+      d0 = d1;
+      d1 = d22;
+      n1 = n0.plus(q.times(d22 = n1));
+      n0 = d22;
+      d2 = n.minus(q.times(d22 = d2));
+      n = d22;
+    }
+    d22 = div(md.minus(d0), d1, 0, 1);
+    n0 = n0.plus(d22.times(n1));
+    d0 = d0.plus(d22.times(d1));
+    n0.s = n1.s = x2.s;
+    e3 = e3 * 2;
+    r = div(n1, d1, e3, ROUNDING_MODE).minus(x2).abs().comparedTo(
+      div(n0, d0, e3, ROUNDING_MODE).minus(x2).abs()
+    ) < 1 ? [n1, d1] : [n0, d0];
+    MAX_EXP = exp;
+    return r;
+  };
+  P2.toNumber = function() {
+    return +valueOf(this);
+  };
+  P2.toPrecision = function(sd, rm) {
+    if (sd != null) intCheck(sd, 1, MAX);
+    return format(this, sd, rm, 2);
+  };
+  P2.toString = function(b2) {
+    var str, n = this, s = n.s, e3 = n.e;
+    if (e3 === null) {
+      if (s) {
+        str = "Infinity";
+        if (s < 0) str = "-" + str;
+      } else {
+        str = "NaN";
+      }
+    } else {
+      if (b2 == null) {
+        str = e3 <= TO_EXP_NEG || e3 >= TO_EXP_POS ? toExponential(coeffToString(n.c), e3) : toFixedPoint(coeffToString(n.c), e3, "0");
+      } else if (b2 === 10 && alphabetHasNormalDecimalDigits) {
+        n = round(new BigNumber(n), DECIMAL_PLACES + e3 + 1, ROUNDING_MODE);
+        str = toFixedPoint(coeffToString(n.c), n.e, "0");
+      } else {
+        intCheck(b2, 2, ALPHABET.length, "Base");
+        str = convertBase(toFixedPoint(coeffToString(n.c), e3, "0"), 10, b2, s, true);
+      }
+      if (s < 0 && n.c[0]) str = "-" + str;
+    }
+    return str;
+  };
+  P2.valueOf = P2.toJSON = function() {
+    return valueOf(this);
+  };
+  P2._isBigNumber = true;
+  P2[Symbol.toStringTag] = "BigNumber";
+  P2[Symbol.for("nodejs.util.inspect.custom")] = P2.valueOf;
+  if (configObject != null) BigNumber.set(configObject);
+  return BigNumber;
+}
+function bitFloor(n) {
+  var i = n | 0;
+  return n > 0 || n === i ? i : i - 1;
+}
+function coeffToString(a) {
+  var s, z2, i = 1, j2 = a.length, r = a[0] + "";
+  for (; i < j2; ) {
+    s = a[i++] + "";
+    z2 = LOG_BASE - s.length;
+    for (; z2--; s = "0" + s) ;
+    r += s;
+  }
+  for (j2 = r.length; r.charCodeAt(--j2) === 48; ) ;
+  return r.slice(0, j2 + 1 || 1);
+}
+function compare(x2, y) {
+  var a, b2, xc = x2.c, yc = y.c, i = x2.s, j2 = y.s, k2 = x2.e, l = y.e;
+  if (!i || !j2) return null;
+  a = xc && !xc[0];
+  b2 = yc && !yc[0];
+  if (a || b2) return a ? b2 ? 0 : -j2 : i;
+  if (i != j2) return i;
+  a = i < 0;
+  b2 = k2 == l;
+  if (!xc || !yc) return b2 ? 0 : !xc ^ a ? 1 : -1;
+  if (!b2) return k2 > l ^ a ? 1 : -1;
+  j2 = (k2 = xc.length) < (l = yc.length) ? k2 : l;
+  for (i = 0; i < j2; i++) if (xc[i] != yc[i]) return xc[i] > yc[i] ^ a ? 1 : -1;
+  return k2 == l ? 0 : k2 > l ^ a ? 1 : -1;
+}
+function intCheck(n, min, max, name) {
+  if (n < min || n > max || n !== mathfloor(n)) {
+    throw Error(bignumberError + (name || "Argument") + (typeof n == "number" ? n < min || n > max ? " out of range: " : " not an integer: " : " not a primitive number: ") + String(n));
+  }
+}
+function isOdd(n) {
+  var k2 = n.c.length - 1;
+  return bitFloor(n.e / LOG_BASE) == k2 && n.c[k2] % 2 != 0;
+}
+function toExponential(str, e3) {
+  return (str.length > 1 ? str.charAt(0) + "." + str.slice(1) : str) + (e3 < 0 ? "e" : "e+") + e3;
+}
+function toFixedPoint(str, e3, z2) {
+  var len, zs;
+  if (e3 < 0) {
+    for (zs = z2 + "."; ++e3; zs += z2) ;
+    str = zs + str;
+  } else {
+    len = str.length;
+    if (++e3 > len) {
+      for (zs = z2, e3 -= len; --e3; zs += z2) ;
+      str += zs;
+    } else if (e3 < len) {
+      str = str.slice(0, e3) + "." + str.slice(e3);
+    }
+  }
+  return str;
+}
+clone();
+const decodeCallRequest = (contentMap) => {
+  const decoded = Cbor.decode(contentMap);
+  const expiry = new Expiry(0);
+  expiry._value = BigInt(decoded.ingress_expiry.toString(10));
+  return Object.assign(Object.assign({}, decoded), { canister_id: Principal.from(decoded.canister_id), ingress_expiry: expiry });
+};
+var __classPrivateFieldGet$1 = function(receiver, state, kind, f) {
+  if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+  return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+};
+var __classPrivateFieldSet$1 = function(receiver, state, value, kind, f) {
+  if (kind === "m") throw new TypeError("Private method is not writable");
+  if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+  return kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value), value;
+};
+var _Queue_ongoing;
+class Queue {
+  constructor() {
+    _Queue_ongoing.set(this, Promise.resolve());
+  }
+  async schedule(job) {
+    return new Promise((resolve, reject) => {
+      __classPrivateFieldSet$1(this, _Queue_ongoing, __classPrivateFieldGet$1(this, _Queue_ongoing, "f").finally(async () => {
+        try {
+          resolve(await job());
+        } catch (error) {
+          reject(error);
+        }
+      }), "f");
+    });
+  }
+}
+_Queue_ongoing = /* @__PURE__ */ new WeakMap();
+var __classPrivateFieldGet = function(receiver, state, kind, f) {
+  if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+  return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+};
+var __classPrivateFieldSet = function(receiver, state, value, kind, f) {
+  if (kind === "m") throw new TypeError("Private method is not writable");
+  if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+  return kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value), value;
+};
+var _SignerAgent_instances, _a, _SignerAgent_isInternalConstructing, _SignerAgent_options, _SignerAgent_certificates, _SignerAgent_queue, _SignerAgent_executeTimeout, _SignerAgent_scheduled, _SignerAgent_autoBatch, _SignerAgent_validation, _SignerAgent_executeQueue, _SignerAgent_executeBatch;
+const ROOT_KEY = new Uint8Array(IC_ROOT_KEY.match(/[\da-f]{2}/gi).map((h2) => parseInt(h2, 16))).buffer;
+const MAX_AGE_IN_MINUTES = 5;
+const INVALID_RESPONSE_MESSAGE = "Received invalid response from signer";
+class SignerAgentError extends Error {
+  constructor(message) {
+    super(message);
+    Object.setPrototypeOf(this, SignerAgentError.prototype);
+  }
+}
+class SignerAgent {
+  constructor(options) {
+    _SignerAgent_instances.add(this);
+    _SignerAgent_options.set(this, void 0);
+    _SignerAgent_certificates.set(this, /* @__PURE__ */ new Map());
+    _SignerAgent_queue.set(this, new Queue());
+    _SignerAgent_executeTimeout.set(this, void 0);
+    _SignerAgent_scheduled.set(this, [[]]);
+    _SignerAgent_autoBatch.set(this, true);
+    _SignerAgent_validation.set(this, void 0);
+    const throwError = !__classPrivateFieldGet(_a, _a, "f", _SignerAgent_isInternalConstructing);
+    __classPrivateFieldSet(_a, _a, false, "f", _SignerAgent_isInternalConstructing);
+    if (throwError) {
+      throw new SignerAgentError("SignerAgent is not constructable");
+    }
+    __classPrivateFieldSet(this, _SignerAgent_options, options, "f");
+  }
+  get rootKey() {
+    var _b;
+    return (_b = __classPrivateFieldGet(this, _SignerAgent_options, "f").agent.rootKey) !== null && _b !== void 0 ? _b : ROOT_KEY;
+  }
+  get signer() {
+    return __classPrivateFieldGet(this, _SignerAgent_options, "f").signer;
+  }
+  static async create(options) {
+    var _b, _c, _d;
+    __classPrivateFieldSet(_a, _a, true, "f", _SignerAgent_isInternalConstructing);
+    return new _a(Object.assign(Object.assign({}, options), { agent: (_b = options.agent) !== null && _b !== void 0 ? _b : await HttpAgent.create(), scheduleDelay: (_c = options.scheduleDelay) !== null && _c !== void 0 ? _c : 20, validation: (_d = options.validation) !== null && _d !== void 0 ? _d : null }));
+  }
+  static createSync(options) {
+    var _b, _c, _d;
+    __classPrivateFieldSet(_a, _a, true, "f", _SignerAgent_isInternalConstructing);
+    return new _a(Object.assign(Object.assign({}, options), { agent: (_b = options.agent) !== null && _b !== void 0 ? _b : HttpAgent.createSync(), scheduleDelay: (_c = options.scheduleDelay) !== null && _c !== void 0 ? _c : 20, validation: (_d = options.validation) !== null && _d !== void 0 ? _d : null }));
+  }
+  async execute() {
+    const scheduled = [...__classPrivateFieldGet(this, _SignerAgent_scheduled, "f")];
+    const validation = __classPrivateFieldGet(this, _SignerAgent_validation, "f");
+    this.clear();
+    const pending = scheduled.flat().length;
+    if (pending === 0) {
+      __classPrivateFieldSet(this, _SignerAgent_validation, void 0, "f");
+      return;
+    }
+    const needsBatch = pending > 1;
+    if (!needsBatch) {
+      await __classPrivateFieldGet(this, _SignerAgent_instances, "m", _SignerAgent_executeQueue).call(this, scheduled);
+      return;
+    }
+    const supportedStandards = await __classPrivateFieldGet(this, _SignerAgent_queue, "f").schedule(() => this.signer.supportedStandards());
+    const supportsBatch = supportedStandards.some((supportedStandard) => supportedStandard.name === "ICRC-112");
+    if (supportsBatch) {
+      await __classPrivateFieldGet(this, _SignerAgent_instances, "m", _SignerAgent_executeBatch).call(this, scheduled, validation);
+    } else {
+      await __classPrivateFieldGet(this, _SignerAgent_instances, "m", _SignerAgent_executeQueue).call(this, scheduled);
+    }
+  }
+  async call(canisterId, options) {
+    canisterId = Principal.from(canisterId);
+    await __classPrivateFieldGet(this, _SignerAgent_options, "f").signer.openChannel();
+    const response = await new Promise((resolve, reject) => {
+      clearTimeout(__classPrivateFieldGet(this, _SignerAgent_executeTimeout, "f"));
+      __classPrivateFieldGet(this, _SignerAgent_scheduled, "f").slice(-1)[0].push({
+        options: {
+          canisterId,
+          method: options.methodName,
+          arg: options.arg
+        },
+        resolve,
+        reject
+      });
+      if (__classPrivateFieldGet(this, _SignerAgent_autoBatch, "f")) {
+        __classPrivateFieldSet(this, _SignerAgent_executeTimeout, setTimeout(() => this.execute(), __classPrivateFieldGet(this, _SignerAgent_options, "f").scheduleDelay), "f");
+      }
+    });
+    const requestBody = decodeCallRequest(response.contentMap);
+    const contentMapMatchesRequest = SubmitRequestType.Call === requestBody.request_type && canisterId.compareTo(requestBody.canister_id) === "eq" && options.methodName === requestBody.method_name && compare$1(options.arg, requestBody.arg) === 0 && __classPrivateFieldGet(this, _SignerAgent_options, "f").account.compareTo(Principal.from(requestBody.sender)) === "eq";
+    if (!contentMapMatchesRequest) {
+      throw new SignerAgentError(INVALID_RESPONSE_MESSAGE);
+    }
+    const requestId = requestIdOf(requestBody);
+    const certificate = await Certificate.create({
+      certificate: response.certificate,
+      rootKey: this.rootKey,
+      canisterId,
+      maxAgeInMinutes: MAX_AGE_IN_MINUTES
+    }).catch(() => {
+      throw new SignerAgentError(INVALID_RESPONSE_MESSAGE);
+    });
+    const certificateIsResponseToContentMap = certificate.lookup(["request_status", requestId, "status"]).status === LookupStatus.Found;
+    if (!certificateIsResponseToContentMap) {
+      throw new SignerAgentError(INVALID_RESPONSE_MESSAGE);
+    }
+    const requestKey = toBase64(requestId);
+    if (__classPrivateFieldGet(this, _SignerAgent_certificates, "f").has(requestKey)) {
+      throw new SignerAgentError(INVALID_RESPONSE_MESSAGE);
+    }
+    __classPrivateFieldGet(this, _SignerAgent_certificates, "f").set(requestKey, response.certificate);
+    const now = Date.now();
+    const lookupTime = lookupResultToBuffer(certificate.lookup(["time"]));
+    if (!lookupTime) {
+      throw new SignerAgentError(INVALID_RESPONSE_MESSAGE);
+    }
+    const certificateTime = Number(lebDecode(new PipeArrayBuffer(lookupTime))) / 1e6;
+    const expiry = certificateTime - now + MAX_AGE_IN_MINUTES * 60 * 1e3;
+    setTimeout(() => __classPrivateFieldGet(this, _SignerAgent_certificates, "f").delete(requestKey), expiry);
+    return {
+      requestId,
+      response: {
+        ok: true,
+        status: 202,
+        statusText: "Call has been sent over ICRC-25 JSON-RPC",
+        body: null,
+        headers: []
+      }
+    };
+  }
+  async fetchRootKey() {
+    return __classPrivateFieldGet(this, _SignerAgent_options, "f").agent.fetchRootKey();
+  }
+  async getPrincipal() {
+    return __classPrivateFieldGet(this, _SignerAgent_options, "f").account;
+  }
+  async query(canisterId, options) {
+    canisterId = Principal.from(canisterId);
+    const submitResponse = await this.call(canisterId, options);
+    const readStateResponse = await this.readState(canisterId, {
+      paths: [
+        [new TextEncoder().encode("request_status"), submitResponse.requestId]
+      ]
+    });
+    const certificate = await Certificate.create({
+      certificate: readStateResponse.certificate,
+      rootKey: this.rootKey,
+      canisterId
+    });
+    const status = certificate.lookup([
+      "request_status",
+      submitResponse.requestId,
+      "status"
+    ]);
+    const reply = certificate.lookup([
+      "request_status",
+      submitResponse.requestId,
+      "reply"
+    ]);
+    if (status.status !== LookupStatus.Found || new TextDecoder().decode(status.value) !== "replied" || reply.status !== LookupStatus.Found) {
+      throw new SignerAgentError("Certificate is missing reply");
+    }
+    return {
+      requestId: submitResponse.requestId,
+      status: "replied",
+      reply: {
+        arg: reply.value
+      },
+      httpDetails: {
+        ok: true,
+        status: 202,
+        statusText: "Certificate with reply has been received over ICRC-25 JSON-RPC",
+        headers: []
+      }
+    };
+  }
+  async createReadStateRequest(_options) {
+    return {
+      body: {
+        content: {}
+      }
+    };
+  }
+  async readState(_canisterId, options, _identity, _request) {
+    if (options.paths.length !== 1 || options.paths[0].length !== 2 || new TextDecoder().decode(options.paths[0][0]) !== "request_status") {
+      throw new SignerAgentError("Given paths are not supported");
+    }
+    const requestId = options.paths[0][1];
+    const key = toBase64(requestId);
+    const certificate = __classPrivateFieldGet(this, _SignerAgent_certificates, "f").get(key);
+    if (!certificate) {
+      throw new SignerAgentError("Certificate could not be found");
+    }
+    return { certificate };
+  }
+  async status() {
+    return __classPrivateFieldGet(this, _SignerAgent_options, "f").agent.status();
+  }
+  replaceAccount(account) {
+    __classPrivateFieldGet(this, _SignerAgent_options, "f").account = account;
+  }
+  replaceValidation(validation) {
+    __classPrivateFieldSet(this, _SignerAgent_validation, validation, "f");
+  }
+  /**
+   * Enable manual triggering of canister calls execution
+   */
+  batch() {
+    __classPrivateFieldSet(this, _SignerAgent_autoBatch, false, "f");
+    if (__classPrivateFieldGet(this, _SignerAgent_scheduled, "f").slice(-1)[0].length > 0) {
+      __classPrivateFieldGet(this, _SignerAgent_scheduled, "f").push([]);
+    }
+  }
+  /**
+   * Clear scheduled canister calls and switch back to automatic canister calls execution
+   */
+  clear() {
+    __classPrivateFieldSet(this, _SignerAgent_scheduled, [[]], "f");
+    __classPrivateFieldSet(this, _SignerAgent_autoBatch, true, "f");
+  }
+}
+_a = SignerAgent, _SignerAgent_options = /* @__PURE__ */ new WeakMap(), _SignerAgent_certificates = /* @__PURE__ */ new WeakMap(), _SignerAgent_queue = /* @__PURE__ */ new WeakMap(), _SignerAgent_executeTimeout = /* @__PURE__ */ new WeakMap(), _SignerAgent_scheduled = /* @__PURE__ */ new WeakMap(), _SignerAgent_autoBatch = /* @__PURE__ */ new WeakMap(), _SignerAgent_validation = /* @__PURE__ */ new WeakMap(), _SignerAgent_instances = /* @__PURE__ */ new WeakSet(), _SignerAgent_executeQueue = async function _SignerAgent_executeQueue2(scheduled) {
+  await Promise.all(scheduled.flat().map(({ options, resolve, reject }) => __classPrivateFieldGet(this, _SignerAgent_queue, "f").schedule(async () => {
+    try {
+      const response = await this.signer.callCanister(Object.assign({ sender: __classPrivateFieldGet(this, _SignerAgent_options, "f").account }, options));
+      resolve(response);
+    } catch (error) {
+      reject(error);
+    }
+  })));
+}, _SignerAgent_executeBatch = async function _SignerAgent_executeBatch2(scheduled, validation) {
+  await __classPrivateFieldGet(this, _SignerAgent_queue, "f").schedule(async () => {
+    try {
+      const responses = await this.signer.batchCallCanister({
+        sender: __classPrivateFieldGet(this, _SignerAgent_options, "f").account,
+        requests: scheduled.map((entries) => entries.map(({ options }) => options)),
+        validation: validation !== null && validation !== void 0 ? validation : void 0
+      });
+      scheduled.forEach((entries, sequenceIndex) => entries.forEach(({ resolve, reject }, requestIndex) => {
+        const response = responses[sequenceIndex][requestIndex];
+        if ("result" in response) {
+          resolve(response.result);
+          return;
+        }
+        if ("error" in response) {
+          reject(new SignerAgentError(`${response.error.code}: ${response.error.message}
+${JSON.stringify(response.error.data)}`));
+          return;
+        }
+        reject(new SignerAgentError(INVALID_RESPONSE_MESSAGE));
+      }));
+    } catch (error) {
+      scheduled.flat().forEach(({ reject }) => reject(error));
+    }
+  });
+};
+_SignerAgent_isInternalConstructing = { value: false };
+class LocalDelegationStorage {
+  async get(key) {
+    const storedData = localStorage.getItem(key);
+    if (!storedData) return null;
+    return JSON.parse(storedData);
+  }
+  async set(key, value) {
+    localStorage.setItem(key, JSON.stringify(value));
+  }
+  async remove(key) {
+    localStorage.removeItem(key);
+  }
+}
+const _NFIDAdapter = class _NFIDAdapter {
+  constructor() {
+    this.identity = null;
+    this.state = Adapter.Status.INIT;
+    this.actorCache = /* @__PURE__ */ new Map();
+    this.sessionKey = null;
+    this.name = "NFID";
+    this.logo = _NFIDAdapter.logo;
+    this.url = "https://nfid.one/rpc";
+    this.info = { id: "nfid", icon: _NFIDAdapter.logo, name: "NFID", adapter: _NFIDAdapter };
+    this.unwrapResponse = (response) => {
+      if ("error" in response) {
+        throw new SignerError(response.error);
+      }
+      if ("result" in response) {
+        return response.result;
+      }
+      throw new SignerError({
+        code: 500,
+        message: "Invalid response"
+      });
+    };
+    this.url = "https://nfid.one/rpc";
+    this.name = "NFID";
+    this.logo = _NFIDAdapter.logo;
+    this.delegationStorage = new LocalDelegationStorage();
+    this.transport = new PostMessageTransport({
+      url: this.url,
+      ..._NFIDAdapter.TRANSPORT_CONFIG
+    });
+    this.signer = new Signer({
+      transport: this.transport
+    });
+    this.signerAgent = SignerAgent.createSync({
+      signer: this.signer,
+      account: Principal.anonymous(),
+      agent: HttpAgent.createSync({ host: this.url })
+    });
+    this.agent = HttpAgent.createSync({ host: this.url });
+    this.setState(Adapter.Status.READY);
+  }
+  setState(newState) {
+    this.state = newState;
+  }
+  async isAvailable() {
+    return true;
+  }
+  async isConnected() {
+    return this.identity !== null && this.agent !== null;
+  }
+  async getPrincipal() {
+    if (!this.identity) {
+      throw new Error("Not connected");
+    }
+    return this.identity.getPrincipal();
+  }
+  async getAccountId() {
+    if (!this.identity) {
+      throw new Error("Not connected");
+    }
+    return D.fromPrincipal({
+      principal: this.identity.getPrincipal(),
+      subAccount: void 0
+      // This will use the default subaccount
+    }).toHex();
+  }
+  async connect(config) {
+    this.setState(Adapter.Status.CONNECTING);
+    this.config = config;
+    try {
+      await this.signer.openChannel();
+      const stored = await this.delegationStorage.get(_NFIDAdapter.STORAGE_KEY);
+      if (stored) {
+        try {
+          this.sessionKey = typeof stored.sessionKey === "string" ? Ed25519KeyIdentity.fromJSON(stored.sessionKey) : stored.sessionKey;
+          const delegationIdentity2 = DelegationIdentity.fromDelegation(
+            this.sessionKey,
+            this.unwrapDelegation(stored.delegationChain)
+          );
+          const isValid = delegationIdentity2.getDelegation().delegations.every(
+            (d2) => d2.delegation.expiration > BigInt(Date.now()) * BigInt(1e6)
+          );
+          if (isValid) {
+            this.identity = delegationIdentity2;
+            const principal2 = this.identity.getPrincipal();
+            this.signerAgent = SignerAgent.createSync({
+              signer: this.signer,
+              account: principal2
+            });
+            if (config.fetchRootKeys) {
+              await this.agent.fetchRootKey();
+            }
+            this.setState(Adapter.Status.CONNECTED);
+            return {
+              owner: principal2,
+              subaccount: D.fromPrincipal({
+                principal: principal2,
+                subAccount: void 0
+              }).toUint8Array(),
+              hasDelegation: true
+            };
+          }
+        } catch (error) {
+          console.warn("Failed to restore session, creating new one:", error);
+          await this.delegationStorage.remove(_NFIDAdapter.STORAGE_KEY);
+        }
+      }
+      if (!this.sessionKey) {
+        this.sessionKey = Ed25519KeyIdentity.generate();
+      }
+      const delegationChain = await this.signer.delegation({
+        publicKey: this.sessionKey.getPublicKey().toDer(),
+        targets: config.delegationTargets,
+        maxTimeToLive: this.config.delegationTimeout === void 0 ? BigInt(24 * 60 * 60 * 1e3 * 1e3 * 1e3 * 1e3) : BigInt(Date.now()) + this.config.delegationTimeout
+      });
+      const delegationIdentity = DelegationIdentity.fromDelegation(
+        this.sessionKey,
+        delegationChain
+      );
+      this.signerAgent.replaceAccount(delegationIdentity.getPrincipal());
+      if (config.fetchRootKeys) {
+        await this.agent.fetchRootKey();
+      }
+      const principal = delegationIdentity.getPrincipal();
+      if (principal.isAnonymous()) {
+        this.setState(Adapter.Status.READY);
+        throw new Error(
+          "Failed to authenticate with NFID - got anonymous principal"
+        );
+      }
+      this.signerAgent = SignerAgent.createSync({
+        signer: this.signer,
+        account: principal
+      });
+      this.identity = delegationIdentity;
+      try {
+        if (this.identity && this.agent && this.signerAgent && this.signer) {
+          await this.delegationStorage.set(_NFIDAdapter.STORAGE_KEY, {
+            sessionKey: this.sessionKey.toJSON(),
+            delegationChain: this.wrapDelegation(delegationChain)
+          });
+          this.setState(Adapter.Status.CONNECTED);
+          return {
+            owner: principal,
+            subaccount: D.fromPrincipal({
+              principal,
+              subAccount: void 0
+              // This will use the default subaccount
+            }).toUint8Array(),
+            hasDelegation: true
+          };
+        }
+      } catch (error) {
+        this.disconnect();
+        this.setState(Adapter.Status.READY);
+        console.error("[NFID] New session verification failed:", error);
+      }
+      this.identity = null;
+      this.agent = null;
+      this.signerAgent = null;
+      await this.delegationStorage.remove(_NFIDAdapter.STORAGE_KEY);
+      this.disconnect();
+      throw new Error("Failed to establish session");
+    } catch (error) {
+      console.error("Error connecting to NFID:", error);
+      this.setState(Adapter.Status.READY);
+      throw error;
+    }
+  }
+  // Helper method to convert DelegationChain to JsonnableDelegationChain
+  wrapDelegation(chain) {
+    return {
+      delegations: chain.delegations.map((d2) => {
+        var _a2;
+        return {
+          signature: JSON.stringify(Array.from(new Uint8Array(d2.signature))),
+          delegation: {
+            pubkey: JSON.stringify(Array.from(new Uint8Array(d2.delegation.pubkey))),
+            expiration: d2.delegation.expiration.toString(),
+            targets: (_a2 = d2.delegation.targets) == null ? void 0 : _a2.map((t) => t.toText())
+          }
+        };
+      }),
+      publicKey: JSON.stringify(Array.from(new Uint8Array(this.sessionKey.getPublicKey().toDer())))
+    };
+  }
+  // Helper method to convert JsonnableDelegationChain to DelegationChain
+  unwrapDelegation(jsonChain) {
+    return {
+      delegations: jsonChain.delegations.map((d2) => {
+        var _a2;
+        return {
+          signature: new Uint8Array(typeof d2.signature === "string" ? JSON.parse(d2.signature) : d2.signature),
+          delegation: {
+            pubkey: new Uint8Array(typeof d2.delegation.pubkey === "string" ? JSON.parse(d2.delegation.pubkey) : d2.delegation.pubkey),
+            expiration: BigInt(d2.delegation.expiration),
+            targets: (_a2 = d2.delegation.targets) == null ? void 0 : _a2.map((t) => Principal.fromText(t))
+          }
+        };
+      }),
+      publicKey: new Uint8Array(typeof jsonChain.publicKey === "string" ? JSON.parse(jsonChain.publicKey) : jsonChain.publicKey)
+    };
+  }
+  createActor(canisterId, idlFactory, options = {
+    requiresSigning: true,
+    anon: false
+  }) {
+    const { requiresSigning = true, anon = false } = options;
+    try {
+      const inTargets = this.identity.getDelegation().delegations.some(
+        (d2) => {
+          var _a2;
+          return (_a2 = d2.delegation.targets) == null ? void 0 : _a2.some((p) => p.toText() === canisterId);
+        }
+      );
+      const isUndelegated = inTargets && !requiresSigning || !inTargets && requiresSigning || !inTargets && !requiresSigning;
+      const cacheKey = `${canisterId}-${inTargets}-${requiresSigning}-${isUndelegated}-${this.identity.getPrincipal().toText()}`;
+      const cachedActor = this.actorCache.get(cacheKey);
+      if (cachedActor) {
+        return cachedActor;
+      }
+      if (inTargets && !requiresSigning || !inTargets && !requiresSigning) {
+        const actor2 = this.undelegatedActor(canisterId, idlFactory);
+        this.actorCache.set(cacheKey, actor2);
+        return actor2;
+      }
+      const actor = Actor.createActor(idlFactory, {
+        agent: this.signerAgent,
+        canisterId
+      });
+      if (requiresSigning) {
+        if (!this.signerAgent) {
+          throw new Error("No signer agent available. Please connect first.");
+        }
+        const finalActor = Actor.createActor(idlFactory, {
+          agent: this.signerAgent,
+          canisterId
+        });
+        this.actorCache.set(cacheKey, finalActor);
+        return finalActor;
+      }
+      return actor;
+    } catch (error) {
+      console.error("Error creating actor:", error);
+      throw new Error(
+        `Failed to create actor: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+  undelegatedActor(canisterId, idlFactory) {
+    var _a2;
+    const agent = HttpAgent.createSync({
+      identity: this.identity,
+      host: this.config.hostUrl,
+      verifyQuerySignatures: ((_a2 = this.config) == null ? void 0 : _a2.dfxNetwork) != "local"
+    });
+    const actor = Actor.createActor(idlFactory, {
+      agent,
+      canisterId
+    });
+    return actor;
+  }
+  async disconnect() {
+    this.setState(Adapter.Status.DISCONNECTING);
+    this.identity = null;
+    this.agent = null;
+    this.signerAgent = null;
+    this.sessionKey = null;
+    this.actorCache.clear();
+    try {
+      localStorage.removeItem(_NFIDAdapter.STORAGE_KEY);
+      if (this.delegationStorage) {
+        await this.delegationStorage.remove(_NFIDAdapter.STORAGE_KEY);
+      }
+    } catch (error) {
+      console.error("[NFID] Error during disconnect cleanup:", error);
+    } finally {
+      this.delegationStorage = null;
+      this.transport = null;
+      this.setState(Adapter.Status.DISCONNECTED);
+    }
+  }
+  getState() {
+    return this.state;
+  }
+};
+_NFIDAdapter.STORAGE_KEY = "nfid_session";
+_NFIDAdapter.TRANSPORT_CONFIG = {
+  windowOpenerFeatures: "width=525,height=705",
+  establishTimeout: 45e3,
+  disconnectTimeout: 45e3,
+  statusPollingRate: 500,
+  detectNonClickEstablishment: false
+  // Allow connection outside of click handler for auto-connect
+};
+_NFIDAdapter.logo = nfidLogo;
+let NFIDAdapter = _NFIDAdapter;
+const oisyLogo = "data:image/webp;base64,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";
+const _OisyAdapter = class _OisyAdapter {
+  constructor() {
+    this.signer = null;
+    this.agent = null;
+    this.name = "Oisy Wallet";
+    this.logo = _OisyAdapter.logo;
+    this.url = "https://oisy.com/sign";
+    this.info = { id: "oisy", icon: _OisyAdapter.logo, name: "Oisy Wallet", adapter: _OisyAdapter };
+    this.state = Adapter.Status.INIT;
+    this.url = "https://oisy.com/sign";
+    this.name = "Oisy Wallet";
+    this.logo = _OisyAdapter.logo;
+    this.agent = HttpAgent.createSync({ host: this.url });
+    this.transport = new PostMessageTransport({
+      url: this.url,
+      ..._OisyAdapter.TRANSPORT_CONFIG
+    });
+    this.signer = new Signer({
+      transport: this.transport
+    });
+    this.signerAgent = SignerAgent.createSync({
+      signer: this.signer,
+      account: Principal.anonymous(),
+      agent: this.agent
+    });
+    this.state = Adapter.Status.READY;
+  }
+  async isAvailable() {
+    return true;
+  }
+  async isConnected() {
+    return this.agent !== null && this.signer !== null;
+  }
+  async getPrincipal() {
+    if (!this.signerAgent) {
+      throw new Error("Not connected");
+    }
+    return this.signerAgent.getPrincipal();
+  }
+  async getAccountId() {
+    return D.fromPrincipal({
+      principal: await this.getPrincipal(),
+      subAccount: void 0
+      // This will use the default subaccount
+    }).toHex();
+  }
+  async connect(config) {
+    try {
+      this.setState(Adapter.Status.CONNECTING);
+      this.config = config;
+      const accounts = await this.signerAgent.signer.accounts();
+      if (!accounts || accounts.length === 0) {
+        this.disconnect();
+        throw new Error("No accounts returned from Oisy");
+      }
+      const principal = accounts[0].owner;
+      if (principal.isAnonymous()) {
+        this.setState(Adapter.Status.READY);
+        throw new Error(
+          "Failed to authenticate with Oisy - got anonymous principal"
+        );
+      }
+      this.signerAgent.replaceAccount(principal);
+      if (config.fetchRootKeys) {
+        await this.signerAgent.fetchRootKey();
+      }
+      localStorage.setItem("oisy_principal", principal.toText());
+      this.setState(Adapter.Status.CONNECTED);
+      return {
+        owner: principal,
+        subaccount: D.fromPrincipal({
+          principal,
+          subAccount: void 0
+          // This will use the default subaccount
+        }).toUint8Array(),
+        hasDelegation: false
+      };
+    } catch (error) {
+      console.error("[Oisy] Connection error:", error);
+      await this.disconnect();
+      throw error;
+    }
+  }
+  setState(newState) {
+    this.state = newState;
+  }
+  getState() {
+    return this.state;
+  }
+  createActor(canisterId, idlFactory, options = {
+    requiresSigning: true,
+    anon: false
+  }) {
+    if (!this.signerAgent) {
+      throw new Error("No signer agent available. Please connect first.");
+    }
+    try {
+      const actor = Actor.createActor(idlFactory, {
+        agent: this.signerAgent,
+        canisterId
+      });
+      return actor;
+    } catch (error) {
+      console.error("[Oisy] Actor creation error:", error);
+      throw error;
+    }
+  }
+  async disconnect() {
+    this.setState(Adapter.Status.DISCONNECTING);
+    try {
+      if (this.signer) {
+        try {
+          console.debug("[Oisy] Closing signer channel");
+          this.signer.closeChannel();
+        } catch (error) {
+          console.debug("[Oisy] Error closing signer channel:", error);
+        }
+      }
+      localStorage.removeItem(this.config.localStorageKey);
+      localStorage.removeItem("oisy_principal");
+    } catch (error) {
+      console.error("[Oisy] Error during disconnect cleanup:", error);
+    } finally {
+      this.signer = null;
+      this.agent = null;
+      this.signerAgent = null;
+      this.transport = null;
+      this.setState(Adapter.Status.DISCONNECTED);
+    }
+  }
+};
+_OisyAdapter.TRANSPORT_CONFIG = {
+  windowOpenerFeatures: "width=525,height=705",
+  establishTimeout: 45e3,
+  disconnectTimeout: 45e3,
+  statusPollingRate: 500,
+  detectNonClickEstablishment: false
+};
+_OisyAdapter.logo = oisyLogo;
+let OisyAdapter = _OisyAdapter;
+const walletList = [
+  {
+    id: "oisy",
+    name: "Oisy Wallet",
+    icon: OisyAdapter.logo,
+    adapter: OisyAdapter
+  },
+  {
+    id: "nfid",
+    name: "NFID",
+    icon: NFIDAdapter.logo,
+    adapter: NFIDAdapter
+  },
+  {
+    id: "nns",
+    name: "Internet Identity",
+    icon: NNSAdapter.logo,
+    adapter: NNSAdapter
+  },
+  {
+    id: "plug",
+    name: "Plug Wallet",
+    icon: PlugAdapter.logo,
+    adapter: PlugAdapter
+  }
+];
+class PNP {
+  constructor(config = {}) {
+    this.account = null;
+    this.activeWallet = null;
+    this.provider = null;
+    this.actorCache = /* @__PURE__ */ new Map();
+    this.dfxNetwork = "local";
+    this.isDev = true;
+    this.isConnecting = false;
+    this.config = {
+      hostUrl: config.hostUrl || "http://localhost:4943",
+      identityProvider: config.identityProvider || "https://identity.ic0.app",
+      localStorageKey: config.localStorageKey || "pnpConnectedWallet",
+      timeout: config.timeout || 1e3 * 60 * 60 * 24,
+      // 1 day in milliseconds
+      delegationTimeout: config.delegationTimeout || BigInt(24 * 60 * 60 * 1e3 * 1e3 * 1e3),
+      delegationTargets: config.delegationTargets || [],
+      dfxNetwork: config.dfxNetwork || "local",
+      isDev: config.dfxNetwork === "local",
+      derivationOrigin: config.derivationOrigin || "https://identity.ic0.app",
+      ...config
+    };
+  }
+  async connect(walletId) {
+    if (this.isConnecting) return null;
+    this.isConnecting = true;
+    try {
+      const targetWalletId = walletId || localStorage.getItem(this.config.localStorageKey);
+      if (!targetWalletId) return null;
+      localStorage.setItem(this.config.localStorageKey, targetWalletId);
+      const adapter = walletList.find((w2) => w2.id === targetWalletId);
+      if (!adapter) throw new Error(`Wallet ${targetWalletId} not found`);
+      const instance = new adapter.adapter(this.config);
+      const account = await instance.connect(this.config);
+      this.account = account;
+      this.activeWallet = adapter;
+      this.provider = instance;
+      return account;
+    } catch (error) {
+      console.warn("[PNP] Connection failed:", error);
+      return null;
+    } finally {
+      this.isConnecting = false;
+    }
+  }
+  getAdapter(walletId) {
+    const wallet = walletList.find((w2) => w2.id === walletId);
+    if (!wallet) throw new Error(`Wallet ${walletId} not found`);
+    return new wallet.adapter();
+  }
+  async disconnect() {
+    try {
+      if (this.provider) await this.provider.disconnect();
+      this.account = null;
+      this.provider = null;
+      this.activeWallet = null;
+      this.account = null;
+      this.actorCache.clear();
+      localStorage.removeItem(this.config.localStorageKey);
+    } catch (error) {
+      console.warn("[PNP] Disconnect error:", error);
+    }
+  }
+  getActor(canisterId, idl, options) {
+    const { anon = false, requiresSigning = true } = options || {};
+    return anon ? this.createAnonymousActor(canisterId, idl) : this.provider.createActor(canisterId, idl, { requiresSigning });
+  }
+  createAnonymousActor(canisterId, idl) {
+    var _a2, _b;
+    const cacheKey = `anon-${canisterId}`;
+    const cachedActor = this.actorCache.get(cacheKey);
+    if (cachedActor) return cachedActor;
+    const actor = Actor.createActor(idl, {
+      agent: HttpAgent.createSync({
+        host: ((_a2 = this.config) == null ? void 0 : _a2.hostUrl) || "https://icp0.io",
+        verifyQuerySignatures: ((_b = this.config) == null ? void 0 : _b.dfxNetwork) != "local"
+      }),
+      canisterId
+    });
+    this.actorCache.set(cacheKey, actor);
+    return actor;
+  }
+  isWalletConnected() {
+    return this.activeWallet !== null;
+  }
+}
+const walletsList = walletList;
+const createPNP = (config = {}) => new PNP(config);
+class BatchTransact {
+  constructor(transactionLlist = {}, _adapterObj) {
+    this.state = "idle";
+    this.transactionLlist = {};
+    this.stepsList = [];
+    this.completed = [];
+    this.activeStep = "";
+    this.failedSteps = [];
+    this.transactionResults = {};
+    this.trxArray = [];
+    this._info = false;
+    this._adapterObj = false;
+    if (!_adapterObj || !_adapterObj.provider) return;
+    Object.entries(transactionLlist).forEach(([key, value]) => {
+      if (typeof value === "object") {
+        this.transactionLlist[key] = value;
+      }
+    });
+    if (Object.keys(this.transactionLlist).length > 0) {
+      this.stepsList = Object.keys(this.transactionLlist);
+      this._adapterObj = _adapterObj;
+    }
+  }
+  _prepareTrxArry() {
+    this.trxArray = [];
+    let tempArray = [];
+    Object.values(this.transactionLlist).forEach((x2) => {
+      tempArray.push(x2);
+      if (x2.updateNextStep) {
+        this.trxArray.push(tempArray);
+        tempArray = [];
+      }
+    });
+    if (tempArray.length > 0) this.trxArray.push(tempArray);
+    let trxIndex = 0;
+    this.trxArray.forEach((subArray, i) => {
+      subArray.forEach((el, j2) => {
+        this.trxArray[i][j2].stepIndex = trxIndex;
+        this.trxArray[i][j2].state = "idle";
+        this.trxArray[i][j2].onSuccessMain = async (data, _this) => {
+          const stepIndex = _this.stepIndex;
+          const onSucessCall = el.onSuccess;
+          const onFailCall = el.onFail;
+          if (data.err || data.Err || data.ERR) {
+            this.failedSteps.push(this.stepsList[stepIndex]);
+            this.transactionResults[this.stepsList[stepIndex]] = data;
+            this.state = "error";
+            _this.state = "error";
+            if (onFailCall) await onFailCall(data);
+            return false;
+          } else {
+            this.completed.push(this.stepsList[stepIndex]);
+            this.activeStep = this.stepsList[stepIndex + 1];
+            this.transactionResults[this.stepsList[stepIndex]] = data;
+            _this.state = "done";
+          }
+          if (typeof _this.updateNextStep === "function" && this.trxArray[i + 1]) {
+            await _this.updateNextStep(data, this.trxArray[i + 1][0]);
+          }
+          if (onSucessCall) await onSucessCall(data);
+        };
+        this.trxArray[i][j2].onFailMain = async (err, _this) => {
+          const onFailCall = el.onFail;
+          const stepIndex = _this.stepIndex;
+          console.error(`error in  ${this.stepsList[stepIndex]} `, this.trxArray[i][j2]);
+          console.error(err);
+          this.failedSteps.push(this.stepsList[stepIndex]);
+          this.activeStep = this.stepsList[stepIndex];
+          this.state = "error";
+          _this.state = "error";
+          if (onFailCall) await onFailCall(err);
+          return false;
+        };
+        trxIndex++;
+      });
+    });
+    return this.trxArray;
+  }
+  async retryExecute() {
+    this.state = "idle";
+    this.failedSteps = [];
+    await this.execute();
+  }
+  async execute() {
+    if (!this._adapterObj || !this._adapterObj.provider) {
+      throw new Error("Provider not found");
+    }
+    this.state = "processing";
+    await this._processBatch();
+  }
+  async _processBatch() {
+    if (this.trxArray.length === 0) {
+      this._prepareTrxArry();
+    }
+    for (const batch of this.trxArray) {
+      for (const trx of batch) {
+        if (trx.state === "error") continue;
+        await this._adapterObj.provider.processTransaction(trx);
+      }
+    }
+  }
+}
 const HOSTURL = "https://icp0.io";
 const NNS_CANISTER_ID = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 const principalIdFromHex = getAccountIdentifier;

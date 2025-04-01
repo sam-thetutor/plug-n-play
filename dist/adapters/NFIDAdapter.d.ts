@@ -36,7 +36,7 @@ export declare class NFIDAdapter implements Adapter.Interface {
     isConnected(): Promise<boolean>;
     getPrincipal(): Promise<Principal>;
     getAccountId(): Promise<string>;
-    unwrapResponse: <T extends unknown>(response: any) => T;
+    unwrapResponse: <T extends any>(response: any) => T;
     connect(config: Wallet.PNPConfig): Promise<Wallet.Account>;
     private wrapDelegation;
     private unwrapDelegation;

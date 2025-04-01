@@ -73,6 +73,7 @@ class PNP {
       this.account = null;
       this.provider = null;
       this.activeWallet = null;
+      this.account = null;
       this.actorCache.clear();
       localStorage.removeItem(this.config.localStorageKey);
     } catch (error) {

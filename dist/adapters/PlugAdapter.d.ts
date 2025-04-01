@@ -1,6 +1,6 @@
 import { ActorSubclass } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
-import { Adapter, Wallet } from '../types';
+import { Adapter, Wallet } from '../types/index.d';
 export declare class PlugAdapter implements Adapter.Interface {
     static logo: string;
     logo: string;
@@ -11,6 +11,7 @@ export declare class PlugAdapter implements Adapter.Interface {
     private _connectionState;
     private _connectionStateTimestamp;
     private _connectionStateUpdateInterval;
+    private state;
     constructor();
     private initPlug;
     isAvailable(): Promise<boolean>;
@@ -25,4 +26,5 @@ export declare class PlugAdapter implements Adapter.Interface {
     isConnected(): Promise<boolean>;
     isConnectedAsync(): Promise<boolean>;
     private handleConnectionUpdate;
+    getState(): Adapter.Status;
 }

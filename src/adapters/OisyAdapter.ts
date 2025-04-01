@@ -167,19 +167,30 @@ export class OisyAdapter implements Adapter.Interface {
 
   async disconnect(): Promise<void> {
     this.setState(Adapter.Status.DISCONNECTING);
-    if (this.signer || this.signerAgent) {
-      try {
-        console.log("Closing channel");
-        this.signer?.closeChannel();
-        this.signerAgent?.signer?.closeChannel();
-      } catch (error) {
-        console.debug("[Oisy] Error cleaning up signer:", error);
+    
+    try {
+      // Close open channels
+      if (this.signer) {
+        try {
+          console.debug("[Oisy] Closing signer channel");
+          this.signer.closeChannel();
+        } catch (error) {
+          console.debug("[Oisy] Error closing signer channel:", error);
+        }
       }
-      this.signer = null;
-    }
 
-    this.agent = null;
-    this.signerAgent = null;
-    this.setState(Adapter.Status.DISCONNECTED);
+      // Remove localStorage entries
+      localStorage.removeItem(this.config.localStorageKey);
+      localStorage.removeItem('oisy_principal');
+    } catch (error) {
+      console.error("[Oisy] Error during disconnect cleanup:", error);
+    } finally {
+      // Nullify resources
+      this.signer = null;
+      this.agent = null;
+      this.signerAgent = null;
+      this.transport = null;
+      this.setState(Adapter.Status.DISCONNECTED);
+    }
   }
 }

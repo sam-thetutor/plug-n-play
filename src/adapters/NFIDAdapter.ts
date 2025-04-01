@@ -387,8 +387,23 @@ export class NFIDAdapter implements Adapter.Interface {
     this.identity = null;
     this.agent = null;
     this.signerAgent = null;
-    await this.delegationStorage.remove(NFIDAdapter.STORAGE_KEY);
-    this.setState(Adapter.Status.DISCONNECTED);
+    this.sessionKey = null;
+    this.actorCache.clear();
+    
+    try {
+      // Remove storage entries before nullifying the objects
+      localStorage.removeItem(NFIDAdapter.STORAGE_KEY);
+      if (this.delegationStorage) {
+        await this.delegationStorage.remove(NFIDAdapter.STORAGE_KEY);
+      }
+    } catch (error) {
+      console.error("[NFID] Error during disconnect cleanup:", error);
+    } finally {
+      // Now set to null after using them
+      this.delegationStorage = null;
+      this.transport = null;
+      this.setState(Adapter.Status.DISCONNECTED);
+    }
   }
 
   getState(): Adapter.Status {
