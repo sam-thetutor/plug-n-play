@@ -1,6 +1,6 @@
 {
   "name": "@windoge98/plug-n-play",
-  "version": "0.0.46",
+  "version": "0.0.60",
   "description": "Wallet wrapper/adapter for connecting different wallets on the Internet Computer",
   "module": "dist/plug-n-play.es.js",
   "main": "dist/index.js",
@@ -29,18 +29,18 @@
   "author": "windoge98",
   "license": "MIT",
   "dependencies": {
-    "@dfinity/agent": "^2.3.0",
-    "@dfinity/auth-client": "^2.3.0",
-    "@dfinity/candid": "^2.3.0",
-    "@dfinity/identity": "^2.3.0",
-    "@dfinity/ledger-icp": "2.6.9",
-    "@dfinity/nns": "8.3.0",
-    "@dfinity/principal": "^2.3.0",
-    "@dfinity/utils": "2.10.1",
+    "@dfinity/agent": "2.4.1",
+    "@dfinity/auth-client": "2.4.1",
+    "@dfinity/candid": "2.4.1",
+    "@dfinity/identity": "2.4.1",
+    "@dfinity/ledger-icp": "2.6.12",
+    "@dfinity/nns": "8.4.0",
+    "@dfinity/principal": "2.4.1",
+    "@dfinity/utils": "2.12.0",
     "@slide-computer/signer": "3.16.0",
     "@slide-computer/signer-agent": "3.16.0",
     "@slide-computer/signer-storage": "3.16.0",
-    "@slide-computer/signer-transport-plug": "3.16.0",
+    "@slide-computer/signer-extension": "3.16.0",
     "@slide-computer/signer-transport-stoic": "3.16.0",
     "@slide-computer/signer-web": "3.16.0",
     "js-sha256": "0.11.0"
@@ -63,6 +63,6 @@
   },
   "engines": {
     "pnpm": ">=9.0.0",
-    "node": ">=20.0.0"
+    "node": ">=18.0.0"
   }
 }

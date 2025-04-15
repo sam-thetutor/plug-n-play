@@ -30,22 +30,56 @@ npm install @windoge98/plug-n-play
 Here's a minimal example of how to use Plug N Play:
 
 ```typescript
-import { createPNP, walletsList } from "@windoge98/plug-n-play";
+import { createPNP } from "@windoge98/plug-n-play";
 
-// Get available wallets
-console.log("Available wallets:", walletsList);
-// Returns: [
-//   { id: "ii", name: "Internet Identity", logo: "..." },
-//   { id: "nfid", name: "NFID", logo: "..." },
-//   { id: "plug", name: "Plug", logo: "..." },
-//   { id: "oisy", name: "Oisy", logo: "..." }
-// ]
-
-// Initialize PNP
+// Initialize PNP with global and adapter-specific settings
 const pnp = createPNP({
-  hostUrl: "https://icp0.io",
-  isDev: false,
+  // Global settings
+  hostUrl: "http://localhost:4943", // Defaults to https://icp0.io, set to your local replica for local dev
+  fetchRootKeys: false, // Default is false, set true for local dev
+  verifyQuerySignatures: false, // Default is true, set false for local dev
+  derivationOrigin: "http://localhost:5173", // Optional: Set for local dev
+  dfxNetwork: "local", // Optional: Set for local dev
+
+  // Adapter-specific configurations are nested within the 'adapters' object
+  adapters: {
+    oisy: {
+      // Settings specific to Oisy
+      enabled: true,
+      config: {
+        // Oisy specific config options, e.g.
+        // signerUrl: "https://oisy.com/sign",
+      },
+    },
+    nfid: {
+      // Settings specific to NFID
+      enabled: true,
+      config: {
+        // rpcUrl: "https://nfid.one/rpc",
+      },
+    },
+    ii: {
+      // Settings specific to Internet Identity
+      enabled: true, // Explicitly enable (default is true)
+      config: {
+        // Configuration specific to the II adapter
+        identityProvider: "https://identity.ic0.app", // Optional: Default is derived
+      },
+    },
+    plug: {
+      // Settings specific to Plug
+      enabled: true,
+      config: {
+        // Plug-specific config, often less needed as it uses browser extension
+      },
+    },
+  },
 });
+
+// Get the list of enabled wallets AFTER initialization
+const availableWallets = pnp.getEnabledWallets();
+console.log("Available wallets:", availableWallets);
+// Returns an array of Adapter.Info objects for enabled wallets
 
 // Connect to a wallet
 async function connectWallet(walletId: string) {
@@ -62,7 +96,7 @@ async function connectWallet(walletId: string) {
 // Interact with a canister
 async function interactWithCanister(canisterId: string, idl: any) {
   try {
-    const actor = await pnp.getActor(canisterId, idl);
+    const actor = pnp.getActor(canisterId, idl);
     // Now you can call methods on your actor
     return actor;
   } catch (error) {
@@ -95,7 +129,7 @@ const LEDGER_CANISTER_ID = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 
 // Get account balance
 async function getBalance(principal: string) {
-  const actor = await pnp.getActor(LEDGER_CANISTER_ID, ICRC2_IDL);
+  const actor = pnp.getActor(LEDGER_CANISTER_ID, ICRC2_IDL);
   const balance = await actor.icrc1_balance_of({
     owner: Principal.fromText(principal),
     subaccount: [],
@@ -105,7 +139,7 @@ async function getBalance(principal: string) {
 
 // Transfer ICP
 async function transfer(to: string, amount: bigint) {
-  const actor = await pnp.getActor(LEDGER_CANISTER_ID, ICRC2_IDL);
+  const actor = pnp.getActor(LEDGER_CANISTER_ID, ICRC2_IDL);
   const result = await actor.icrc1_transfer({
     to: {
       owner: Principal.fromText(to),
@@ -121,34 +155,14 @@ async function transfer(to: string, amount: bigint) {
 }
 ```
 
-## Identity Delegation
-
-Example of using identity delegation (required for oisy, plug, and nfid):
-
-```typescript
-// Initialize PNP with delegation support
-const pnp = createPNP({
-  hostUrl: "https://icp0.io",
-  isDev: false,
-  delegationTargets: [Principal.fromText('your-canister-id')],
-  delegationTimeout: BigInt(7 * 24 * 60 * 60 * 1000_000_000), // 7 days
-});
-
-// Connect with delegation
-await pnp.connect('nfid', true); // Second parameter enables delegation
-```
-
 ## Best Practices
 
 1. Always initialize PNP before attempting to connect to a wallet
 2. Use try-catch blocks when calling PNP methods
-3. Keep your canister whitelist up-to-date
-4. Set appropriate delegation timeouts based on your security requirements
-5. Implement proper error handling for all wallet operations
-6. Check connection status before making canister calls
-7. Clean up resources by calling disconnect when appropriate
-8. Use library-level delegation configuration for consistent settings
-9. For local development, make sure to use the correct `hostUrl`
+3. Set appropriate delegation timeouts based on your security requirements
+4. Implement proper error handling for all wallet operations
+5. Clean up resources by calling disconnect when appropriate
+6. For local development, make sure to use the correct `hostUrl`
 
 ## License
 

@@ -40,14 +40,14 @@ jobs:
 
       - name: Upload Test Artifacts
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-results
           path: ./  # Make sure this path contains the results
 
       - name: Upload Coverage Report
         if: success()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: ./coverage  # Ensure this path exists after tests run

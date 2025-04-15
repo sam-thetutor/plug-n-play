@@ -1,10 +1,19 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { NNSAdapter } from '../src/adapters/NNSAdapter';
+import { IIAdapter } from '../src/adapters/ic/IIAdapter';
 import { AuthClient } from "@dfinity/auth-client";
 import { vi } from 'vitest';
+import { type Wallet } from '../src/types'; // Corrected path for types
 
-describe('NNSAdapter', () => {
-  let adapter: NNSAdapter;
+// Define a basic mock config
+const mockConfig: Wallet.PNPConfig = {
+  hostUrl: "http://localhost:4943",
+  verifyQuerySignatures: false,
+  fetchRootKeys: false,
+  // Add other necessary fields if required by BaseIcAdapter or IIAdapter
+};
+
+describe('IIAdapter', () => {
+  let adapter: IIAdapter;
 
   beforeEach(() => {
     // Mock AuthClient.create
@@ -20,15 +29,11 @@ describe('NNSAdapter', () => {
       }
     } as any);
     
-    adapter = new NNSAdapter();
+    adapter = new IIAdapter(mockConfig);
   });
 
   afterEach(() => {
     vi.clearAllMocks();
-  });
-
-  it('should have a default URL', () => {
-    expect(adapter.url).toBe('https://identity.ic0.app');
   });
 
   it('should initialize the auth client', async () => {

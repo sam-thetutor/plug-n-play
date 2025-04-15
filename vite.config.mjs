@@ -4,10 +4,13 @@ import dts from 'vite-plugin-dts';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 import viteCompression from 'vite-plugin-compression';
 
+// Determine build environment
+const isProd = process.env.NODE_ENV === 'production';
+
 export default defineConfig({
   build: {
-    sourcemap: true,
-    minify: false,
+    sourcemap: !isProd, // Only generate sourcemaps in development
+    minify: isProd ? 'esbuild' : false, // Only minify in production using faster esbuild
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
       name: 'PlugNPlay',
@@ -22,13 +25,11 @@ export default defineConfig({
         '@dfinity/agent',
         '@dfinity/identity',
         '@dfinity/utils',
-        '@astrox/sdk-web',
-        '@astrox/sdk-webview',
-        '@dfinity/oisy-wallet-signer'
       ],
       output: {
         format: 'es',
-        exports: 'named'
+        exports: 'named',
+        manualChunks: isProd ? undefined : null, // Disable code splitting in dev
       }
     },
     commonjsOptions: {
@@ -38,6 +39,10 @@ export default defineConfig({
     },
     outDir: 'dist',
     emptyOutDir: true,
+    // Speed up build by using more resources
+    reportCompressedSize: isProd,
+    chunkSizeWarningLimit: 1000,
+    target: 'es2020',
   },
   test: {
     globals: true,
@@ -69,12 +74,18 @@ export default defineConfig({
     }
   },
   plugins: [
+    // TypeScript declarations plugin - optimized config
     dts({
       insertTypesEntry: true,
       compilerOptions: {
         declaration: true,
+        skipLibCheck: true, // Skip type checking of declaration files
       },
+      logDiagnostics: isProd, // Only log diagnostics in production
+      // Skip type checking in development for faster builds
+      skipDiagnostics: !isProd,
     }),
+    // Static asset copying
     viteStaticCopy({
       targets: [
         {
@@ -83,22 +94,35 @@ export default defineConfig({
         },
       ],
     }),
-    viteCompression({
-      verbose: true,
-      disable: false,
-      threshold: 1024 * 4,
-      algorithm: 'gzip',
-      ext: '.gz',
-    }),
-    viteCompression({
-      verbose: true,
-      disable: false,
-      threshold: 1024 * 4,
-      algorithm: 'brotliCompress',
-      ext: '.br',
-    })
+    // Conditional compression plugins for production only
+    ...(isProd ? [
+      viteCompression({
+        verbose: false, // Reduce logging
+        disable: false,
+        threshold: 1024 * 10, // Only compress files > 10KB
+        algorithm: 'gzip',
+        ext: '.gz',
+      }),
+      viteCompression({
+        verbose: false, // Reduce logging
+        disable: false,
+        threshold: 1024 * 10, // Only compress files > 10KB
+        algorithm: 'brotliCompress',
+        ext: '.br',
+        compressionOptions: { level: 9 }, // Max compression level
+      })
+    ] : [])
   ],
   ssr: {
     noExternal: ['@dfinity/oisy-wallet-signer']
-  }
+  },
+  // Improve dev server performance
+  server: {
+    hmr: {
+      overlay: true,
+    },
+    watch: {
+      usePolling: false,
+    },
+  },
 });
