@@ -4,7 +4,7 @@ import { Wallet, Adapter } from '../../types/index.d';
 /**
  * Abstract base class for adapters implementing Adapter.Interface
  */
-export declare abstract class ICRCAdapter implements Adapter.Interface {
+export declare abstract class BaseIcAdapter implements Adapter.Interface {
     abstract walletName: string;
     abstract logo: string;
     protected state: Adapter.Status;

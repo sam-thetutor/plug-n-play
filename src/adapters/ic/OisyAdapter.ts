@@ -7,9 +7,9 @@ import { SignerAgent } from "@slide-computer/signer-agent";
 import { Signer } from "@slide-computer/signer";
 import { AccountIdentifier } from "@dfinity/ledger-icp";
 import { hexStringToUint8Array } from "@dfinity/utils";
-import { ICRCAdapter } from "./ICRCAdapter";
+import { BaseIcAdapter } from "./BaseIcAdapter";
 
-export class OisyAdapter extends ICRCAdapter implements Adapter.Interface {
+export class OisyAdapter extends BaseIcAdapter implements Adapter.Interface {
   private static readonly TRANSPORT_CONFIG = {
     windowOpenerFeatures: "width=525,height=705",
     establishTimeout: 45000,
@@ -111,7 +111,7 @@ export class OisyAdapter extends ICRCAdapter implements Adapter.Interface {
     }
   }
 
-  // Use ICRCAdapter's actor caching by implementing createActorInternal
+  // Use BaseIcAdapter's actor caching by implementing createActorInternal
   protected createActorInternal<T>(
     canisterId: string,
     idlFactory: any,

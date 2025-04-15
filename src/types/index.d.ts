@@ -27,48 +27,13 @@ export namespace Wallet {
     timeout?: number;
   }
 
-  export interface PNPWindow {
-    BatchTransact: typeof BatchTransact;
-    ii: {
-      AnonymousIdentity: typeof AnonymousIdentity;
-      Principal: typeof Principal;
-    };
-  }
-
   export interface Account {
     subaccount: Uint8Array | null;
     owner: Principal | null;
     hasDelegation?: boolean;
   }
 
-  export type ConnectionResult = Account;
-
-  export interface WalletState {
-    account: Account | null;
-    activeWallet: string | null;
-  }
-
-  type WalletEventCallback = (state: WalletState) => void;
-
   export type AdapterConstructor = new (config: Wallet.PNPConfig) => Adapter.Interface;
-
-  export type Adapters = {
-    ii: Adapter.Interface;
-    plug: Adapter.Interface;
-    bitfinity: Adapter.Interface;
-  };
-
-  export namespace Transaction {
-    export interface Item {
-      stepIndex?: number;
-      state?: string;
-      updateNextStep?: (data: any, nextStep: Item) => Promise<void>;
-      onSuccess?: (data: any) => Promise<void>;
-      onFail?: (error: any) => Promise<void>;
-      onSuccessMain?: (data: any, _this: Item) => Promise<boolean | undefined>;
-      onFailMain?: (error: any, _this: Item) => Promise<boolean>;
-    }
-  }
 }
 
 export namespace Adapter {

@@ -5,10 +5,10 @@ import { Principal } from "@dfinity/principal";
 import { Adapter, Wallet } from "../../types/index.d";
 import plugLogo from "../../../assets/plug.webp";
 import { AccountIdentifier } from "@dfinity/ledger-icp";
-import { ICRCAdapter } from "./ICRCAdapter";
+import { BaseIcAdapter } from "./BaseIcAdapter";
 
-// Extend ICRCAdapter
-export class PlugAdapter extends ICRCAdapter implements Adapter.Interface {
+// Extend BaseIcAdapter
+export class PlugAdapter extends BaseIcAdapter implements Adapter.Interface {
   static readonly logo: string = plugLogo;
   static readonly walletName: string = "Plug";
   walletName: string = PlugAdapter.walletName;
@@ -18,7 +18,7 @@ export class PlugAdapter extends ICRCAdapter implements Adapter.Interface {
   private readyState:
     | "NotDetected"
     | "Installed"
-    | "Connected" = "NotDetected"; // Removed "Disconnected" as it's handled by ICRCAdapter state
+    | "Connected" = "NotDetected"; // Removed "Disconnected" as it's handled by BaseIcAdapter state
   
   private _connectionState: boolean = false;
   private _connectionStateTimestamp: number = 0;
@@ -116,7 +116,7 @@ export class PlugAdapter extends ICRCAdapter implements Adapter.Interface {
 
   // getAccountId is inherited
 
-  // Implementation of the required abstract method from ICRCAdapter
+  // Implementation of the required abstract method from BaseIcAdapter
   protected createActorInternal<T>(
     canisterId: string,
     idl: any,

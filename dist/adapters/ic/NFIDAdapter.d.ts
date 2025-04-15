@@ -1,8 +1,8 @@
 import { Principal } from '@dfinity/principal';
 import { ActorSubclass } from '@dfinity/agent';
 import { Wallet, Adapter } from '../../types/index.d';
-import { ICRCAdapter } from './ICRCAdapter';
-export declare class NFIDAdapter extends ICRCAdapter implements Adapter.Interface {
+import { BaseIcAdapter } from './BaseIcAdapter';
+export declare class NFIDAdapter extends BaseIcAdapter implements Adapter.Interface {
     private static readonly TRANSPORT_CONFIG;
     private agent;
     private identity;

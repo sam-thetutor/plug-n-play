@@ -8,10 +8,10 @@ import { SignerAgent } from "@slide-computer/signer-agent";
 import { Signer } from "@slide-computer/signer";
 import { SignerError } from "@slide-computer/signer";
 import { AccountIdentifier } from "@dfinity/ledger-icp";
-import { ICRCAdapter } from "./ICRCAdapter"; // Add ICRCAdapter import
+import { BaseIcAdapter } from "./BaseIcAdapter"; // Add BaseIcAdapter import
 
-// Extend ICRCAdapter instead of just implementing Adapter.Interface
-export class NFIDAdapter extends ICRCAdapter implements Adapter.Interface {
+// Extend BaseIcAdapter instead of just implementing Adapter.Interface
+export class NFIDAdapter extends BaseIcAdapter implements Adapter.Interface {
   private static readonly TRANSPORT_CONFIG = {
     windowOpenerFeatures: "width=525,height=705",
     establishTimeout: 45000,
@@ -35,7 +35,7 @@ export class NFIDAdapter extends ICRCAdapter implements Adapter.Interface {
   url: string;
 
   constructor(config: Wallet.PNPConfig) {
-    super(config); // Call ICRCAdapter constructor
+    super(config); // Call BaseIcAdapter constructor
     const nfidInfo = this.config.adapters?.['nfid'] as Adapter.Info | undefined;
     // Provide a default URL if none is found in the config
     this.url = nfidInfo?.rpcUrl ?? "https://nfid.one/rpc"; // Default NFID RPC endpoint
@@ -198,7 +198,7 @@ export class NFIDAdapter extends ICRCAdapter implements Adapter.Interface {
     return actor;
   }
 
-  // Implementation for ICRCAdapter actor caching
+  // Implementation for BaseIcAdapter actor caching
   protected createActorInternal<T>(
     canisterId: string,
     idlFactory: any,
@@ -253,7 +253,7 @@ export class NFIDAdapter extends ICRCAdapter implements Adapter.Interface {
     }
   }
 
-  // disconnect is handled by ICRCAdapter, implement internal methods instead
+  // disconnect is handled by BaseIcAdapter, implement internal methods instead
   protected async disconnectInternal(): Promise<void> {
     // Existing logic minus state changes and cleanup
     this.identity = null;

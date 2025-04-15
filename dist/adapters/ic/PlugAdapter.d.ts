@@ -1,8 +1,8 @@
 import { ActorSubclass } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { Adapter, Wallet } from '../../types/index.d';
-import { ICRCAdapter } from './ICRCAdapter';
-export declare class PlugAdapter extends ICRCAdapter implements Adapter.Interface {
+import { BaseIcAdapter } from './BaseIcAdapter';
+export declare class PlugAdapter extends BaseIcAdapter implements Adapter.Interface {
     static readonly logo: string;
     static readonly walletName: string;
     walletName: string;

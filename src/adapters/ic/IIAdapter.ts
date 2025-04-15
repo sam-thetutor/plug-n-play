@@ -6,10 +6,10 @@ import { type Wallet, Adapter } from "../../types/index.d";
 import { Principal } from "@dfinity/principal";
 import { hexStringToUint8Array } from "@dfinity/utils";
 import dfinityLogo from "../../../assets/dfinity.webp";
-import { ICRCAdapter } from "./ICRCAdapter";
+import { BaseIcAdapter } from "./BaseIcAdapter";
 
-// Extend ICRCAdapter
-export class IIAdapter extends ICRCAdapter implements Adapter.Interface {
+// Extend BaseIcAdapter
+export class IIAdapter extends BaseIcAdapter implements Adapter.Interface {
   static readonly logo: string = dfinityLogo;
   static readonly walletName: string = "Internet Identity";
   walletName: string = IIAdapter.walletName;
@@ -117,7 +117,7 @@ export class IIAdapter extends ICRCAdapter implements Adapter.Interface {
       await this.initAgent(identity); 
       return {
         owner: principal,
-        // Derive subaccount using the method from ICRCAdapter via getAccountId (implicitly)
+        // Derive subaccount using the method from BaseIcAdapter via getAccountId (implicitly)
         // Or calculate directly if preferred, but using getAccountId promotes reuse
         subaccount: hexStringToUint8Array(await this.getAccountId() || ""),
       };
@@ -133,7 +133,7 @@ export class IIAdapter extends ICRCAdapter implements Adapter.Interface {
     return this.authClient ? await this.authClient.isAuthenticated() : false;
   }
 
-  // Implementation for ICRCAdapter actor caching
+  // Implementation for BaseIcAdapter actor caching
   protected createActorInternal<T>(
     canisterId: string, 
     idl: any, 
