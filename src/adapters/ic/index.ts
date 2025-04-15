@@ -14,6 +14,26 @@ const commonDefaultConfig = {
 
 // Define the default adapters map, now including default config
 const ICAdapters: Record<string, Adapter.Info> = {
+  'oisy': {
+    id: 'oisy',
+    walletName: OisyAdapter.walletName,
+    logo: OisyAdapter.logo, 
+    adapter: OisyAdapter,
+    config: {
+      ...commonDefaultConfig,
+      signerUrl: "https://oisy.com/sign", // Default Oisy sign URL
+    },
+  },
+  'nfid': {
+    id: 'nfid',
+    walletName: NFIDAdapter.walletName,
+    logo: NFIDAdapter.logo, 
+    adapter: NFIDAdapter,
+    config: {
+      ...commonDefaultConfig,
+      rpcUrl: "https://nfid.one/rpc", // Default NFID RPC endpoint
+    },
+  },
   'ii': {
     id: 'ii',
     walletName: IIAdapter.walletName,
@@ -32,26 +52,6 @@ const ICAdapters: Record<string, Adapter.Info> = {
     config: {
       ...commonDefaultConfig,
       identityProvider: "https://identity.ic0.app",
-    },
-  },
-  'nfid': {
-    id: 'nfid',
-    walletName: NFIDAdapter.walletName,
-    logo: NFIDAdapter.logo, 
-    adapter: NFIDAdapter,
-    config: {
-      ...commonDefaultConfig,
-      rpcUrl: "https://nfid.one/rpc", // Default NFID RPC endpoint
-    },
-  },
-  'oisy': {
-    id: 'oisy',
-    walletName: OisyAdapter.walletName,
-    logo: OisyAdapter.logo, 
-    adapter: OisyAdapter,
-    config: {
-      ...commonDefaultConfig,
-      signerUrl: "https://oisy.com/sign", // Default Oisy sign URL
     },
   },
 };

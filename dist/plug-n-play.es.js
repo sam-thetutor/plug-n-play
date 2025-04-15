@@ -2702,6 +2702,28 @@ const me = {
   // 1 day
   enabled: !0
 }, yi = {
+  oisy: {
+    id: "oisy",
+    walletName: pe.walletName,
+    logo: pe.logo,
+    adapter: pe,
+    config: {
+      ...me,
+      signerUrl: "https://oisy.com/sign"
+      // Default Oisy sign URL
+    }
+  },
+  nfid: {
+    id: "nfid",
+    walletName: ge.walletName,
+    logo: ge.logo,
+    adapter: ge,
+    config: {
+      ...me,
+      rpcUrl: "https://nfid.one/rpc"
+      // Default NFID RPC endpoint
+    }
+  },
   ii: {
     id: "ii",
     walletName: le.walletName,
@@ -2720,28 +2742,6 @@ const me = {
     config: {
       ...me,
       identityProvider: "https://identity.ic0.app"
-    }
-  },
-  nfid: {
-    id: "nfid",
-    walletName: ge.walletName,
-    logo: ge.logo,
-    adapter: ge,
-    config: {
-      ...me,
-      rpcUrl: "https://nfid.one/rpc"
-      // Default NFID RPC endpoint
-    }
-  },
-  oisy: {
-    id: "oisy",
-    walletName: pe.walletName,
-    logo: pe.logo,
-    adapter: pe,
-    config: {
-      ...me,
-      signerUrl: "https://oisy.com/sign"
-      // Default Oisy sign URL
     }
   }
 }, ze = {

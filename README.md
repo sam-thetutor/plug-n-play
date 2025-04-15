@@ -31,7 +31,7 @@ Here's a minimal example of how to use Plug N Play:
 
 ```typescript
 import { createPNP } from "@windoge98/plug-n-play";
-import { ICAdapters } from '@windoge98/plug-n-play/adapters/ic'; // Optional: If you want to customize specific adapters
+import { ICAdapters } from "@windoge98/plug-n-play/adapters/ic"; // Optional: If you want to customize specific adapters
 
 // Get available wallet info (IDs, names, logos)
 // The actual list comes from the initialized pnp instance
@@ -39,44 +39,45 @@ import { ICAdapters } from '@windoge98/plug-n-play/adapters/ic'; // Optional: If
 // Initialize PNP with global and adapter-specific settings
 const pnp = createPNP({
   // Global settings
-  hostUrl: "https://icp0.io", 
+  hostUrl: "http://localhost:4943", // Defaults to https://icp0.io, set to your local replica for local dev
   fetchRootKeys: false, // Default is false, set true for local dev
-  // derivationOrigin: "http://localhost:5173", // Optional: Set for local dev
-  // dfxNetwork: "local", // Optional: Set for local dev
+  verifyQuerySignatures: false, // Default is true, set false for local dev
+  derivationOrigin: "http://localhost:5173", // Optional: Set for local dev
+  dfxNetwork: "local", // Optional: Set for local dev
 
   // Adapter-specific configurations are nested within the 'adapters' object
   adapters: {
-    ii: { // Settings specific to Internet Identity
-      enabled: true, // Explicitly enable (default is true)
-      config: { // Configuration specific to the II adapter
-        identityProvider: "https://identity.ic0.app", // Optional: Default is derived
-        // You might add other II-specific config here if the adapter supports it
-      }
-    },
-    nfid: { // Settings specific to NFID
+    oisy: {
+      // Settings specific to Oisy
       enabled: true,
       config: {
-        // NFID-specific config options, e.g.:
-        // appName: "My Awesome Dapp",
-        // logoUrl: "https://example.com/logo.png"
-      }
+        // Oisy specific config options, e.g.
+        // signerUrl: "https://oisy.com/sign",
+      },
     },
-    plug: { // Settings specific to Plug
+    nfid: {
+      // Settings specific to NFID
+      enabled: true,
+      config: {
+        // rpcUrl: "https://nfid.one/rpc",
+      },
+    },
+    ii: {
+      // Settings specific to Internet Identity
+      enabled: true, // Explicitly enable (default is true)
+      config: {
+        // Configuration specific to the II adapter
+        identityProvider: "https://identity.ic0.app", // Optional: Default is derived
+      },
+    },
+    plug: {
+      // Settings specific to Plug
       enabled: true,
       config: {
         // Plug-specific config, often less needed as it uses browser extension
-      }
+      },
     },
-    oisy: { // Settings specific to Oisy
-      enabled: true,
-      config: {
-         // Oisy specific config options, e.g.
-         // delegationTargets: ["ryjl3-tyaaa-aaaaa-aaaba-cai"], // Example canister
-      }
-    },
-    // Add configs for other adapters as needed
-    // You can also *omit* adapters here to use their defaults
-  }
+  },
 });
 
 // Get the list of enabled wallets AFTER initialization
@@ -158,89 +159,14 @@ async function transfer(to: string, amount: bigint) {
 }
 ```
 
-## Identity Delegation
-
-Identity delegation allows wallets like NFID and Plug to sign requests on behalf of the user's main identity. Configure delegation targets globally or per-adapter.
-
-```typescript
-import { Principal } from "@dfinity/principal";
-
-// Global delegation configuration
-const pnpGlobalDelegation = createPNP({
-  hostUrl: "https://icp0.io",
-  delegationTargets: ["ryjl3-tyaaa-aaaaa-aaaba-cai"], // Apply to all adapters supporting delegation
-  delegationTimeout: BigInt(7 * 24 * 60 * 60 * 1000_000_000), // 7 days (optional)
-});
-
-// Per-adapter delegation configuration (Oisy example)
-const pnpPerAdapterDelegation = createPNP({
-  hostUrl: "https://icp0.io",
-  adapters: {
-    oisy: {
-      config: {
-        delegationTargets: ["canister1-id", "canister2-id"], // Specific targets for Oisy
-        // delegationTimeout: ... // Oisy-specific timeout if needed
-      }
-    },
-    // Other adapters might use global config or have their own
-  }
-});
-
-// Connect (no extra flag needed, delegation is handled by config)
-await pnpGlobalDelegation.connect('nfid'); 
-```
-
 ## Best Practices
 
 1. Always initialize PNP before attempting to connect to a wallet
 2. Use try-catch blocks when calling PNP methods
-3. Keep your canister whitelist up-to-date
-4. Set appropriate delegation timeouts based on your security requirements
-5. Implement proper error handling for all wallet operations
-6. Check connection status before making canister calls
-7. Clean up resources by calling disconnect when appropriate
-8. Use library-level delegation configuration for consistent settings
-9. For local development, make sure to use the correct `hostUrl`
-
-## React Integration with @dfinity/use-auth-client
-
-If you're building a React application, you can integrate the InternetIdentity with the `@dfinity/use-auth-client` package for a more React-friendly approach:
-
-```typescript
-import { useEffect, useState } from 'react';
-import { useAuthClient } from '@dfinity/use-auth-client';
-import { InternetIdentity } from '@windoge98/plug-n-play';
-
-function MyComponent() {
-  // Create an adapter instance
-  const [adapter] = useState(() => new InternetIdentity({
-    derivationOrigin: window.location.origin,
-  }));
-  
-  // Get config for useAuthClient
-  const authClientConfig = adapter.getUseAuthClientConfig();
-  
-  // Use the hook with the adapter's configuration
-  const { isAuthenticated, login, logout, identity } = useAuthClient(authClientConfig);
-
-  // Create a wallet account from the identity
-  useEffect(() => {
-    if (isAuthenticated && identity) {
-      const principal = identity.getPrincipal();
-      const account = InternetIdentity.createAccountFromPrincipal(principal);
-      console.log("Connected account:", account);
-    }
-  }, [isAuthenticated, identity]);
-
-  return (
-    <button onClick={isAuthenticated ? logout : login}>
-      {isAuthenticated ? 'Logout' : 'Login with Internet Identity'}
-    </button>
-  );
-}
-```
-
-For more detailed examples and advanced usage, see the [use-auth-client integration guide](./docs/use-auth-client-integration.md).
+3. Set appropriate delegation timeouts based on your security requirements
+4. Implement proper error handling for all wallet operations
+5. Clean up resources by calling disconnect when appropriate
+6. For local development, make sure to use the correct `hostUrl`
 
 ## License
 
