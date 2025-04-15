@@ -27,7 +27,7 @@ const createPNP = vi.fn().mockImplementation(() => ({
 vi.mock('../src/index', () => ({
   createPNP,
   walletsList: [
-    { id: 'nns', name: 'Internet Identity', icon: '/assets/dfinity.svg', adapter: expect.any(Function) },
+    { id: 'ii', name: 'Internet Identity', icon: '/assets/dfinity.svg', adapter: expect.any(Function) },
     { id: 'plug', name: 'Plug Wallet', icon: '/assets/plug.jpg', adapter: expect.any(Function) }
   ],
   BatchTransact,
@@ -35,7 +35,7 @@ vi.mock('../src/index', () => ({
   getAccountIdentifier: vi.fn(),
   getPNPAdapter: vi.fn(),
   adapters: {
-    nns: { isAvailable: vi.fn() },
+    ii: { isAvailable: vi.fn() },
     plug: { isAvailable: vi.fn() },
     bitfinity: { isAvailable: vi.fn() },
   },
@@ -57,7 +57,7 @@ describe('index.ts', () => {
   it('should export walletsList', () => {
     expect(indexModule.walletsList).toBeDefined();
     expect(indexModule.walletsList).toEqual([
-      { id: 'nns', name: 'Internet Identity', icon: '/assets/dfinity.svg', adapter: expect.any(Function) },
+      { id: 'ii', name: 'Internet Identity', icon: '/assets/dfinity.svg', adapter: expect.any(Function) },
       { id: 'plug', name: 'Plug Wallet', icon: '/assets/plug.jpg', adapter: expect.any(Function) }
     ]);
   });

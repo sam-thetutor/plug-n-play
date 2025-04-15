@@ -1,49 +1,173 @@
-import { AnonymousIdentity } from "@dfinity/agent";
-import { Principal } from "@dfinity/principal";
-import { 
-  createPNP, 
-  walletsList,
-} from './pnp';
-import { BatchTransact } from "./utils/batchTransact";
-import { getAccountIdentifier } from './utils/identifierUtils.js';
-import { HOSTURL, NNS_CANISTER_ID } from './constants';
-import type { Wallet, Adapter, PNP } from './types';
+import { Actor, HttpAgent, type ActorSubclass } from "@dfinity/agent";
+import type { Wallet, Adapter } from "./types";
+import { createPNPConfig, type PNPConfig } from "./config";
 
-const principalIdFromHex = getAccountIdentifier;
+// Re-export config types and creation function for easier consumption
+export { createPNPConfig, type PNPConfig };
+// Re-export core types
+export type { Wallet, Adapter, ActorSubclass };
 
-// Create the PNP instance only when needed
-let PNPAdapter: ReturnType<typeof createPNP> | null = null;
+// Define the PNP class directly here
+export class PNP {
+  account: Wallet.Account | null = null;
+  activeWallet: Adapter.Info | null = null;
+  provider: Adapter.Interface | null = null;
+  config: ReturnType<typeof createPNPConfig>;
+  actorCache: Map<string, ActorSubclass<any>> = new Map();
+  isConnecting: boolean = false;
+  adapters: Record<string, Adapter.Info>;
 
-function getPNPAdapter(): ReturnType<typeof createPNP> {
-  if (!PNPAdapter) {
-    PNPAdapter = createPNP({
-      whitelist: [NNS_CANISTER_ID],
-      host: HOSTURL,
-      identityProvider: "",
+  constructor(config: PNPConfig = {}) {
+    this.config = createPNPConfig(config);
+    this.adapters = this.config.adapters || {};
+  }
+
+  private getAdapterConfig(adapterId: string): Adapter.Info {
+    return this.config.adapters?.[adapterId];
+  }
+
+  private mergeAdapterConfig(adapterId: string): Wallet.PNPConfig {
+    const specificConfig = this.getAdapterConfig(adapterId);
+    return {
+      ...this.config,
+      ...specificConfig,
+    };
+  }
+
+  async connect(walletId?: string): Promise<Wallet.Account | null> {
+    if (this.isConnecting) return null;
+    this.isConnecting = true;
+    let instance: Adapter.Interface | null = null;
+
+    try {
+      const targetWalletId =
+        walletId || localStorage.getItem(this.config.localStorageKey);
+      if (!targetWalletId) return null;
+
+      localStorage.setItem(this.config.localStorageKey, targetWalletId);
+
+      const adapterInfo = this.adapters[targetWalletId];
+      if (!adapterInfo)
+        throw new Error(
+          `Wallet ${targetWalletId} not found in provided adapters`
+        );
+
+      const adapterConfig = this.mergeAdapterConfig(targetWalletId);
+
+      instance = new adapterInfo.adapter(adapterConfig);
+      const account = await instance.connect(adapterConfig);
+
+      this.account = account;
+      this.activeWallet = adapterInfo;
+      this.provider = instance;
+      return account;
+    } catch (error) {
+      console.warn(
+        `[PNP] Connection failed for ${walletId || "stored wallet"}:`,
+        error
+      );
+      if (instance) {
+        try {
+          await instance.disconnect();
+        } catch (disconnectError) {
+          console.warn("[PNP] Disconnect error:", disconnectError);
+        }
+      }
+      this.account = null;
+      this.provider = null;
+      this.activeWallet = null;
+      localStorage.removeItem(this.config.localStorageKey);
+      return null;
+    } finally {
+      this.isConnecting = false;
+    }
+  }
+
+  getAdapter(walletId: string): Adapter.Interface {
+    const wallet = this.adapters[walletId];
+    if (!wallet)
+      throw new Error(`Wallet ${walletId} not found in provided adapters`);
+    const adapterConfig = this.mergeAdapterConfig(walletId);
+    return new wallet.adapter(adapterConfig);
+  }
+
+  async disconnect(): Promise<void> {
+    this.isConnecting = false;
+    try {
+      if (this.provider) await this.provider.disconnect();
+      this.account = null;
+      this.provider = null;
+      this.activeWallet = null;
+      this.actorCache.clear();
+      localStorage.removeItem(this.config.localStorageKey);
+    } catch (error) {
+      console.warn("[PNP] Disconnect error:", error);
+      this.account = null;
+      this.provider = null;
+      this.activeWallet = null;
+      this.actorCache.clear();
+      localStorage.removeItem(this.config.localStorageKey);
+    } finally {
+      this.isConnecting = false;
+    }
+  }
+
+  getActor<T>(
+    canisterId: string,
+    idl: any,
+    options?: {
+      anon?: boolean;
+      requiresSigning?: boolean;
+    }
+  ): ActorSubclass<T> {
+    const { anon = false, requiresSigning = true } = options || {};
+
+    if (anon) {
+      return this.createAnonymousActor<T>(canisterId, idl);
+    }
+
+    if (!this.provider) {
+      throw new Error(
+        "Cannot create signed actor. No wallet provider connected."
+      );
+    }
+
+    return this.provider.createActor<T>(canisterId, idl, { requiresSigning });
+  }
+
+  createAnonymousActor<T>(canisterId: string, idl: any): ActorSubclass<T> {
+    const cacheKey = `anon-${canisterId}`;
+    const cachedActor = this.actorCache.get(cacheKey);
+    if (cachedActor) return cachedActor;
+
+    const actor = Actor.createActor<T>(idl, {
+      agent: HttpAgent.createSync({
+        host: this.config.hostUrl,
+        verifyQuerySignatures: this.config.verifyQuerySignatures,
+      }),
+      canisterId,
+    });
+
+    this.actorCache.set(cacheKey, actor);
+    return actor;
+  }
+
+  isWalletConnected(): boolean {
+    return (
+      this.activeWallet !== null &&
+      this.provider !== null &&
+      this.account !== null
+    );
+  }
+
+  getEnabledWallets(): Adapter.Info[] {
+    return Object.values(this.adapters).filter((wallet) => {
+      const adapterConfig = this.config.adapters[wallet.id];
+      // Enabled if explicitly true or not defined (defaults to true implicitly)
+      return adapterConfig?.enabled !== false;
     });
   }
-  return PNPAdapter;
 }
 
-if (typeof window !== 'undefined') {
-  (window as any).pnp = {
-    PNP: createPNP,
-    BatchTransact,
-    nns: { AnonymousIdentity, Principal },
-    getPNPAdapter,
-  };
-}
-
-export {
-  createPNP,
-  walletsList,
-  BatchTransact,
-  principalIdFromHex,
-  AnonymousIdentity,
-  Principal,
-  HOSTURL,
-  NNS_CANISTER_ID,
-  type Wallet,
-  type Adapter,
-  type PNP
-};
+// Export the factory function and wallet list
+export const createPNP = (config: PNPConfig = {}) => new PNP(config);

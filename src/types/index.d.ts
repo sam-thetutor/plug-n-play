@@ -1,5 +1,5 @@
 // Adapters
-import { NNSAdapter } from "./src/adapters/NNSAdapter";
+import { InternetIdentity } from "./src/adapters/InternetIdentity";
 import { PlugAdapter } from "./src/adapters/PlugAdapter";
 import { BitfinityAdapter } from "./src/adapters/BitfinityAdapter";
 import { BatchTransact } from "./src/utils/batchTransact";
@@ -16,16 +16,20 @@ export namespace Wallet {
     hostUrl?: string;
     localStorageKey?: string;
     defaultCanisterId?: string;
-    delegationTargets?: Principal[];
+    delegationTargets?: Principal[] | string[];
     delegationTimeout?: bigint;
-    timeout?: number;
+    derivationOrigin?: string;
     dfxNetwork?: string;
-    [key: string]: any;
+    fetchRootKeys?: boolean;
+    verifyQuerySignatures?: boolean;
+    adapters?: Record<string, Adapter.Info>;
+    identityProvider?: string;
+    timeout?: number;
   }
 
   export interface PNPWindow {
     BatchTransact: typeof BatchTransact;
-    nns: {
+    ii: {
       AnonymousIdentity: typeof AnonymousIdentity;
       Principal: typeof Principal;
     };
@@ -46,18 +50,10 @@ export namespace Wallet {
 
   type WalletEventCallback = (state: WalletState) => void;
 
-  export interface AdapterConfig {
-    whitelist?: string[];
-    host?: string;
-    identityProvider?: string;
-    timeout?: number;
-    [key: string]: any;
-  }
-
-  export type AdapterConstructor = new () => AdapterInterface;
+  export type AdapterConstructor = new (config: Wallet.PNPConfig) => Adapter.Interface;
 
   export type Adapters = {
-    nns: Adapter.Interface;
+    ii: Adapter.Interface;
     plug: Adapter.Interface;
     bitfinity: Adapter.Interface;
   };
@@ -79,19 +75,28 @@ export namespace Adapter {
   // deprecated
   export interface Info {
     id: string;
-    icon: string;
-    name: string;
+    logo: string;
+    walletName: string;
     adapter: AdapterConstructor;
+    config: {
+      identityProvider?: string;
+      signerUrl?: string;
+      rpcUrl?: string;
+      timeout?: number;
+      enabled?: boolean;
+    };
+    rpcUrl?: string;
+    timeout?: number;
+    enabled?: boolean;
   }
 
   // replaces Info
   export interface Wallet {
     id: string;
-    icon: string;
-    name: string;
+    logo: string;
+    walletName: string;
     adapter: AdapterConstructor;
   }
-
 
   export enum Status {
     INIT = "INIT",
@@ -104,9 +109,6 @@ export namespace Adapter {
   }
 
   export interface Interface {
-    // Required properties
-    info: Adapter.Info;
-
     // Core wallet functionality
     isAvailable(): Promise<boolean>;
     isConnected(): Promise<boolean>;
@@ -134,7 +136,6 @@ export class PNP {
   provider: Adapter.Interface | null;
   config: Wallet.PNPConfig;
   actorCache: Map<string, ActorSubclass<any>>;
-  isDev: boolean;
   fetchRootKeys: boolean;
 
   constructor(config?: Wallet.PNPConfig);

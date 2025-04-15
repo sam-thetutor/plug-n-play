@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { NNSAdapter } from '../src/adapters/NNSAdapter';
+import { InternetIdentity } from '../src/adapters/InternetIdentity';
 import { AuthClient } from "@dfinity/auth-client";
 import { vi } from 'vitest';
 
-describe('NNSAdapter', () => {
-  let adapter: NNSAdapter;
+describe('InternetIdentity', () => {
+  let adapter: InternetIdentity;
 
   beforeEach(() => {
     // Mock AuthClient.create
@@ -20,7 +20,7 @@ describe('NNSAdapter', () => {
       }
     } as any);
     
-    adapter = new NNSAdapter();
+    adapter = new InternetIdentity();
   });
 
   afterEach(() => {

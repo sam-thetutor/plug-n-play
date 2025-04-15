@@ -1,6 +1,6 @@
-# Using NNSAdapter with @dfinity/use-auth-client
+# Using InternetIdentity with @dfinity/use-auth-client
 
-This guide explains how to integrate the `NNSAdapter` from the @windoge98/plug-n-play library with the @dfinity/use-auth-client React hook.
+This guide explains how to integrate the `InternetIdentity` from the @windoge98/plug-n-play library with the @dfinity/use-auth-client React hook.
 
 ## Overview
 
@@ -16,16 +16,16 @@ npm install @windoge98/plug-n-play @dfinity/use-auth-client
 
 ## Basic Integration
 
-Here's a basic example of how to use the NNSAdapter with the useAuthClient hook:
+Here's a basic example of how to use the InternetIdentity with the useAuthClient hook:
 
 ```jsx
 import React, { useEffect, useState } from 'react';
 import { useAuthClient } from '@dfinity/use-auth-client';
-import { NNSAdapter } from '@windoge98/plug-n-play';
+import { InternetIdentity } from '@windoge98/plug-n-play';
 
 function MyComponent() {
-  // Create an instance of the NNSAdapter
-  const [adapter] = useState(() => new NNSAdapter({
+  // Create an instance of the InternetIdentity
+  const [adapter] = useState(() => new InternetIdentity({
     isDev: process.env.NODE_ENV === 'development',
     derivationOrigin: window.location.origin,
   }));
@@ -42,7 +42,7 @@ function MyComponent() {
   useEffect(() => {
     if (isAuthenticated && identity) {
       const principal = identity.getPrincipal();
-      const walletAccount = NNSAdapter.createAccountFromPrincipal(principal);
+      const walletAccount = InternetIdentity.createAccountFromPrincipal(principal);
       setAccount(walletAccount);
       
       // You can also create an actor
@@ -101,12 +101,12 @@ For larger applications, you might want to create a context provider:
 ```jsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuthClient } from '@dfinity/use-auth-client';
-import { NNSAdapter } from '@windoge98/plug-n-play';
+import { InternetIdentity } from '@windoge98/plug-n-play';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [adapter] = useState(() => new NNSAdapter({
+  const [adapter] = useState(() => new InternetIdentity({
     isDev: process.env.NODE_ENV === 'development',
     derivationOrigin: window.location.origin,
   }));
@@ -120,7 +120,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (isAuthenticated && identity) {
       const principal = identity.getPrincipal();
-      const walletAccount = NNSAdapter.createAccountFromPrincipal(principal);
+      const walletAccount = InternetIdentity.createAccountFromPrincipal(principal);
       setAccount(walletAccount);
     } else {
       setAccount(null);
@@ -164,7 +164,7 @@ function MyComponent() {
 
 ## Benefits
 
-Using the NNSAdapter with useAuthClient provides:
+Using the InternetIdentity with useAuthClient provides:
 
 1. React-friendly state management with hooks
 2. Integration with React's component lifecycle

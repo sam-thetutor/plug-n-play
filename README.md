@@ -30,22 +30,59 @@ npm install @windoge98/plug-n-play
 Here's a minimal example of how to use Plug N Play:
 
 ```typescript
-import { createPNP, walletsList } from "@windoge98/plug-n-play";
+import { createPNP } from "@windoge98/plug-n-play";
+import { ICAdapters } from '@windoge98/plug-n-play/adapters/ic'; // Optional: If you want to customize specific adapters
 
-// Get available wallets
-console.log("Available wallets:", walletsList);
-// Returns: [
-//   { id: "ii", name: "Internet Identity", logo: "..." },
-//   { id: "nfid", name: "NFID", logo: "..." },
-//   { id: "plug", name: "Plug", logo: "..." },
-//   { id: "oisy", name: "Oisy", logo: "..." }
-// ]
+// Get available wallet info (IDs, names, logos)
+// The actual list comes from the initialized pnp instance
 
-// Initialize PNP
+// Initialize PNP with global and adapter-specific settings
 const pnp = createPNP({
-  hostUrl: "https://icp0.io",
-  isDev: false,
+  // Global settings
+  hostUrl: "https://icp0.io", 
+  fetchRootKeys: false, // Default is false, set true for local dev
+  // derivationOrigin: "http://localhost:5173", // Optional: Set for local dev
+  // dfxNetwork: "local", // Optional: Set for local dev
+
+  // Adapter-specific configurations are nested within the 'adapters' object
+  adapters: {
+    ii: { // Settings specific to Internet Identity
+      enabled: true, // Explicitly enable (default is true)
+      config: { // Configuration specific to the II adapter
+        identityProvider: "https://identity.ic0.app", // Optional: Default is derived
+        // You might add other II-specific config here if the adapter supports it
+      }
+    },
+    nfid: { // Settings specific to NFID
+      enabled: true,
+      config: {
+        // NFID-specific config options, e.g.:
+        // appName: "My Awesome Dapp",
+        // logoUrl: "https://example.com/logo.png"
+      }
+    },
+    plug: { // Settings specific to Plug
+      enabled: true,
+      config: {
+        // Plug-specific config, often less needed as it uses browser extension
+      }
+    },
+    oisy: { // Settings specific to Oisy
+      enabled: true,
+      config: {
+         // Oisy specific config options, e.g.
+         // delegationTargets: ["ryjl3-tyaaa-aaaaa-aaaba-cai"], // Example canister
+      }
+    },
+    // Add configs for other adapters as needed
+    // You can also *omit* adapters here to use their defaults
+  }
 });
+
+// Get the list of enabled wallets AFTER initialization
+const availableWallets = pnp.getEnabledWallets();
+console.log("Available wallets:", availableWallets);
+// Returns an array of Adapter.Info objects for enabled wallets
 
 // Connect to a wallet
 async function connectWallet(walletId: string) {
@@ -123,19 +160,34 @@ async function transfer(to: string, amount: bigint) {
 
 ## Identity Delegation
 
-Example of using identity delegation (required for oisy, plug, and nfid):
+Identity delegation allows wallets like NFID and Plug to sign requests on behalf of the user's main identity. Configure delegation targets globally or per-adapter.
 
 ```typescript
-// Initialize PNP with delegation support
-const pnp = createPNP({
+import { Principal } from "@dfinity/principal";
+
+// Global delegation configuration
+const pnpGlobalDelegation = createPNP({
   hostUrl: "https://icp0.io",
-  isDev: false,
-  delegationTargets: [Principal.fromText('your-canister-id')],
-  delegationTimeout: BigInt(7 * 24 * 60 * 60 * 1000_000_000), // 7 days
+  delegationTargets: ["ryjl3-tyaaa-aaaaa-aaaba-cai"], // Apply to all adapters supporting delegation
+  delegationTimeout: BigInt(7 * 24 * 60 * 60 * 1000_000_000), // 7 days (optional)
 });
 
-// Connect with delegation
-await pnp.connect('nfid', true); // Second parameter enables delegation
+// Per-adapter delegation configuration (Oisy example)
+const pnpPerAdapterDelegation = createPNP({
+  hostUrl: "https://icp0.io",
+  adapters: {
+    oisy: {
+      config: {
+        delegationTargets: ["canister1-id", "canister2-id"], // Specific targets for Oisy
+        // delegationTimeout: ... // Oisy-specific timeout if needed
+      }
+    },
+    // Other adapters might use global config or have their own
+  }
+});
+
+// Connect (no extra flag needed, delegation is handled by config)
+await pnpGlobalDelegation.connect('nfid'); 
 ```
 
 ## Best Practices
@@ -152,17 +204,16 @@ await pnp.connect('nfid', true); // Second parameter enables delegation
 
 ## React Integration with @dfinity/use-auth-client
 
-If you're building a React application, you can integrate the NNSAdapter with the `@dfinity/use-auth-client` package for a more React-friendly approach:
+If you're building a React application, you can integrate the InternetIdentity with the `@dfinity/use-auth-client` package for a more React-friendly approach:
 
 ```typescript
 import { useEffect, useState } from 'react';
 import { useAuthClient } from '@dfinity/use-auth-client';
-import { NNSAdapter } from '@windoge98/plug-n-play';
+import { InternetIdentity } from '@windoge98/plug-n-play';
 
 function MyComponent() {
   // Create an adapter instance
-  const [adapter] = useState(() => new NNSAdapter({
-    isDev: process.env.NODE_ENV === 'development',
+  const [adapter] = useState(() => new InternetIdentity({
     derivationOrigin: window.location.origin,
   }));
   
@@ -176,7 +227,7 @@ function MyComponent() {
   useEffect(() => {
     if (isAuthenticated && identity) {
       const principal = identity.getPrincipal();
-      const account = NNSAdapter.createAccountFromPrincipal(principal);
+      const account = InternetIdentity.createAccountFromPrincipal(principal);
       console.log("Connected account:", account);
     }
   }, [isAuthenticated, identity]);
