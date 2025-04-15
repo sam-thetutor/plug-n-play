@@ -31,10 +31,6 @@ Here's a minimal example of how to use Plug N Play:
 
 ```typescript
 import { createPNP } from "@windoge98/plug-n-play";
-import { ICAdapters } from "@windoge98/plug-n-play/adapters/ic"; // Optional: If you want to customize specific adapters
-
-// Get available wallet info (IDs, names, logos)
-// The actual list comes from the initialized pnp instance
 
 // Initialize PNP with global and adapter-specific settings
 const pnp = createPNP({
@@ -100,7 +96,7 @@ async function connectWallet(walletId: string) {
 // Interact with a canister
 async function interactWithCanister(canisterId: string, idl: any) {
   try {
-    const actor = await pnp.getActor(canisterId, idl);
+    const actor = pnp.getActor(canisterId, idl);
     // Now you can call methods on your actor
     return actor;
   } catch (error) {
@@ -133,7 +129,7 @@ const LEDGER_CANISTER_ID = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 
 // Get account balance
 async function getBalance(principal: string) {
-  const actor = await pnp.getActor(LEDGER_CANISTER_ID, ICRC2_IDL);
+  const actor = pnp.getActor(LEDGER_CANISTER_ID, ICRC2_IDL);
   const balance = await actor.icrc1_balance_of({
     owner: Principal.fromText(principal),
     subaccount: [],
@@ -143,7 +139,7 @@ async function getBalance(principal: string) {
 
 // Transfer ICP
 async function transfer(to: string, amount: bigint) {
-  const actor = await pnp.getActor(LEDGER_CANISTER_ID, ICRC2_IDL);
+  const actor = pnp.getActor(LEDGER_CANISTER_ID, ICRC2_IDL);
   const result = await actor.icrc1_transfer({
     to: {
       owner: Principal.fromText(to),
