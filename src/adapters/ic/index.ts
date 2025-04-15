@@ -1,4 +1,4 @@
-// Path: src/adapters/index.ts
+// Path: src/adapters/ic/index.ts
 // Import adapters
 import { IIAdapter } from "./IIAdapter";
 import { PlugAdapter } from "./PlugAdapter";
