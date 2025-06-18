@@ -96,7 +96,7 @@ async function connectWallet(walletId: string) {
 // Interact with a canister
 async function interactWithCanister(canisterId: string, idl: any) {
   try {
-    const actor = pnp.getActor(canisterId, idl);
+    const actor = pnp.getActor({canisterId, idl});
     // Now you can call methods on your actor
     return actor;
   } catch (error) {
